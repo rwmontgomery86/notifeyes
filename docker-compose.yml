@@ -1,0 +1,30 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: notifeyes-db
+    environment:
+      POSTGRES_USER: notifeyes
+      POSTGRES_PASSWORD: notifeyes
+      POSTGRES_DB: notifeyes
+    ports:
+      - "5432:5432"
+    volumes:
+      - notifeyes-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U notifeyes -d notifeyes"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: notifeyes-mailpit
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # web UI at http://localhost:8025
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+
+volumes:
+  notifeyes-pgdata:

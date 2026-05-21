@@ -1,0 +1,70 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 40 25% 97%;
+    --foreground: 220 14% 8%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 14% 8%;
+    --primary: 222 52% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 220 14% 16%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 222 52% 96%;
+    --accent-foreground: 222 52% 30%;
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 88%;
+    --input: 220 13% 88%;
+    --ring: 222 52% 50%;
+    --radius: 0.6rem;
+  }
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+  html, body {
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+      "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  }
+}
+
+@layer components {
+  .ne-card {
+    @apply rounded-lg border bg-card text-card-foreground p-5;
+  }
+  .ne-btn {
+    @apply inline-flex items-center justify-center rounded-md text-sm font-medium
+           transition-colors disabled:opacity-50 disabled:cursor-not-allowed
+           h-10 px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90;
+  }
+  .ne-btn-secondary {
+    @apply inline-flex items-center justify-center rounded-md text-sm font-medium
+           transition-colors disabled:opacity-50
+           h-10 px-4 py-2 bg-secondary text-secondary-foreground hover:bg-secondary/80
+           border;
+  }
+  .ne-btn-ghost {
+    @apply inline-flex items-center justify-center rounded-md text-sm font-medium
+           h-10 px-3 py-2 text-foreground hover:bg-accent;
+  }
+  .ne-input {
+    @apply flex h-10 w-full rounded-md border bg-background px-3 py-2 text-sm
+           ring-offset-background placeholder:text-muted-foreground
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring;
+  }
+  .ne-label {
+    @apply text-sm font-medium leading-none mb-1.5 block;
+  }
+  .ne-pill {
+    @apply inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold;
+  }
+}

@@ -1,0 +1,280 @@
+"use server";
+
+import { eq, sql } from "drizzle-orm";
+import { db } from "@/db";
+import {
+  applications,
+  bookings,
+  contracts,
+  optometrists,
+  practices,
+  shifts,
+  threadParticipants,
+  threads,
+  users,
+} from "@/db/schema";
+import { requireVerifiedOd } from "@/lib/auth/guards";
+import { computeShiftCost, formatUsd } from "@/lib/pricing";
+import { buildContractBody, CONTRACT_TEMPLATE_VERSION } from "@/lib/contract";
+import { assertApplicationTransition } from "@/lib/state/application";
+import { assertShiftTransition } from "@/lib/state/shift";
+import { payments } from "@/lib/payments";
+import { dispatchNotification } from "@/lib/notifications";
+import { formatShiftWhen } from "@/lib/dates";
+
+/**
+ * OD response to an invite (source='invite', status='offered').
+ *
+ * Decline: just flip status='declined'.
+ *
+ * Accept: this is the post-invite booking-creation path. It runs the same
+ * sequence as the practice's "Confirm and book" action, except the practice
+ * has already pre-signed at invite time, so we promote that signature onto
+ * the new Contract row using the envelope stored in `applications.message`.
+ */
+export async function respondToInvite(
+  applicationId: string,
+  decision: "accept" | "decline",
+) {
+  const session = await requireVerifiedOd();
+  const odId = session.user.odId!;
+
+  const [row] = await db
+    .select({
+      application: applications,
+      shift: shifts,
+      practice: practices,
+      od: optometrists,
+    })
+    .from(applications)
+    .innerJoin(shifts, eq(shifts.id, applications.shiftId))
+    .innerJoin(practices, eq(practices.id, shifts.practiceId))
+    .innerJoin(optometrists, eq(optometrists.id, applications.odId))
+    .where(eq(applications.id, applicationId))
+    .limit(1);
+
+  if (!row) return { ok: false as const, error: "Invite not found" };
+  if (row.application.odId !== odId) {
+    return { ok: false as const, error: "Forbidden" };
+  }
+  if (row.application.source !== "invite") {
+    return { ok: false as const, error: "Not an invitation." };
+  }
+  if (row.application.status !== "offered") {
+    return {
+      ok: false as const,
+      error: `Invitation is ${row.application.status}.`,
+    };
+  }
+  if (row.shift.status !== "posted") {
+    return {
+      ok: false as const,
+      error: `Shift is ${row.shift.status} — invite no longer valid.`,
+    };
+  }
+
+  if (decision === "decline") {
+    await db
+      .update(applications)
+      .set({ status: "declined", statusChangedAt: sql`now()` })
+      .where(eq(applications.id, applicationId));
+    // Notify the practice
+    try {
+      const [practiceUser] = await db
+        .select({ id: users.id, email: users.email })
+        .from(users)
+        .where(eq(users.id, row.shift.postedByUserId))
+        .limit(1);
+      if (practiceUser) {
+        await dispatchNotification({
+          kind: "new_applicant",
+          userId: practiceUser.id,
+          recipientEmail: practiceUser.email,
+          subject: `${row.od.name} declined your invitation`,
+          body: `${formatShiftWhen(row.shift.startsAt, row.shift.endsAt)} — your shift is still posted.`,
+          actionUrl: `/p/shifts/${row.shift.id}`,
+          channels: ["push", "email"],
+          payload: { shiftId: row.shift.id, applicationId },
+        });
+      }
+    } catch (err) {
+      console.error("[invite:decline] notify failed:", err);
+    }
+    return { ok: true as const, bookingId: null };
+  }
+
+  // === Accept path ========================================================
+  // Parse the practice's pre-signed envelope from the application message.
+  let practiceSignedAt: string | null = null;
+  let practiceSignedByUserId: string | null = null;
+  try {
+    if (row.application.message) {
+      const parsed = JSON.parse(row.application.message) as {
+        contractBody?: string;
+        signedByUserId?: string;
+        signedAt?: string;
+      };
+      practiceSignedByUserId = parsed.signedByUserId ?? null;
+      practiceSignedAt = parsed.signedAt ?? null;
+    }
+  } catch {
+    // No envelope (very old invites). Practice signs again via /bookings/:id.
+  }
+
+  const cost = computeShiftCost({
+    rateCentsPerHour: row.shift.rateCentsPerHour,
+    startsAt: row.shift.startsAt,
+    endsAt: row.shift.endsAt,
+    lunchMinutes: row.shift.lunchMinutes,
+  });
+
+  const finalContractBody = buildContractBody({
+    practiceName: row.practice.name,
+    odName: row.od.name,
+    shiftStartsAt: row.shift.startsAt,
+    shiftEndsAt: row.shift.endsAt,
+    ratePerHour: formatUsd(row.shift.rateCentsPerHour),
+    totalAmount: formatUsd(cost.totalCents),
+    platformFeePct: `${(cost.feeBps / 100).toFixed(0)}%`,
+  });
+
+  // Look up OD's user (for thread)
+  const [odUser] = await db
+    .select({ id: users.id, email: users.email })
+    .from(users)
+    .where(eq(users.odId, odId))
+    .limit(1);
+
+  const bookingId = await db.transaction(async (tx) => {
+    // Application → accepted
+    assertApplicationTransition(row.application.status, "accepted");
+    await tx
+      .update(applications)
+      .set({
+        status: "accepted",
+        statusChangedAt: sql`now()`,
+        message: null, // clear the envelope; we've promoted it
+      })
+      .where(eq(applications.id, applicationId));
+
+    // Shift → booked
+    assertShiftTransition(row.shift.status, "booked");
+    await tx
+      .update(shifts)
+      .set({ status: "booked", bookedApplicationId: applicationId })
+      .where(eq(shifts.id, row.shift.id));
+
+    // Decline any other pending applications on this shift
+    await tx
+      .update(applications)
+      .set({ status: "declined", statusChangedAt: sql`now()` })
+      .where(
+        sql`${applications.shiftId} = ${row.shift.id} AND ${applications.id} <> ${applicationId} AND ${applications.status} IN ('applied','shortlisted','offered')`,
+      );
+
+    // Booking + contract
+    const [bookingRow] = await tx
+      .insert(bookings)
+      .values({
+        shiftId: row.shift.id,
+        odId,
+        practiceId: row.shift.practiceId,
+        applicationId,
+        totalCents: cost.totalCents,
+        platformFeeCents: cost.feeCents,
+        status: "confirmed",
+        paymentStatus: "authorizing",
+      })
+      .returning({ id: bookings.id });
+
+    const [contract] = await tx
+      .insert(contracts)
+      .values({
+        bookingId: bookingRow.id,
+        templateVersion: CONTRACT_TEMPLATE_VERSION,
+        bodyText: finalContractBody,
+        signedByPracticeAt: practiceSignedAt
+          ? sql`${practiceSignedAt}::timestamptz`
+          : sql`now()`,
+        signedByPracticeUserId: practiceSignedByUserId,
+        // OD signs from /bookings/:id
+      })
+      .returning({ id: contracts.id });
+
+    await tx
+      .update(bookings)
+      .set({ contractId: contract.id })
+      .where(eq(bookings.id, bookingRow.id));
+
+    // Thread bootstrap
+    if (odUser) {
+      const [t] = await tx
+        .insert(threads)
+        .values({
+          contextBookingId: bookingRow.id,
+          contextShiftId: row.shift.id,
+          lastMessageAt: sql`now()`,
+        })
+        .returning({ id: threads.id });
+      await tx.insert(threadParticipants).values([
+        { threadId: t.id, userId: row.shift.postedByUserId },
+        { threadId: t.id, userId: odUser.id },
+      ]);
+      const { messages } = await import("@/db/schema");
+      await tx.insert(messages).values({
+        threadId: t.id,
+        body: "Booking confirmed via invitation. Sign the engagement to lock it in.",
+        systemKind: "booking_confirmed",
+        systemPayload: { bookingId: bookingRow.id, viaInvite: true },
+      });
+    }
+
+    return bookingRow.id;
+  });
+
+  // Authorize payment (outside tx)
+  try {
+    const intent = await payments.createIntent({
+      amountCents: cost.totalCents,
+      bookingId,
+      practiceId: row.shift.practiceId,
+      description: `NotifEyes invite booking #${bookingId.slice(0, 8)}`,
+      captureMethod: "manual",
+    });
+    await db
+      .update(bookings)
+      .set({ paymentIntentId: intent.id, paymentStatus: intent.status })
+      .where(eq(bookings.id, bookingId));
+  } catch (err) {
+    console.error("[invite:accept] payment auth failed:", err);
+    await db
+      .update(bookings)
+      .set({ paymentStatus: "failed" })
+      .where(eq(bookings.id, bookingId));
+  }
+
+  // Notify the practice that the invite was accepted
+  try {
+    const [practiceUser] = await db
+      .select({ id: users.id, email: users.email })
+      .from(users)
+      .where(eq(users.id, row.shift.postedByUserId))
+      .limit(1);
+    if (practiceUser) {
+      await dispatchNotification({
+        kind: "booking_confirmed",
+        userId: practiceUser.id,
+        recipientEmail: practiceUser.email,
+        subject: `${row.od.name} accepted — booking locked in`,
+        body: `${formatShiftWhen(row.shift.startsAt, row.shift.endsAt)} · ${formatUsd(row.shift.rateCentsPerHour)}/hr. They&apos;ll sign the engagement next.`,
+        actionUrl: `/bookings/${bookingId}`,
+        channels: ["push", "email"],
+        payload: { bookingId, shiftId: row.shift.id, viaInvite: true },
+      });
+    }
+  } catch (err) {
+    console.error("[invite:accept] notify failed:", err);
+  }
+
+  return { ok: true as const, bookingId };
+}
