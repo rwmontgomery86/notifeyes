@@ -24,7 +24,10 @@ export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
         setError("Invalid email or password.");
         return;
       }
-      router.push(callbackUrl ?? "/");
+      // /me is a server route that 307s to the right dashboard for the
+      // session's role. We don't know the role on the client at this point
+      // (signIn returns just a status), so let the server route it.
+      router.push(callbackUrl ?? "/me");
       router.refresh();
     });
   }
