@@ -1,5 +1,7 @@
 # NotifEyes — V1 MVP
 
+[![CI](https://github.com/rwmontgomery86/notifeyes/actions/workflows/ci.yml/badge.svg)](https://github.com/rwmontgomery86/notifeyes/actions/workflows/ci.yml)
+
 A two-sided marketplace connecting optometry practices with optometrists (ODs) for fill-in shifts. Watch-zone notifications are the differentiator: ODs draw a geo zone + filters and get pinged the moment a matching shift posts (< 10 s target).
 
 ## Quick start

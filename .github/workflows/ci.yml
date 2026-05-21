@@ -1,0 +1,111 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel in-progress runs of the same workflow on the same ref. Saves
+# minutes when you force-push or push twice in a row.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Typecheck + build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Build
+        # Dummy env values that satisfy the zod schema in src/env.ts. These
+        # don't connect to anything — most routes are force-dynamic and the
+        # build never evaluates env at request time.
+        env:
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+          AUTH_SECRET: ci-dummy-secret-32-chars-aaaaaaaaa
+          AUTH_URL: http://localhost:4000
+          NOTIFEYES_LAUNCH_METRO: sf_bay
+          PLATFORM_FEE_BPS: '1000'
+        run: npx next build
+
+  e2e:
+    name: Playwright e2e (spine flow)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # e2e is gated to the main branch and PRs that touch app/server code,
+    # to keep PR feedback fast on doc-only changes.
+    if: ${{ github.event_name == 'push' || contains(toJSON(github.event.pull_request.changed_files), 'src/') }}
+
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_USER: notifeyes
+          POSTGRES_PASSWORD: notifeyes
+          POSTGRES_DB: notifeyes
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U notifeyes"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://notifeyes:notifeyes@localhost:5432/notifeyes
+      AUTH_SECRET: ci-dummy-secret-32-chars-aaaaaaaaa
+      AUTH_URL: http://localhost:3000
+      NOTIFEYES_LAUNCH_METRO: sf_bay
+      PLATFORM_FEE_BPS: '1000'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Migrate DB
+        run: npm run db:migrate
+
+      - name: Seed DB
+        run: npm run db:seed
+
+      - name: Run Playwright spine test
+        # Playwright config's webServer block starts `npm run dev`. The worker
+        # process isn't started here — the spine test doesn't exercise the
+        # fanout queue (that's M3 territory and has its own test plan in P5).
+        run: npm run test:e2e
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
