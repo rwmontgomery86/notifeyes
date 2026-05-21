@@ -10,10 +10,10 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate && node scripts/post-generate-drizzle.mjs",
-    "db:migrate": "tsx --conditions=react-server --env-file=.env src/db/migrate.ts",
-    "db:seed": "tsx --conditions=react-server --env-file=.env src/db/seed.ts",
+    "db:migrate": "tsx --conditions=react-server --env-file-if-exists=.env src/db/migrate.ts",
+    "db:seed": "tsx --conditions=react-server --env-file-if-exists=.env src/db/seed.ts",
     "db:studio": "drizzle-kit studio",
-    "worker": "tsx --conditions=react-server --env-file=.env src/workers/index.ts",
+    "worker": "tsx --conditions=react-server --env-file-if-exists=.env src/workers/index.ts",
     "test": "vitest",
     "test:e2e": "playwright test"
   },
