@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, ne } from "drizzle-orm";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
@@ -32,7 +32,12 @@ export default async function NotificationsInbox() {
   const rows = await db
     .select()
     .from(notifications)
-    .where(eq(notifications.userId, session.user.id))
+    .where(
+      and(
+        eq(notifications.userId, session.user.id),
+        ne(notifications.kind, "message_received"),
+      ),
+    )
     .orderBy(desc(notifications.createdAt))
     .limit(100);
 

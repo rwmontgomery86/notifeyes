@@ -2,17 +2,24 @@ import { eq, sql, and } from "drizzle-orm";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { optometrists, practices, shifts } from "@/db/schema";
+import { optometrists, practices, shifts, watchZones } from "@/db/schema";
 import { formatShiftWhen, relativeTime } from "@/lib/dates";
 import { formatUsd } from "@/lib/pricing";
 import { ShiftsMap } from "./ShiftsMap";
+import { ScopeToggle } from "./ScopeToggle";
 
 export const metadata = { title: "Browse shifts · NotifEyes" };
 export const dynamic = "force-dynamic";
 
-export default async function OdShiftsPage() {
+export default async function OdShiftsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ wz?: string }>;
+}) {
   const session = await auth();
   const odId = session!.user.odId!;
+  const sp = await searchParams;
+  const watchZoneOnly = sp.wz === "1";
 
   const [me] = await db
     .select()
@@ -21,25 +28,49 @@ export default async function OdShiftsPage() {
     .limit(1);
 
   const isVerified = me?.verificationStatus === "verified" && !!me?.verifiedAt;
+  const licenseState = me?.licenseState ?? null;
+
+  const [{ count: watchZoneCount }] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(watchZones)
+    .where(and(eq(watchZones.odId, odId), eq(watchZones.paused, false)));
 
   // Open shifts with practice lat/lng for the map. Sorted by distance from
-  // OD home if we have one.
-  const rows = await db
-    .select({
-      shift: shifts,
-      practice: practices,
-      lat: sql<number | null>`ST_Y(${practices.location}::geometry)`.as("lat"),
-      lng: sql<number | null>`ST_X(${practices.location}::geometry)`.as("lng"),
-      distanceMeters: me?.homeLocation
-        ? sql<number>`COALESCE(ST_Distance(${practices.location}, ${optometrists.homeLocation}), 0)`.as("distance_meters")
-        : sql<number>`0`.as("distance_meters"),
-    })
-    .from(shifts)
-    .innerJoin(practices, eq(shifts.practiceId, practices.id))
-    .innerJoin(optometrists, eq(optometrists.id, odId))
-    .where(and(eq(shifts.status, "posted"), sql`${shifts.startsAt} > now()`))
-    .orderBy(sql`distance_meters asc, ${shifts.startsAt} asc`)
-    .limit(50);
+  // OD home if we have one. State-mandatory; watch-zone narrow opt-in.
+  const rows = licenseState
+    ? await db
+        .select({
+          shift: shifts,
+          practice: practices,
+          lat: sql<number | null>`ST_Y(${practices.location}::geometry)`.as("lat"),
+          lng: sql<number | null>`ST_X(${practices.location}::geometry)`.as("lng"),
+          distanceMeters: me?.homeLocation
+            ? sql<number>`COALESCE(ST_Distance(${practices.location}, ${optometrists.homeLocation}), 0)`.as(
+                "distance_meters",
+              )
+            : sql<number>`0`.as("distance_meters"),
+        })
+        .from(shifts)
+        .innerJoin(practices, eq(shifts.practiceId, practices.id))
+        .innerJoin(optometrists, eq(optometrists.id, odId))
+        .where(
+          and(
+            eq(shifts.status, "posted"),
+            sql`${shifts.startsAt} > now()`,
+            eq(practices.state, licenseState),
+            watchZoneOnly
+              ? sql`EXISTS (
+                  SELECT 1 FROM watch_zones wz
+                  WHERE wz.od_id = ${odId}
+                    AND wz.paused = false
+                    AND ST_Contains(wz.geometry::geometry, ${practices.location}::geometry)
+                )`
+              : sql`TRUE`,
+          ),
+        )
+        .orderBy(sql`distance_meters asc, ${shifts.startsAt} asc`)
+        .limit(50)
+    : [];
 
   // Also pull the OD home location for the "me" pin
   const homeRow = me?.homeLocation
@@ -71,44 +102,67 @@ export default async function OdShiftsPage() {
       ? { lat: Number(home.lat), lng: Number(home.lng) }
       : null;
 
+  const headerCopy = !licenseState
+    ? "Add your license state on your profile to see matching shifts."
+    : watchZoneOnly
+      ? "Showing shifts inside your watch zones."
+      : `Showing shifts in ${licenseState}. Toggle to narrow to your watch zones.`;
+
   return (
     <div>
-      <header className="flex items-center justify-between">
+      <header className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold">Open shifts</h1>
           <p className="mt-1 text-muted-foreground">
-            Sorted by distance from your home location.{" "}
+            {headerCopy}{" "}
             <Link href="/d/watch" className="font-medium text-primary">
-              Set a watch zone
-            </Link>{" "}
-            to get pinged when new ones post.
+              {watchZoneCount === 0 ? "Set a watch zone" : "Manage watch zones"}
+            </Link>
+            .
           </p>
         </div>
-        {isVerified ? (
-          <span className="ne-pill border-green-500/40 bg-green-100/60 text-green-900">
-            Verified
-          </span>
-        ) : (
-          <span className="ne-pill border-amber-500/40 bg-amber-100/60 text-amber-900">
-            Verification pending
-          </span>
-        )}
+        <div className="flex items-center gap-3">
+          <ScopeToggle licenseState={licenseState} />
+          {isVerified ? (
+            <span className="ne-pill border-green-500/40 bg-green-100/60 text-green-900">
+              Verified
+            </span>
+          ) : (
+            <span className="ne-pill border-amber-500/40 bg-amber-100/60 text-amber-900">
+              Verification pending
+            </span>
+          )}
+        </div>
       </header>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[3fr_2fr]">
         <div className="ne-card p-0 overflow-hidden h-[520px]">
-          <ShiftsMap
-            pins={pins}
-            home={homeForMap}
-          />
+          <ShiftsMap pins={pins} home={homeForMap} />
         </div>
 
         <div className="grid gap-3 overflow-y-auto max-h-[520px] pr-1">
-          {rows.length === 0 ? (
+          {!licenseState ? (
             <div className="ne-card text-sm text-muted-foreground">
-              No open shifts right now. Set a watch zone and we&apos;ll alert
-              you when one matches.
+              No license state on file.{" "}
+              <Link href="/d/profile" className="font-medium text-primary">
+                Add it on your profile
+              </Link>{" "}
+              to see open shifts.
             </div>
+          ) : rows.length === 0 ? (
+            watchZoneOnly && watchZoneCount === 0 ? (
+              <div className="ne-card text-sm text-muted-foreground">
+                You don&apos;t have any active watch zones.{" "}
+                <Link href="/d/watch" className="font-medium text-primary">
+                  Create one
+                </Link>{" "}
+                to filter by area.
+              </div>
+            ) : (
+              <div className="ne-card text-sm text-muted-foreground">
+                No open shifts {watchZoneOnly ? "inside your watch zones" : `in ${licenseState}`} right now.
+              </div>
+            )
           ) : null}
           {rows.map(({ shift, practice, distanceMeters }) => (
             <Link

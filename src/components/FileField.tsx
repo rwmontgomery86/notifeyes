@@ -6,6 +6,38 @@ import { useState, useRef } from "react";
  * Reusable file field. Posts to /api/upload and stores the resulting URL.
  * Falls back to a data URL in dev when UPLOADTHING_TOKEN is unset.
  */
+
+const TARGET_BYTES = 900 * 1024;
+const MAX_EDGE = 1600;
+
+async function compressImage(file: File): Promise<File> {
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height));
+  const w = Math.round(bitmap.width * scale);
+  const h = Math.round(bitmap.height * scale);
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return file;
+  ctx.drawImage(bitmap, 0, 0, w, h);
+  bitmap.close();
+
+  for (const quality of [0.82, 0.7, 0.6, 0.5]) {
+    const blob: Blob | null = await new Promise((resolve) =>
+      canvas.toBlob(resolve, "image/jpeg", quality),
+    );
+    if (!blob) continue;
+    if (blob.size <= TARGET_BYTES || quality === 0.5) {
+      return new File([blob], file.name.replace(/\.\w+$/, ".jpg"), {
+        type: "image/jpeg",
+        lastModified: Date.now(),
+      });
+    }
+  }
+  return file;
+}
+
 export function FileField({
   label,
   value,
@@ -27,8 +59,11 @@ export function FileField({
     setErr(null);
     setUploading(true);
     try {
+      const toUpload = file.type.startsWith("image/")
+        ? await compressImage(file).catch(() => file)
+        : file;
       const fd = new FormData();
-      fd.append("file", file);
+      fd.append("file", toUpload);
       const res = await fetch("/api/upload", { method: "POST", body: fd });
       const data = await res.json();
       if (!res.ok) {
