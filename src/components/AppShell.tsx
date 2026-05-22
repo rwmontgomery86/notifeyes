@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { signOut } from "@/lib/auth";
+import { NotificationsLive } from "@/components/NotificationsLive";
 
-type Nav = { href: string; label: string };
+type Nav = { href: string; label: string; badge?: number };
+
+function formatBadge(n: number): string {
+  return n > 99 ? "99+" : String(n);
+}
 
 export function AppShell({
   role,
@@ -16,6 +21,7 @@ export function AppShell({
 }) {
   return (
     <div className="grid min-h-screen grid-cols-[220px_1fr]">
+      <NotificationsLive />
       <aside className="border-r bg-card flex flex-col">
         <div className="px-5 py-5 border-b">
           <Link href="/" className="flex items-center gap-2 font-semibold text-sm">
@@ -35,9 +41,17 @@ export function AppShell({
             <Link
               key={n.href}
               href={n.href}
-              className="block rounded-md px-3 py-2 text-sm hover:bg-accent"
+              className="flex items-center justify-between rounded-md px-3 py-2 text-sm hover:bg-accent"
             >
-              {n.label}
+              <span>{n.label}</span>
+              {n.badge && n.badge > 0 ? (
+                <span
+                  aria-label={`${n.badge} unread`}
+                  className="ml-2 inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-destructive px-1.5 py-0.5 text-[10px] font-semibold leading-none text-destructive-foreground"
+                >
+                  {formatBadge(n.badge)}
+                </span>
+              ) : null}
             </Link>
           ))}
         </nav>

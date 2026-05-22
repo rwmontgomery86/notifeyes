@@ -5,6 +5,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { watchZones } from "@/db/schema";
 import { requireOd } from "@/lib/auth/guards";
+import { geocoder } from "@/lib/geocode";
 
 const circleSchema = z.object({
   kind: z.literal("circle"),
@@ -96,4 +97,27 @@ export async function toggleWatchZonePaused(zoneId: string, paused: boolean) {
     .update(watchZones)
     .set({ paused })
     .where(and(eq(watchZones.id, zoneId), eq(watchZones.odId, session.user.odId!)));
+}
+
+const zipSchema = z
+  .string()
+  .trim()
+  .regex(/^\d{5}(-\d{4})?$/, "Enter a 5-digit ZIP code");
+
+export async function geocodeZip(
+  zip: string,
+): Promise<{ ok: true; lat: number; lng: number } | { ok: false; error: string }> {
+  await requireOd();
+  const parsed = zipSchema.safeParse(zip);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid ZIP" };
+  }
+  const result = await geocoder.geocode({
+    addressLine: null,
+    city: null,
+    state: null,
+    zip: parsed.data,
+  });
+  if (!result) return { ok: false, error: "ZIP not found" };
+  return { ok: true, lat: result.lat, lng: result.lng };
 }

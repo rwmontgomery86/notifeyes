@@ -1,30 +1,27 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { AppShell } from "@/components/AppShell";
-import { PRACTICE_NAV } from "@/lib/nav";
+import { navForRole, type Role } from "@/lib/nav";
 import {
   getUnreadNotificationCount,
   getUnreadMessagesCount,
 } from "@/lib/notifications/unread";
 
-export default async function PracticeLayout({
+export default async function SharedLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
-  const role = session.user.role;
-  if (role !== "practice_owner" && role !== "practice_scheduler" && role !== "admin") {
-    redirect("/d/shifts");
-  }
+  const role = session.user.role as Role;
 
   const [unreadNotifications, unreadMessages] = await Promise.all([
     getUnreadNotificationCount(session.user.id),
     getUnreadMessagesCount(session.user.id),
   ]);
 
-  const nav = PRACTICE_NAV.map((n) => ({
+  const nav = navForRole(role).map((n) => ({
     href: n.href,
     label: n.label,
     badge:

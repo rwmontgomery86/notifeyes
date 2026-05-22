@@ -1,15 +1,11 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { AppShell } from "@/components/AppShell";
-
-const NAV = [
-  { href: "/d/shifts", label: "Browse shifts" },
-  { href: "/d/watch", label: "Watch zones" },
-  { href: "/notifications", label: "Notifications" },
-  { href: "/messages", label: "Messages" },
-  { href: "/d/payouts", label: "Payouts" },
-  { href: "/d/profile", label: "My profile" },
-];
+import { OD_NAV } from "@/lib/nav";
+import {
+  getUnreadNotificationCount,
+  getUnreadMessagesCount,
+} from "@/lib/notifications/unread";
 
 export default async function OdLayout({
   children,
@@ -20,8 +16,25 @@ export default async function OdLayout({
   if (!session?.user) redirect("/login");
   const role = session.user.role;
   if (role !== "od" && role !== "admin") redirect("/p/dashboard");
+
+  const [unreadNotifications, unreadMessages] = await Promise.all([
+    getUnreadNotificationCount(session.user.id),
+    getUnreadMessagesCount(session.user.id),
+  ]);
+
+  const nav = OD_NAV.map((n) => ({
+    href: n.href,
+    label: n.label,
+    badge:
+      n.badgeKey === "notifications"
+        ? unreadNotifications
+        : n.badgeKey === "messages"
+          ? unreadMessages
+          : undefined,
+  }));
+
   return (
-    <AppShell role={role} userName={session.user.name} nav={NAV}>
+    <AppShell role={role} userName={session.user.name} nav={nav}>
       {children}
     </AppShell>
   );

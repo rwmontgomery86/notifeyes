@@ -5,7 +5,6 @@ import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { notifications } from "@/db/schema";
 import { relativeTime } from "@/lib/dates";
-import { NotificationsLive } from "@/components/NotificationsLive";
 import { markNotificationsRead } from "./actions";
 
 export const metadata = { title: "Notifications · NotifEyes" };
@@ -39,8 +38,6 @@ export default async function NotificationsInbox() {
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
-      <NotificationsLive />
-
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Notifications</h1>
         <form action={markNotificationsRead}>
