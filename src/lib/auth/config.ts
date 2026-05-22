@@ -84,26 +84,24 @@ export const authConfig = {
       const isLoggedIn = Boolean(session?.user);
       const path = url.pathname;
 
-      // Public routes
-      const publicPrefixes = [
-        "/",
-        "/login",
-        "/signup",
-        "/api/auth",
-        "/_next",
-        "/favicon.ico",
+      // Protected routes — everything else (incl. marketing, 404s, profile
+      // pages) is public by default. Inverted gate: deny by exception.
+      const protectedPrefixes = [
+        "/me",
+        "/p/",
+        "/d/",
+        "/admin/",
+        "/bookings/",
+        "/messages",
+        "/notifications",
+        "/reviews/",
       ];
-      const publicExact = new Set(["/"]);
-      if (publicExact.has(path)) return true;
-      if (publicPrefixes.some((p) => p !== "/" && path.startsWith(p))) return true;
-      // Public shift / OD / practice detail
-      if (
-        path.startsWith("/shifts/") ||
-        path.startsWith("/ods/") ||
-        path.startsWith("/practices/")
-      ) {
-        return true;
-      }
+      const protectedApiPrefixes = ["/api/notifications", "/api/upload"];
+      const needsAuth =
+        protectedPrefixes.some((p) => path.startsWith(p)) ||
+        protectedApiPrefixes.some((p) => path.startsWith(p));
+
+      if (!needsAuth) return true;
 
       if (!isLoggedIn) {
         const callbackUrl = encodeURIComponent(path + url.search);

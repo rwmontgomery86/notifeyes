@@ -126,7 +126,12 @@ export async function respondToInvite(
     startsAt: row.shift.startsAt,
     endsAt: row.shift.endsAt,
     lunchMinutes: row.shift.lunchMinutes,
+    confirmedAt: new Date(),
+    urgent: row.shift.urgent,
   });
+  const matchFeeDisplay = cost.sameDay
+    ? `${formatUsd(cost.feeCents)} (same-day)`
+    : formatUsd(cost.feeCents);
 
   const finalContractBody = buildContractBody({
     practiceName: row.practice.name,
@@ -135,7 +140,7 @@ export async function respondToInvite(
     shiftEndsAt: row.shift.endsAt,
     ratePerHour: formatUsd(row.shift.rateCentsPerHour),
     totalAmount: formatUsd(cost.totalCents),
-    platformFeePct: `${(cost.feeBps / 100).toFixed(0)}%`,
+    matchFee: matchFeeDisplay,
   });
 
   // Look up OD's user (for thread)

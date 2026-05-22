@@ -44,6 +44,7 @@ export default async function ShiftDetailPage({
     startsAt: row.shift.startsAt,
     endsAt: row.shift.endsAt,
     lunchMinutes: row.shift.lunchMinutes,
+    urgent: row.shift.urgent,
   });
 
   let existingApplication:

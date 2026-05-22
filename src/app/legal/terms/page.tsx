@@ -1,0 +1,43 @@
+import type { Metadata } from "next";
+import {
+  LegalLayout,
+  LegalSection,
+  LegalTodo,
+} from "@/components/marketing/LegalLayout";
+
+export const metadata: Metadata = {
+  title: "Terms of Service — NotifEyes",
+  description: "Plain-English Terms of Service draft. Final version pending legal review.",
+};
+
+const SECTIONS: [string, string][] = [
+  ["1. Acceptance", "By creating an account on NotifEyes, you agree to these Terms. If you don't agree, don't use NotifEyes."],
+  ["2. The marketplace", "NotifEyes is a venue connecting practices with optometrists. We are not a party to the engagement between them."],
+  ["3. Eligibility", "Practices must be lawfully operating in the US. ODs must hold a current state license."],
+  ["4. Verification", "We verify license, ID, and (optionally) DEA. We do not guarantee performance — but we vet that ODs are who they say they are."],
+  ["5. Fees", "$9.99 per booked shift on the practice side; $19.99 same-day. ODs are free. Subject to V2 changes — V1 cohort price is locked."],
+  ["6. Cancellation", "Tiered fee schedule, see Trust & safety. Charges enforced via stored payment method."],
+  ["7. Payouts", "Captured at completion. ACH 3 business days. OD responsible for tax reporting; 1099-NEC issued by Jan 31."],
+  ["8. Conduct", "No harassment, no off-platform circumvention, no PHI uploaded. Suspension for violations."],
+  ["9. Disputes", "Internal review within 2 business days. Binding arbitration thereafter — see § 14."],
+  ["10. Liability", "NotifEyes is not liable for clinical outcomes, equipment damage, or wage disputes between parties."],
+  ["11. IP", "You retain your content. We get a license to display it on the platform."],
+  ["12. Termination", "Either party may terminate. Open bookings continue to completion."],
+  ["13. Changes", "We may update Terms. We will email 30 days before material changes take effect."],
+  ["14. Arbitration · governing law", "Delaware. JAMS rules. Class action waiver."],
+];
+
+export default function TermsPage() {
+  return (
+    <LegalLayout
+      active="terms"
+      title="Terms of Service."
+      intro="Plain-English terms draft. Final version pending legal review. The headings below are the structure we will publish."
+    >
+      <LegalTodo />
+      {SECTIONS.map(([h, body]) => (
+        <LegalSection key={h} heading={h} body={body} />
+      ))}
+    </LegalLayout>
+  );
+}

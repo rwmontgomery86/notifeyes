@@ -19,7 +19,7 @@ export function buildContractBody(params: {
   shiftEndsAt: Date;
   ratePerHour: string; // formatted, e.g. "$110.00"
   totalAmount: string;
-  platformFeePct: string; // e.g. "10%"
+  matchFee: string; // formatted, e.g. "$9.99" or "$19.99 (same-day)"
 }): string {
   // --TODO: legal review --- all language below is placeholder. Replace with
   // attorney-drafted independent contractor agreement before any real launch.
@@ -30,7 +30,7 @@ export function buildContractBody(params: {
     ``,
     `1. SCOPE. The Optometrist will provide independent optometric services at the Practice during the scheduled shift hours at the agreed rate of ${params.ratePerHour}/hour. The Optometrist is an independent contractor and not an employee of the Practice or NotifEyes.`,
     ``,
-    `2. PAYMENT. Practice will be charged ${params.totalAmount}, which includes a NotifEyes platform fee of ${params.platformFeePct}. The Optometrist's payout is scheduled three (3) days after shift completion.`,
+    `2. PAYMENT. Practice will be charged ${params.totalAmount}, which includes a NotifEyes match fee of ${params.matchFee}. The Optometrist's payout is scheduled three (3) days after shift completion.`,
     ``,
     `3. CANCELLATION. The cancellation fee schedule and no-show policy described in the NotifEyes Terms of Service apply to this engagement.`,
     ``,

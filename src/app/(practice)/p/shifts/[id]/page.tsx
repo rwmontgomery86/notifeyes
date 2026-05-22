@@ -49,7 +49,11 @@ export default async function ShiftAdminPage({
     startsAt: shift.startsAt,
     endsAt: shift.endsAt,
     lunchMinutes: shift.lunchMinutes,
+    urgent: shift.urgent,
   });
+  const matchFeeDisplay = cost.sameDay
+    ? `${formatUsd(cost.feeCents)} (same-day)`
+    : formatUsd(cost.feeCents);
 
   const buckets: Record<string, typeof rows> = {
     applied: [],
@@ -85,7 +89,7 @@ export default async function ShiftAdminPage({
               {formatUsd(shift.rateCentsPerHour)}/hr
             </div>
             <div className="text-xs text-muted-foreground">
-              Est. {formatUsd(cost.totalCents)} total ({formatUsd(cost.feeCents)} platform fee)
+              Est. {formatUsd(cost.totalCents)} total ({matchFeeDisplay} match fee)
             </div>
           </div>
         </div>
@@ -105,7 +109,7 @@ export default async function ShiftAdminPage({
               shiftEndsAt: shift.endsAt,
               ratePerHour: formatUsd(shift.rateCentsPerHour),
               totalAmount: formatUsd(cost.totalCents),
-              platformFeePct: `${(cost.feeBps / 100).toFixed(0)}%`,
+              matchFee: matchFeeDisplay,
             })}
           />
         </div>

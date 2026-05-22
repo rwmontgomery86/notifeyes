@@ -11,7 +11,8 @@ import {
   threads,
 } from "@/db/schema";
 import { auth } from "@/lib/auth";
-import { computeShiftCost, formatUsd } from "@/lib/pricing";
+import { formatUsd } from "@/lib/pricing";
+import { env } from "@/env";
 import { computeCancellationFee } from "@/lib/cancellation";
 import { formatShiftWhen } from "@/lib/dates";
 import { OdContractSign } from "./OdContractSign";
@@ -64,12 +65,13 @@ export default async function BookingPage({
     .where(eq(threads.contextBookingId, row.booking.id))
     .limit(1);
 
-  const cost = computeShiftCost({
-    rateCentsPerHour: row.shift.rateCentsPerHour,
-    startsAt: row.shift.startsAt,
-    endsAt: row.shift.endsAt,
-    lunchMinutes: row.shift.lunchMinutes,
-  });
+  // Read fee/total from the booking row (preserves historical accuracy across
+  // pricing-model changes). Subtotal = total − fee; OD payout = subtotal.
+  const feeCents = row.booking.platformFeeCents;
+  const totalCents = row.booking.totalCents;
+  const subtotalCents = totalCents - feeCents;
+  const wasSameDayFee = feeCents === env.NOTIFEYES_SAMEDAY_FEE_CENTS;
+  const matchFeeLabel = wasSameDayFee ? "Same-day match fee" : "Match fee";
 
   const odSigned = !!row.contract?.signedByOdAt;
 
@@ -133,13 +135,10 @@ export default async function BookingPage({
           Payment
         </h2>
         <dl className="mt-3 grid gap-1 text-sm">
-          <Row label="Subtotal" value={formatUsd(cost.subtotalCents)} />
-          <Row
-            label={`Platform fee (${(cost.feeBps / 100).toFixed(0)}%)`}
-            value={formatUsd(cost.feeCents)}
-          />
+          <Row label="Subtotal" value={formatUsd(subtotalCents)} />
+          <Row label={matchFeeLabel} value={formatUsd(feeCents)} />
           <div className="border-t pt-2 mt-1 font-semibold">
-            <Row label="Total" value={formatUsd(cost.totalCents)} />
+            <Row label="Total" value={formatUsd(totalCents)} />
           </div>
           <div className="mt-2 text-xs text-muted-foreground">
             Payment status:{" "}
