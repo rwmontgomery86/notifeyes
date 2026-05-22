@@ -14,7 +14,6 @@ type PracticeForm = {
   chairs: number | null;
   ehr: string | null;
   services: string[];
-  languages: string[];
   addressLine: string | null;
   city: string | null;
   state: string | null;
@@ -30,7 +29,6 @@ const SERVICE_OPTIONS = [
   "Dry eye treatment",
   "LASIK co-management",
 ];
-const LANGUAGE_OPTIONS = ["English", "Spanish", "Mandarin", "Cantonese", "Vietnamese", "Tagalog", "Russian"];
 
 export function PracticeSettingsForm({ initial }: { initial: PracticeForm }) {
   const router = useRouter();
@@ -39,7 +37,7 @@ export function PracticeSettingsForm({ initial }: { initial: PracticeForm }) {
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
-  function toggle(key: "services" | "languages", value: string) {
+  function toggle(key: "services", value: string) {
     const cur = form[key];
     setForm({
       ...form,
@@ -71,7 +69,6 @@ export function PracticeSettingsForm({ initial }: { initial: PracticeForm }) {
         chairs: form.chairs,
         ehr: form.ehr,
         services: form.services,
-        languages: form.languages,
         addressLine: form.addressLine,
         city: form.city,
         state: form.state,
@@ -220,24 +217,6 @@ export function PracticeSettingsForm({ initial }: { initial: PracticeForm }) {
           })}
         </div>
 
-        <h3 className="mt-6 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          Languages spoken
-        </h3>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {LANGUAGE_OPTIONS.map((s) => {
-            const on = form.languages.includes(s);
-            return (
-              <button
-                key={s}
-                type="button"
-                onClick={() => toggle("languages", s)}
-                className={`ne-pill border ${on ? "bg-primary text-primary-foreground border-primary" : "border-border"}`}
-              >
-                {s}
-              </button>
-            );
-          })}
-        </div>
       </section>
 
       <section className="ne-card">

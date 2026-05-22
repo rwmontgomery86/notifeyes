@@ -35,7 +35,6 @@ export default async function PracticeSettingsPage() {
           chairs: p.chairs,
           ehr: p.ehr,
           services: p.services,
-          languages: p.languages,
           addressLine: p.addressLine,
           city: p.city,
           state: p.state,

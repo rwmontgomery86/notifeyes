@@ -76,10 +76,10 @@ export default async function PracticeDashboard({
       </p>
 
       <div className="mt-6 grid gap-4 md:grid-cols-4">
-        <Stat label="Draft" value={byStatus.draft ?? 0} />
-        <Stat label="Posted" value={byStatus.posted ?? 0} />
-        <Stat label="Booked" value={byStatus.booked ?? 0} />
-        <Stat label="Completed" value={byStatus.completed ?? 0} />
+        <Stat label="Draft" value={byStatus.draft ?? 0} status="draft" />
+        <Stat label="Posted" value={byStatus.posted ?? 0} status="posted" />
+        <Stat label="Booked" value={byStatus.booked ?? 0} status="booked" />
+        <Stat label="Completed" value={byStatus.completed ?? 0} status="completed" />
       </div>
 
       <div className="mt-6 flex gap-3">
@@ -124,13 +124,24 @@ export default async function PracticeDashboard({
   );
 }
 
-function Stat({ label, value }: { label: string; value: number }) {
+function Stat({
+  label,
+  value,
+  status,
+}: {
+  label: string;
+  value: number;
+  status: "draft" | "posted" | "booked" | "completed";
+}) {
   return (
-    <div className="ne-card">
+    <Link
+      href={`/p/shifts?status=${status}`}
+      className="ne-card hover:border-primary transition-colors"
+    >
       <div className="text-xs uppercase tracking-wide text-muted-foreground">
         {label}
       </div>
       <div className="mt-2 text-3xl font-semibold">{value}</div>
-    </div>
+    </Link>
   );
 }

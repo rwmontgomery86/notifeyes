@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createShift } from "./actions";
+import { updateShift } from "../[id]/edit/actions";
 
 const SHIFT_TYPES = [
   { v: "fill_in", label: "Fill-in (single day)" },
@@ -10,23 +11,60 @@ const SHIFT_TYPES = [
   { v: "weekend", label: "Weekend" },
 ] as const;
 
-export function ShiftForm({ practiceCity }: { practiceCity: string | null }) {
+export type ShiftFormInitial = {
+  date: string;
+  startTime: string;
+  endTime: string;
+  lunchMinutes: number;
+  type: "fill_in" | "half_day" | "weekend";
+  ratePerHour: number;
+  notesForOd: string;
+};
+
+export function ShiftForm({
+  practiceCity,
+  mode = "create",
+  shiftId,
+  initial,
+}: {
+  practiceCity: string | null;
+  mode?: "create" | "edit";
+  shiftId?: string;
+  initial?: ShiftFormInitial;
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  function handle(e: React.FormEvent<HTMLFormElement>, action: "draft" | "post") {
+  function handle(e: React.SyntheticEvent, action: "draft" | "post") {
     e.preventDefault();
     setError(null);
-    const fd = new FormData(e.currentTarget);
+    const target = e.currentTarget as HTMLElement;
+    const form =
+      target instanceof HTMLFormElement ? target : target.closest("form");
+    if (!(form instanceof HTMLFormElement)) {
+      setError("Form not found");
+      return;
+    }
+    const fd = new FormData(form);
     fd.set("action", action);
     startTransition(async () => {
-      const res = await createShift(fd);
+      const res =
+        mode === "edit" && shiftId
+          ? await updateShift(shiftId, fd)
+          : await createShift(fd);
       if (!res.ok) {
-        setError(res.error ?? "Could not create shift");
+        setError(res.error ?? "Could not save shift");
         return;
       }
-      router.push(`/p/shifts/${res.shiftId}`);
+      // On post, jump to the shift detail. On draft save, return to the draft list.
+      if (action === "post") {
+        router.push(`/p/shifts/${"shiftId" in res ? res.shiftId : shiftId}`);
+      } else if (mode === "edit") {
+        router.push("/p/shifts?status=draft");
+      } else {
+        router.push(`/p/shifts/${"shiftId" in res ? res.shiftId : shiftId}`);
+      }
     });
   }
 
@@ -34,6 +72,16 @@ export function ShiftForm({ practiceCity }: { practiceCity: string | null }) {
   const today = new Date();
   const tomorrow = new Date(today.getTime() + 24 * 3600 * 1000);
   const yyyymmdd = tomorrow.toISOString().slice(0, 10);
+
+  const v: ShiftFormInitial = initial ?? {
+    date: yyyymmdd,
+    startTime: "09:00",
+    endTime: "17:00",
+    lunchMinutes: 30,
+    type: "fill_in",
+    ratePerHour: 110,
+    notesForOd: "",
+  };
 
   return (
     <form className="mt-8 grid gap-5" onSubmit={(e) => handle(e, "post")}>
@@ -45,7 +93,7 @@ export function ShiftForm({ practiceCity }: { practiceCity: string | null }) {
               type="date"
               name="date"
               required
-              defaultValue={yyyymmdd}
+              defaultValue={v.date}
               className="ne-input"
             />
           </label>
@@ -55,7 +103,7 @@ export function ShiftForm({ practiceCity }: { practiceCity: string | null }) {
               type="time"
               name="startTime"
               required
-              defaultValue="09:00"
+              defaultValue={v.startTime}
               className="ne-input"
             />
           </label>
@@ -65,7 +113,7 @@ export function ShiftForm({ practiceCity }: { practiceCity: string | null }) {
               type="time"
               name="endTime"
               required
-              defaultValue="17:00"
+              defaultValue={v.endTime}
               className="ne-input"
             />
           </label>
@@ -75,7 +123,7 @@ export function ShiftForm({ practiceCity }: { practiceCity: string | null }) {
           <input
             type="number"
             name="lunchMinutes"
-            defaultValue={30}
+            defaultValue={v.lunchMinutes}
             min={0}
             max={120}
             className="ne-input"
@@ -87,7 +135,7 @@ export function ShiftForm({ practiceCity }: { practiceCity: string | null }) {
         <div className="grid gap-4 md:grid-cols-2">
           <label>
             <span className="ne-label">Type</span>
-            <select name="type" defaultValue="fill_in" className="ne-input" required>
+            <select name="type" defaultValue={v.type} className="ne-input" required>
               {SHIFT_TYPES.map((t) => (
                 <option key={t.v} value={t.v}>
                   {t.label}
@@ -100,7 +148,7 @@ export function ShiftForm({ practiceCity }: { practiceCity: string | null }) {
             <input
               type="number"
               name="ratePerHour"
-              defaultValue={110}
+              defaultValue={v.ratePerHour}
               min={50}
               max={500}
               step={5}
@@ -120,6 +168,7 @@ export function ShiftForm({ practiceCity }: { practiceCity: string | null }) {
           <textarea
             name="notesForOd"
             rows={3}
+            defaultValue={v.notesForOd}
             placeholder="Parking, dress code, EHR notes, special services needed…"
             className="ne-input h-auto"
           />
@@ -135,16 +184,14 @@ export function ShiftForm({ practiceCity }: { practiceCity: string | null }) {
       <div className="flex gap-3 justify-end">
         <button
           type="button"
-          onClick={(e) =>
-            handle(e as unknown as React.FormEvent<HTMLFormElement>, "draft")
-          }
+          onClick={(e) => handle(e, "draft")}
           className="ne-btn-secondary"
           disabled={pending}
         >
-          Save draft
+          {mode === "edit" ? "Save draft" : "Save draft"}
         </button>
         <button type="submit" className="ne-btn" disabled={pending}>
-          {pending ? "Posting…" : "Post shift"}
+          {pending ? "Posting…" : mode === "edit" ? "Post shift" : "Post shift"}
         </button>
       </div>
     </form>

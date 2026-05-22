@@ -15,12 +15,11 @@ const schema = z.object({
   chairs: z.number().int().min(0).max(100).nullable().optional(),
   ehr: z.string().max(80).nullable().optional(),
   services: z.array(z.string().max(60)).max(30).optional(),
-  languages: z.array(z.string().max(60)).max(30).optional(),
   addressLine: z.string().max(200).nullable().optional(),
   city: z.string().max(100).nullable().optional(),
   state: z.string().length(2).nullable().optional(),
   zip: z.string().max(10).nullable().optional(),
-  photos: z.array(z.string().max(8000)).max(6).optional(),
+  photos: z.array(z.string().max(2_000_000)).max(6).optional(),
 });
 
 export async function updatePracticeSettings(input: z.infer<typeof schema>) {
@@ -83,7 +82,6 @@ export async function updatePracticeSettings(input: z.infer<typeof schema>) {
       chairs: v.chairs ?? null,
       ehr: v.ehr ?? null,
       services: v.services ?? [],
-      languages: v.languages ?? [],
       addressLine: v.addressLine ?? null,
       city: v.city ?? null,
       state: v.state?.toUpperCase() ?? null,
