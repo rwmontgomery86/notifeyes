@@ -1,7 +1,8 @@
 import { desc, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { watchZones } from "@/db/schema";
+import { optometrists, watchZones } from "@/db/schema";
+import { capitalForState } from "@/lib/geo/state-capitals";
 import { WatchZoneEditor } from "./WatchZoneEditor";
 import { WatchZoneList } from "./WatchZoneList";
 
@@ -11,6 +12,16 @@ export const dynamic = "force-dynamic";
 export default async function WatchPage() {
   const session = await auth();
   const odId = session!.user.odId!;
+
+  const [me] = await db
+    .select({ licenseState: optometrists.licenseState })
+    .from(optometrists)
+    .where(eq(optometrists.id, odId))
+    .limit(1);
+  const capital = capitalForState(me?.licenseState);
+  const initialCenter: [number, number] | undefined = capital
+    ? [capital.lat, capital.lng]
+    : undefined;
 
   const zones = await db
     .select()
@@ -47,7 +58,7 @@ export default async function WatchPage() {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[3fr_2fr]">
         <div className="ne-card p-0 overflow-hidden">
-          <WatchZoneEditor />
+          <WatchZoneEditor initialCenter={initialCenter} />
         </div>
         <WatchZoneList zones={zonesForClient} />
       </div>

@@ -17,8 +17,14 @@ const METERS_PER_MILE = 1609.344;
 const DEFAULT_RADIUS_MILES = 25;
 const MIN_RADIUS_MILES = 1;
 const MAX_RADIUS_MILES = 100;
+const DEFAULT_ZOOM = 7;
+const FALLBACK_ZOOM = 11;
 
-export function WatchZoneEditor() {
+export function WatchZoneEditor({
+  initialCenter,
+}: {
+  initialCenter?: [number, number];
+} = {}) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapInstance = useRef<unknown>(null);
   const drawnLayerRef = useRef<unknown>(null);
@@ -61,7 +67,9 @@ export function WatchZoneEditor() {
 
       if (cancelled || !containerRef.current) return;
 
-      const map = L.map(containerRef.current).setView(SF_BAY_CENTER, 11);
+      const center = initialCenter ?? SF_BAY_CENTER;
+      const zoom = initialCenter ? DEFAULT_ZOOM : FALLBACK_ZOOM;
+      const map = L.map(containerRef.current).setView(center, zoom);
       mapInstance.current = map;
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: "© OpenStreetMap",

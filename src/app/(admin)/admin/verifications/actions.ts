@@ -46,7 +46,7 @@ export async function decideVerification(
           decision === "approve"
             ? "Your license is verified. The apply button on every shift is unlocked."
             : `We weren't able to verify your credentials yet. ${notes ? `Note: ${notes}` : "Please re-upload your documents from your profile."}`,
-        actionUrl: decision === "approve" ? "/d/shifts" : "/d/profile",
+        actionUrl: decision === "approve" ? "/d/welcome" : "/d/profile",
         channels: ["push", "email"],
         payload: { decision, notes },
       });

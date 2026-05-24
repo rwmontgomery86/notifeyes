@@ -121,7 +121,7 @@ export function OdProfileEditor({ initial }: { initial: OdProfile }) {
               />
             </label>
             <label>
-              <span className="ne-label">Travel radius (miles)</span>
+              <span className="ne-label">Mileage willing to travel</span>
               <input
                 type="number"
                 min={5}
@@ -139,36 +139,36 @@ export function OdProfileEditor({ initial }: { initial: OdProfile }) {
             Credentials
           </h2>
           <p className="mt-1 text-xs text-muted-foreground">
-            We require license, DEA, and malpractice docs. ID verification is
-            optional but unlocks faster booking.
+            Your license document is required to apply to shifts. The rest are
+            optional but strengthen your profile.
           </p>
           <div className="mt-3 grid gap-3">
             <FileField
-              label="License document"
+              label="License document (required)"
               value={form.licenseDocUrl}
               onChange={(v) => setForm({ ...form, licenseDocUrl: v })}
               accept="image/*,application/pdf"
             />
             <FileField
-              label="DEA registration"
+              label="DEA registration (optional)"
               value={form.deaUrl}
               onChange={(v) => setForm({ ...form, deaUrl: v })}
               accept="image/*,application/pdf"
             />
             <FileField
-              label="Malpractice insurance"
+              label="Malpractice insurance (optional)"
               value={form.malpracticeUrl}
               onChange={(v) => setForm({ ...form, malpracticeUrl: v })}
               accept="image/*,application/pdf"
             />
             <FileField
-              label="CPR certificate"
+              label="CPR certificate (optional)"
               value={form.cprUrl}
               onChange={(v) => setForm({ ...form, cprUrl: v })}
               accept="image/*,application/pdf"
             />
             <label>
-              <span className="ne-label">NPI</span>
+              <span className="ne-label">NPI (optional)</span>
               <input
                 value={form.npiNumber ?? ""}
                 onChange={(e) => setForm({ ...form, npiNumber: e.target.value })}

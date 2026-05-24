@@ -64,6 +64,7 @@ export default async function OdShiftsPage({
                   WHERE wz.od_id = ${odId}
                     AND wz.paused = false
                     AND ST_Contains(wz.geometry::geometry, ${practices.location}::geometry)
+                    AND wz.min_rate_cents <= ${shifts.rateCentsPerHour}
                 )`
               : sql`TRUE`,
           ),

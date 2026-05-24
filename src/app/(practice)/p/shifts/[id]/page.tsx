@@ -2,12 +2,20 @@ import { desc, eq } from "drizzle-orm";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { db } from "@/db";
-import { applications, optometrists, practices, shifts } from "@/db/schema";
+import {
+  applications,
+  bookings,
+  optometrists,
+  practices,
+  shifts,
+} from "@/db/schema";
 import { auth } from "@/lib/auth";
+import { computeCancellationFee } from "@/lib/cancellation";
 import { formatShiftWhen } from "@/lib/dates";
 import { formatUsd, computeShiftCost } from "@/lib/pricing";
 import { buildContractBody, CONTRACT_TEMPLATE_VERSION } from "@/lib/contract";
 import { ApplicantActions } from "./ApplicantActions";
+import { CancelShift } from "./CancelShift";
 import { InvitePanel } from "./InvitePanel";
 
 export const dynamic = "force-dynamic";
@@ -55,6 +63,22 @@ export default async function ShiftAdminPage({
     ? `${formatUsd(cost.feeCents)} (same-day)`
     : formatUsd(cost.feeCents);
 
+  let feePreview: { feeCents: number; copy: string } | null = null;
+  if (shift.status === "booked") {
+    const [booking] = await db
+      .select({ totalCents: bookings.totalCents })
+      .from(bookings)
+      .where(eq(bookings.shiftId, shift.id))
+      .limit(1);
+    if (booking) {
+      const fee = computeCancellationFee({
+        shiftStartsAt: shift.startsAt,
+        totalCents: booking.totalCents,
+      });
+      feePreview = { feeCents: fee.feeCents, copy: fee.copy };
+    }
+  }
+
   const buckets: Record<string, typeof rows> = {
     applied: [],
     shortlisted: [],
@@ -67,11 +91,18 @@ export default async function ShiftAdminPage({
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <h1 className="text-2xl font-bold">Shift</h1>
-        <span className="ne-pill capitalize border-border">
-          {shift.status}
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="ne-pill capitalize border-border">
+            {shift.status}
+          </span>
+          <CancelShift
+            shiftId={shift.id}
+            status={shift.status}
+            feePreview={feePreview}
+          />
+        </div>
       </div>
 
       <div className="mt-4 ne-card">

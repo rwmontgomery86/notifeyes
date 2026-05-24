@@ -1,11 +1,11 @@
 import { and, desc, eq, ne } from "drizzle-orm";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { notifications } from "@/db/schema";
 import { relativeTime } from "@/lib/dates";
 import { markNotificationsRead } from "./actions";
+import { NotificationRow } from "./NotificationRow";
 
 export const metadata = { title: "Notifications · NotifEyes" };
 export const dynamic = "force-dynamic";
@@ -63,28 +63,21 @@ export default async function NotificationsInbox() {
           const url = n.actionUrl ?? "/";
           const label = KIND_LABELS[n.kind] ?? n.kind;
           const payload = n.payload as Record<string, unknown>;
+          const channels =
+            Array.isArray(n.channelsSent) && n.channelsSent.length
+              ? n.channelsSent.join(" · ")
+              : "in-app only";
+          const metaLine = `${payload.zoneName ? `Zone: ${String(payload.zoneName)} · ` : ""}sent on ${channels}`;
           return (
-            <Link
+            <NotificationRow
               key={n.id}
-              href={url}
-              className={`ne-card transition-colors ${n.readAt ? "" : "border-primary/40"}`}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="text-sm font-medium">{label}</div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    {payload.zoneName ? `Zone: ${String(payload.zoneName)} · ` : ""}
-                    sent on{" "}
-                    {Array.isArray(n.channelsSent) && n.channelsSent.length
-                      ? n.channelsSent.join(" · ")
-                      : "in-app only"}
-                  </div>
-                </div>
-                <div className="text-xs text-muted-foreground whitespace-nowrap">
-                  {relativeTime(n.createdAt)}
-                </div>
-              </div>
-            </Link>
+              id={n.id}
+              url={url}
+              label={label}
+              metaLine={metaLine}
+              timeLabel={relativeTime(n.createdAt)}
+              isUnread={!n.readAt}
+            />
           );
         })}
       </div>
