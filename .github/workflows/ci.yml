@@ -49,9 +49,6 @@ jobs:
     name: Playwright e2e (spine flow)
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    # e2e is gated to the main branch and PRs that touch app/server code,
-    # to keep PR feedback fast on doc-only changes.
-    if: ${{ github.event_name == 'push' || contains(toJSON(github.event.pull_request.changed_files), 'src/') }}
 
     services:
       postgres:
