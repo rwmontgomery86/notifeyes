@@ -63,8 +63,10 @@ export function DashboardCalendar({
 
   return (
     <div className="mt-4 grid gap-4 lg:grid-cols-[3fr_2fr]">
-      <div className="ne-card p-0 overflow-hidden">
-        <div className="grid grid-cols-7 border-b text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">
+      <div>
+        <CalendarLegend />
+        <div className="ne-card p-0 overflow-hidden">
+          <div className="grid grid-cols-7 border-b text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">
           {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
             <div key={d} className="px-2 py-1 text-center">
               {d}
@@ -108,6 +110,7 @@ export function DashboardCalendar({
               </button>
             );
           })}
+        </div>
         </div>
       </div>
 
@@ -163,6 +166,33 @@ export function DashboardCalendar({
           ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+const LEGEND_ITEMS: { status: string; label: string }[] = [
+  { status: "draft", label: "Draft" },
+  { status: "posted", label: "Posted" },
+  { status: "booked", label: "Booked" },
+  { status: "completed", label: "Completed" },
+  { status: "cancelled", label: "Cancelled" },
+];
+
+function CalendarLegend() {
+  return (
+    <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+      <span className="font-medium">Legend:</span>
+      {LEGEND_ITEMS.map((item) => (
+        <span
+          key={item.status}
+          className={
+            "inline-flex items-center rounded border px-1.5 py-0.5 font-medium " +
+            statusBadge(item.status)
+          }
+        >
+          {item.label}
+        </span>
+      ))}
     </div>
   );
 }

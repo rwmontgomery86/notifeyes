@@ -94,6 +94,8 @@ export async function confirmBooking(
     startsAt: row.shift.startsAt,
     endsAt: row.shift.endsAt,
     lunchMinutes: row.shift.lunchMinutes,
+    confirmedAt: new Date(),
+    urgent: row.shift.urgent,
   });
 
   // === Phase 2: db tx ======================================================

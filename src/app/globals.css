@@ -4,24 +4,50 @@
 
 @layer base {
   :root {
-    --background: 40 25% 97%;
-    --foreground: 220 14% 8%;
-    --card: 0 0% 100%;
-    --card-foreground: 220 14% 8%;
-    --primary: 222 52% 50%;
+    /* === NotifEyes hi-fi design system =================================== */
+    /* Surfaces — cool off-white family */
+    --paper:        #f4f6fa;
+    --paper-2:      #e7ecf3;
+    --paper-card:   #ffffff;
+    --paper-deep:   #1b2a4e;
+
+    /* Ink (navy-led) */
+    --ink:          #1b2a4e;
+    --ink-2:        #4a5876;
+    --ink-3:        #8b9aaf;
+    --ink-faint:    #b8c3d3;
+    --rule:         #dce2eb;
+    --rule-strong:  #b8c3d3;
+
+    /* Brand — cyan + sage */
+    --rust:         #1e9be3;
+    --rust-2:       #1577b3;
+    --rust-soft:    #dceefa;
+    --sage:         #3faf4f;
+    --sage-soft:    #dcf2df;
+    --gold:         #f0b03c;
+
+    /* === Legacy semantic tokens, re-pointed to the new palette =========== */
+    /* `hsl(var(--…))` consumers continue to compile; values now render in    */
+    /* paper/ink/rust/sage instead of the old slate palette.                  */
+    --background: 220 33% 97%;        /* paper */
+    --foreground: 222 49% 21%;        /* ink */
+    --card: 0 0% 100%;                /* paper-card */
+    --card-foreground: 222 49% 21%;
+    --primary: 202 78% 51%;           /* rust (cyan CTA) */
     --primary-foreground: 0 0% 100%;
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 220 14% 16%;
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
-    --accent: 222 52% 96%;
-    --accent-foreground: 222 52% 30%;
+    --secondary: 220 28% 93%;         /* paper-2 */
+    --secondary-foreground: 222 49% 21%;
+    --muted: 220 28% 93%;
+    --muted-foreground: 220 23% 38%;  /* ink-2 */
+    --accent: 206 84% 92%;            /* rust-soft */
+    --accent-foreground: 202 78% 39%; /* rust-2 */
     --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 13% 88%;
-    --input: 220 13% 88%;
-    --ring: 222 52% 50%;
-    --radius: 0.6rem;
+    --border: 220 24% 89%;            /* rule */
+    --input: 220 24% 89%;
+    --ring: 202 78% 51%;              /* rust */
+    --radius: 0.375rem;               /* 6px — matches --rad-card */
   }
 }
 
@@ -32,39 +58,50 @@
   html, body {
     background: hsl(var(--background));
     color: hsl(var(--foreground));
-    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    font-family: var(--font-sans), system-ui, -apple-system, "Segoe UI", Roboto,
       "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  }
+  .font-display {
+    font-family: var(--font-display), Georgia, serif;
+    font-variation-settings: "SOFT" 30, "WONK" 0;
+    letter-spacing: -0.012em;
+  }
+  .font-display.italic,
+  .font-display em,
+  em.font-display {
+    font-variation-settings: "SOFT" 30, "WONK" 1;
   }
 }
 
 @layer components {
   .ne-card {
-    @apply rounded-lg border bg-card text-card-foreground p-5;
+    @apply rounded-card border border-rule bg-paper-card text-ink p-5;
   }
   .ne-btn {
     @apply inline-flex items-center justify-center rounded-md text-sm font-medium
            transition-colors disabled:opacity-50 disabled:cursor-not-allowed
-           h-10 px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90;
+           h-10 px-4 py-2 bg-rust text-white hover:bg-rust-2;
   }
   .ne-btn-secondary {
     @apply inline-flex items-center justify-center rounded-md text-sm font-medium
            transition-colors disabled:opacity-50
-           h-10 px-4 py-2 bg-secondary text-secondary-foreground hover:bg-secondary/80
-           border;
+           h-10 px-4 py-2 bg-paper-card text-ink border border-ink
+           hover:bg-paper-2;
   }
   .ne-btn-ghost {
     @apply inline-flex items-center justify-center rounded-md text-sm font-medium
-           h-10 px-3 py-2 text-foreground hover:bg-accent;
+           h-10 px-3 py-2 text-ink-2 hover:bg-paper-2 hover:text-ink;
   }
   .ne-input {
-    @apply flex h-10 w-full rounded-md border bg-background px-3 py-2 text-sm
-           ring-offset-background placeholder:text-muted-foreground
-           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring;
+    @apply flex h-10 w-full rounded-md border border-rule bg-paper-card px-3 py-2 text-sm
+           text-ink placeholder:text-ink-3
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rust;
   }
   .ne-label {
     @apply text-sm font-medium leading-none mb-1.5 block;
   }
   .ne-pill {
-    @apply inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold;
+    @apply inline-flex items-center rounded-full border border-rule bg-paper-card
+           px-2.5 py-0.5 text-xs font-semibold text-ink-2;
   }
 }

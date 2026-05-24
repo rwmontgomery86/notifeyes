@@ -15,7 +15,10 @@ const envSchema = z.object({
   VAPID_SUBJECT: z.string().default("mailto:admin@notifeyes.local"),
   WORKER_URL: z.string().url().optional(),
   NOTIFEYES_LAUNCH_METRO: z.string().default("sf_bay"),
-  PLATFORM_FEE_BPS: z.coerce.number().int().min(0).max(10000).default(1000),
+  // --TODO: legal review --- flat-fee pricing per brief §8 (V1 placeholder)
+  NOTIFEYES_MATCH_FEE_CENTS: z.coerce.number().int().min(0).default(999),
+  NOTIFEYES_SAMEDAY_FEE_CENTS: z.coerce.number().int().min(0).default(1999),
+  NOTIFEYES_SAMEDAY_THRESHOLD_HOURS: z.coerce.number().int().min(1).default(24),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
 });
 
