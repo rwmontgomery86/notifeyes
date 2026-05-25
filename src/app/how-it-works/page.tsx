@@ -89,12 +89,10 @@ export default function HowItWorksPage() {
             </div>
             <h1
               className="font-display mt-4 text-[56px] md:text-[80px] font-medium leading-[0.97] text-ink"
-              style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
             >
               The whole loop,{" "}
               <em
-                className="not-italic"
-                style={{ fontVariationSettings: '"SOFT" 30, "WONK" 1', fontStyle: "italic" }}
+                className="italic"
               >
                 in plain English.
               </em>
@@ -127,12 +125,10 @@ export default function HowItWorksPage() {
             </div>
             <h2
               className="font-display mt-3.5 text-5xl md:text-[60px] font-medium leading-[1.05] text-[#f4f7fc]"
-              style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
             >
               From open chair{" "}
               <em
-                className="not-italic"
-                style={{ fontVariationSettings: '"SOFT" 30, "WONK" 1', fontStyle: "italic" }}
+                className="italic"
               >
                 to paid OD.
               </em>
@@ -167,12 +163,10 @@ export default function HowItWorksPage() {
             </div>
             <h2
               className="font-display mt-3.5 text-5xl md:text-[60px] font-medium leading-[1.05] text-ink"
-              style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
             >
               Watch zones,{" "}
               <em
-                className="not-italic"
-                style={{ fontVariationSettings: '"SOFT" 30, "WONK" 1', fontStyle: "italic" }}
+                className="italic"
               >
                 in detail.
               </em>
@@ -202,12 +196,10 @@ export default function HowItWorksPage() {
             </div>
             <h2
               className="font-display mt-3.5 text-5xl md:text-[56px] font-medium leading-[1.05] text-ink"
-              style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
             >
               When the spine{" "}
               <em
-                className="not-italic"
-                style={{ fontVariationSettings: '"SOFT" 30, "WONK" 1', fontStyle: "italic" }}
+                className="italic"
               >
                 bends.
               </em>
@@ -243,12 +235,10 @@ export default function HowItWorksPage() {
             </div>
             <h2
               className="font-display mt-3.5 text-5xl md:text-[56px] font-medium leading-[1.05] text-ink"
-              style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
             >
               Plain-English{" "}
               <em
-                className="not-italic"
-                style={{ fontVariationSettings: '"SOFT" 30, "WONK" 1', fontStyle: "italic" }}
+                className="italic"
               >
                 definitions.
               </em>

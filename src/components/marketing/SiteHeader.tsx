@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { auth } from "@/lib/auth";
 import { MarketingButton } from "./MarketingButton";
+import { StickyHeader } from "./StickyHeader";
 
 type NavKey = "home" | "practices" | "ods" | "how" | "pricing";
 
@@ -25,12 +26,11 @@ export async function SiteHeader({ activeKey }: { activeKey?: NavKey }) {
   const session = await auth();
   const signedIn = !!session?.user;
   return (
-    <header className="border-b border-rule bg-paper">
+    <StickyHeader>
       <div className="max-w-wide mx-auto flex items-center gap-9 px-7 py-[18px]">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 font-display text-[22px] font-semibold leading-none tracking-[-0.012em] text-ink no-underline"
-          style={{ fontVariationSettings: '"SOFT" 30' }}
+          className="inline-flex items-center gap-2 font-display text-[22px] font-semibold leading-none tracking-[-0.012em] text-ink no-underline transition-colors group-data-[dark]:text-paper"
         >
           <Image
             src="/notifeyes-mark.png"
@@ -48,8 +48,8 @@ export async function SiteHeader({ activeKey }: { activeKey?: NavKey }) {
               href={item.href}
               className={`no-underline transition-colors ${
                 activeKey === item.key
-                  ? "text-ink font-medium"
-                  : "text-ink-2 hover:text-ink"
+                  ? "text-ink font-medium group-data-[dark]:text-paper"
+                  : "text-ink-2 hover:text-ink group-data-[dark]:text-[#a8b3c6] group-data-[dark]:hover:text-paper"
               }`}
             >
               {item.label}
@@ -70,7 +70,7 @@ export async function SiteHeader({ activeKey }: { activeKey?: NavKey }) {
             <>
               <Link
                 href="/login"
-                className="hidden sm:inline text-ink-2 hover:text-ink no-underline"
+                className="hidden sm:inline text-ink-2 hover:text-ink no-underline transition-colors group-data-[dark]:text-[#a8b3c6] group-data-[dark]:hover:text-paper"
               >
                 Log in
               </Link>
@@ -81,6 +81,6 @@ export async function SiteHeader({ activeKey }: { activeKey?: NavKey }) {
           )}
         </div>
       </div>
-    </header>
+    </StickyHeader>
   );
 }

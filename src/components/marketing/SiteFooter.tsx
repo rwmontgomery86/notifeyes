@@ -46,7 +46,6 @@ export function SiteFooter() {
           <Link
             href="/"
             className="inline-flex items-center gap-2 font-display text-[22px] font-semibold leading-none tracking-[-0.012em] text-[#f4f7fc] no-underline"
-            style={{ fontVariationSettings: '"SOFT" 30' }}
           >
             <Image
               src="/notifeyes-mark.png"

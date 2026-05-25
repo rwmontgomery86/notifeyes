@@ -11,22 +11,17 @@ export function FinalCTA({
   italicTail?: string;
   subhead?: string;
 } = {}) {
-  const headlineText = headline ?? "Two doors. Both lead to";
-  const tail = italicTail ?? "less Tuesday-morning panic.";
+  const headlineText = headline ?? "One marketplace.";
+  const tail = italicTail ?? "Two doors.";
   return (
     <Section variant="dark">
       <Container className="text-center">
         <h2
           className="font-display mx-auto max-w-[900px] text-[64px] md:text-[80px] font-medium leading-[1.05] text-[#f4f7fc]"
-          style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
         >
           {headlineText}{" "}
           <em
-            className="not-italic"
-            style={{
-              fontVariationSettings: '"SOFT" 30, "WONK" 1',
-              fontStyle: "italic",
-            }}
+            className="italic"
           >
             {tail}
           </em>

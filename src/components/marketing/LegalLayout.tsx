@@ -39,7 +39,6 @@ export function LegalLayout({
           </div>
           <h1
             className="font-display mt-3 text-5xl md:text-[64px] font-medium leading-[0.97] text-ink"
-            style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
           >
             {title}
           </h1>
@@ -91,7 +90,6 @@ export function LegalSection({ heading, body }: { heading: string; body: string 
     <div className="mb-8">
       <h3
         className="font-display border-b border-dashed border-rule pb-2 text-[22px] font-semibold text-ink"
-        style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
       >
         {heading}
       </h3>

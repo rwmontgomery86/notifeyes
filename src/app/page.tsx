@@ -62,7 +62,6 @@ function ProofBar() {
           <div key={s.l}>
             <div
               className="font-display text-5xl font-medium leading-[0.96] text-ink tracking-[-0.02em]"
-              style={{ fontVariationSettings: '"SOFT" 30' }}
             >
               {s.n}
             </div>
@@ -136,23 +135,18 @@ function WhyBoth() {
           </div>
           <h2
             className="font-display mt-3.5 text-[56px] md:text-[72px] font-medium leading-[1.05] text-ink"
-            style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
           >
             One mechanic.{" "}
             <em
-              className="not-italic"
-              style={{
-                fontVariationSettings: '"SOFT" 30, "WONK" 1',
-                fontStyle: "italic",
-              }}
+              className="italic"
             >
               Two doors.
             </em>
           </h2>
           <p className="mt-4 max-w-[580px] text-[19px] leading-[1.5] text-ink-2">
             The thing that makes NotifEyes work for practices is the same thing
-            that makes it work for ODs: shifts find the right person, not the
-            other way around.
+            that makes it work for ODs: shifts go find the right person. The
+            person doesn&apos;t have to go find them.
           </p>
         </div>
 
@@ -160,14 +154,14 @@ function WhyBoth() {
           <article className="rounded-card border border-rule bg-paper-card p-6">
             <RoleBadge role="practice" />
             <h3 className="font-display mt-3.5 text-[26px] text-ink">
-              You fill the chair without writing five group texts.
+              Post once. The right ODs apply.
             </h3>
             <ul className="m-0 mt-4 flex list-none flex-col gap-2.5 p-0">
               {[
                 ["Post in 90 seconds", "Pulls from your existing scheduler. Five fields, then publish."],
                 ["Vetted ODs only", "License + DEA + ID, all verified before they can apply."],
                 [`${MARKETING_MATCH_FEE_DISPLAY} per booked shift`, "Flat. No %, no markup, no agency middle-cut."],
-                ["Cancel policy, written down", "7-day, 48-hr, 4-hr tiers — enforced by us, not chased by you."],
+                ["Cancel policy, written down", "7-day, 48-hr, 4-hr tiers. We enforce them so you're not chasing anyone."],
               ].map(([h, d]) => (
                 <li key={h} className="grid grid-cols-[16px_1fr] gap-3">
                   <span className="mt-1.5 h-2 w-2 rounded-full bg-rust" />
@@ -183,7 +177,7 @@ function WhyBoth() {
           <article className="rounded-card border border-[#a8d5f0] bg-rust-soft p-6">
             <RoleBadge role="od" />
             <h3 className="font-display mt-3.5 text-[26px] text-ink">
-              You stop hunting for shifts. They come to you.
+              Set zones once. The right shifts find you.
             </h3>
             <ul className="m-0 mt-4 flex list-none flex-col gap-2.5 p-0">
               {[
@@ -219,15 +213,10 @@ function WatchZoneSection() {
             </div>
             <h2
               className="font-display mt-3.5 text-5xl md:text-[72px] font-medium leading-[1.05] text-[#f4f7fc]"
-              style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
             >
               Watch{" "}
               <em
-                className="not-italic"
-                style={{
-                  fontVariationSettings: '"SOFT" 30, "WONK" 1',
-                  fontStyle: "italic",
-                }}
+                className="italic"
               >
                 zones.
               </em>
@@ -239,8 +228,7 @@ function WatchZoneSection() {
             </p>
             <p className="mt-3.5 text-sm leading-[1.6] text-[#a8b3c6]">
               No more browsing job boards. No more Facebook groups. No more being
-              last to know about the good Tuesday shift. Always-on, opt-in
-              discovery — calibrated to your life.
+              last to know about the good Tuesday shift.
             </p>
           </div>
           <div className="aspect-[4/3] overflow-hidden rounded-card border border-white/10">
@@ -284,7 +272,7 @@ function WatchZoneSection() {
             {
               n: "03",
               t: "Live your life.",
-              d: "We ping when something matches. Push, email, SMS — your call. Quiet hours configurable.",
+              d: "We ping when something matches. Push, email, SMS. Your call. Quiet hours configurable.",
               diagram: <PhonePingDiagram />,
             },
           ].map((step) => (
@@ -318,22 +306,17 @@ function Compare() {
           </div>
           <h2
             className="font-display mt-3.5 text-5xl md:text-[60px] font-medium leading-[1.05] text-ink"
-            style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
           >
             We know what you&apos;re{" "}
             <em
-              className="not-italic"
-              style={{
-                fontVariationSettings: '"SOFT" 30, "WONK" 1',
-                fontStyle: "italic",
-              }}
+              className="italic"
             >
               used to.
             </em>
           </h2>
           <p className="mt-3.5 text-[19px] leading-[1.5] text-ink-2">
-            Here&apos;s how the existing options stack up against NotifEyes —
-            honestly.
+            Here&apos;s how the existing options stack up against NotifEyes.
+            Honestly.
           </p>
         </div>
 
@@ -428,7 +411,6 @@ function Quotes() {
             <article key={q.name}>
               <p
                 className="font-display text-[28px] italic leading-[1.3] text-ink"
-                style={{ fontVariationSettings: '"SOFT" 30, "WONK" 1' }}
               >
                 <span className="text-rust">&ldquo;</span>
                 {q.quote}
@@ -467,7 +449,6 @@ function PricingTeaser() {
           </div>
           <h2
             className="font-display mt-3.5 text-5xl md:text-[64px] font-medium leading-[1.05] text-ink"
-            style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
           >
             Free for ODs. Free to post.
           </h2>
@@ -561,7 +542,6 @@ function TeaserCard({
       <div className="mt-3 text-sm text-ink">{label}</div>
       <h3
         className="font-display mt-1 text-[56px] font-medium leading-[1] text-ink"
-        style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
       >
         {whole}
         {cents && <span className="text-[36px]">.{cents}</span>}
@@ -585,17 +565,12 @@ function FinalCTA() {
       <Container className="text-center">
         <h2
           className="font-display mx-auto max-w-[900px] text-[64px] md:text-[80px] font-medium leading-[1.05] text-[#f4f7fc]"
-          style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
         >
-          Two doors. Both lead to{" "}
+          One marketplace.{" "}
           <em
-            className="not-italic"
-            style={{
-              fontVariationSettings: '"SOFT" 30, "WONK" 1',
-              fontStyle: "italic",
-            }}
+            className="italic"
           >
-            less Tuesday-morning panic.
+            Two doors.
           </em>
         </h2>
         <p className="mx-auto mt-4 max-w-[540px] text-[19px] leading-[1.5] text-[#a8b3c6]">

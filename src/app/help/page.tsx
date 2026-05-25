@@ -76,12 +76,10 @@ export default function HelpPage() {
               </div>
               <h1
                 className="font-display mt-3.5 text-5xl md:text-[72px] font-medium leading-[0.97] text-ink"
-                style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
               >
                 How can{" "}
                 <em
-                  className="not-italic"
-                  style={{ fontVariationSettings: '"SOFT" 30, "WONK" 1', fontStyle: "italic" }}
+                  className="italic"
                 >
                   we help?
                 </em>

@@ -70,21 +70,18 @@ export default function ForPracticesPage() {
             </div>
             <h1
               className="font-display mt-4 text-[56px] md:text-[84px] font-medium leading-[0.97] text-ink"
-              style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
             >
-              We know the{" "}
+              Coverage,{" "}
               <em
-                className="not-italic"
-                style={{ fontVariationSettings: '"SOFT" 30, "WONK" 1', fontStyle: "italic" }}
+                className="italic"
               >
-                Tuesday-morning
-              </em>{" "}
-              panic.
+                in 90 seconds.
+              </em>
             </h1>
             <p className="mt-5 max-w-[500px] text-[19px] leading-[1.5] text-ink-2">
-              Post the shift in 90 seconds. License-verified ODs in your zip get
-              pinged. You pick someone you would hire twice. The whole thing costs{" "}
-              {MARKETING_MATCH_FEE_DISPLAY}.
+              Post the shift. License-verified ODs in your zip get pinged. You
+              pick. We handle the contract and the payout.{" "}
+              {MARKETING_MATCH_FEE_DISPLAY} per booked match.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <MarketingButton href="/signup?role=practice" variant="primary" size="lg">
@@ -118,7 +115,6 @@ export default function ForPracticesPage() {
             <div key={s.l}>
               <div
                 className="font-display text-5xl font-medium leading-[0.96] text-ink tracking-[-0.02em]"
-                style={{ fontVariationSettings: '"SOFT" 30' }}
               >
                 {s.n}
               </div>
@@ -137,14 +133,12 @@ export default function ForPracticesPage() {
             </div>
             <h2
               className="font-display mt-3.5 text-[56px] md:text-[64px] font-medium leading-[1.05] text-ink"
-              style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
             >
-              Same panic.{" "}
+              The same job,{" "}
               <em
-                className="not-italic"
-                style={{ fontVariationSettings: '"SOFT" 30, "WONK" 1', fontStyle: "italic" }}
+                className="italic"
               >
-                Different ending.
+                two ways.
               </em>
             </h2>
           </div>
@@ -154,9 +148,9 @@ export default function ForPracticesPage() {
               <h3 className="font-display mt-2 text-2xl text-ink">The group text scramble.</h3>
               <ul className="m-0 mt-4 flex list-none flex-col gap-2.5 p-0">
                 {[
-                  "Text three OD friends. Hope one says yes.",
+                  "Text three OD friends. Hope one's free.",
                   "Call the agency. 18% markup. Random person.",
-                  "Reschedule 11 patients. Wave goodbye to revenue.",
+                  "Reschedule 11 patients.",
                   "Spend the afternoon on credentialing paperwork.",
                 ].map((l) => (
                   <li key={l} className="grid grid-cols-[14px_1fr] gap-3 text-sm text-ink-2">
@@ -196,12 +190,10 @@ export default function ForPracticesPage() {
             </div>
             <h2
               className="font-display mt-3.5 text-5xl md:text-[60px] font-medium leading-[1.05] text-ink"
-              style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
             >
               Four steps. The last three{" "}
               <em
-                className="not-italic"
-                style={{ fontVariationSettings: '"SOFT" 30, "WONK" 1', fontStyle: "italic" }}
+                className="italic"
               >
                 are automatic.
               </em>
@@ -238,19 +230,17 @@ export default function ForPracticesPage() {
             </div>
             <h2
               className="font-display mt-3.5 text-5xl md:text-[60px] font-medium leading-[1.05] text-ink"
-              style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
             >
-              Built for the person{" "}
+              For schedulers, office managers,{" "}
               <em
-                className="not-italic"
-                style={{ fontVariationSettings: '"SOFT" 30, "WONK" 1', fontStyle: "italic" }}
+                className="italic"
               >
-                who actually books.
+                and owners.
               </em>
             </h2>
             <p className="mt-3.5 max-w-[540px] text-[19px] leading-[1.5] text-ink-2">
-              Whether that&apos;s you, your scheduler, or your office manager —
-              separate seats, the right permissions.
+              Separate seats, the right permissions. The person booking shifts
+              isn&apos;t always the one paying for them.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -272,7 +262,6 @@ export default function ForPracticesPage() {
         <Container className="max-w-[820px]">
           <p
             className="font-display text-[36px] italic leading-[1.3] text-ink"
-            style={{ fontVariationSettings: '"SOFT" 30, "WONK" 1' }}
           >
             <span className="text-rust">&ldquo;</span>I covered a same-day no-show
             in 40 minutes. The OD was license-verified before she even messaged me.
@@ -301,12 +290,10 @@ export default function ForPracticesPage() {
               </div>
               <h2
                 className="font-display mt-3.5 text-5xl md:text-[64px] font-medium leading-[1.05] text-ink"
-                style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
               >
                 {MARKETING_MATCH_FEE_DISPLAY} per booked shift.{" "}
                 <em
-                  className="not-italic"
-                  style={{ fontVariationSettings: '"SOFT" 30, "WONK" 1', fontStyle: "italic" }}
+                  className="italic"
                 >
                   No subscription.
                 </em>
@@ -331,7 +318,6 @@ export default function ForPracticesPage() {
               <div className="font-mono text-xs text-rust-2">PER BOOKED SHIFT</div>
               <div
                 className="font-display mt-2 text-[96px] font-medium leading-[1] text-ink"
-                style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
               >
                 $9.<span className="text-[56px]">99</span>
               </div>
@@ -352,7 +338,6 @@ export default function ForPracticesPage() {
           </div>
           <h2
             className="font-display mt-3.5 mb-6 text-[56px] font-medium leading-[1.05] text-ink"
-            style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
           >
             What practices ask first.
           </h2>
@@ -365,7 +350,6 @@ export default function ForPracticesPage() {
               >
                 <summary
                   className="flex cursor-pointer items-center justify-between font-display text-[22px] font-medium text-ink"
-                  style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
                 >
                   <span>{f.q}</span>
                   <span className="font-mono text-sm text-ink-3">—</span>
@@ -382,14 +366,12 @@ export default function ForPracticesPage() {
         <Container className="text-center">
           <h2
             className="font-display mx-auto max-w-[900px] text-[64px] md:text-[80px] font-medium leading-[1.05] text-[#f4f7fc]"
-            style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
           >
-            Cover your next chair{" "}
+            Post your first{" "}
             <em
-              className="not-italic"
-              style={{ fontVariationSettings: '"SOFT" 30, "WONK" 1', fontStyle: "italic" }}
+              className="italic"
             >
-              before lunch.
+              shift.
             </em>
           </h2>
           <div className="mt-8 flex flex-wrap justify-center gap-3.5">
