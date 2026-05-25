@@ -54,15 +54,13 @@ export default function PricingPage() {
           </div>
           <h1
             className="font-display mx-auto mt-3.5 max-w-3xl text-[64px] md:text-[96px] font-medium leading-[0.95] text-ink"
-            style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
           >
             Free for ODs.
             <br />
             Free to post.
             <br />
             <em
-              className="not-italic text-sage"
-              style={{ fontVariationSettings: '"SOFT" 30, "WONK" 1', fontStyle: "italic" }}
+              className="italic text-sage"
             >
               {MARKETING_MATCH_FEE_DISPLAY} to book.
             </em>
@@ -139,12 +137,10 @@ export default function PricingPage() {
             </div>
             <h2
               className="font-display mt-3.5 text-[56px] font-medium leading-[1.05] text-ink"
-              style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
             >
               Things we want you{" "}
               <em
-                className="not-italic"
-                style={{ fontVariationSettings: '"SOFT" 30, "WONK" 1', fontStyle: "italic" }}
+                className="italic"
               >
                 to actually read.
               </em>
@@ -204,7 +200,6 @@ export default function PricingPage() {
             </div>
             <h2
               className="font-display mt-3.5 text-[56px] font-medium leading-[1.05] text-ink"
-              style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
             >
               How $9.99 stacks up.
             </h2>
@@ -275,7 +270,6 @@ export default function PricingPage() {
             </div>
             <h2
               className="font-display mt-3.5 mb-6 text-5xl font-medium leading-[1.05] text-ink"
-              style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
             >
               The stuff we get asked.
             </h2>
@@ -288,7 +282,6 @@ export default function PricingPage() {
                 >
                   <summary
                     className="flex cursor-pointer items-center justify-between font-display text-[22px] font-medium text-ink"
-                    style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
                   >
                     <span>{f.q}</span>
                     <span className="font-mono text-sm text-ink-3">—</span>
@@ -306,14 +299,12 @@ export default function PricingPage() {
         <Container className="text-center">
           <h2
             className="font-display mx-auto max-w-[900px] text-[64px] md:text-[80px] font-medium leading-[1.05] text-[#f4f7fc]"
-            style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
           >
-            Two doors. Both lead to{" "}
+            One marketplace.{" "}
             <em
-              className="not-italic"
-              style={{ fontVariationSettings: '"SOFT" 30, "WONK" 1', fontStyle: "italic" }}
+              className="italic"
             >
-              less Tuesday-morning panic.
+              Two doors.
             </em>
           </h2>
           <p className="lead mx-auto mt-4 max-w-[540px] text-[19px] leading-[1.5] text-[#a8b3c6]">
@@ -374,7 +365,6 @@ function PricingCard({
       <RoleBadge role={role} />
       <h3
         className="font-display mt-3.5 text-[72px] font-medium leading-[1] text-ink"
-        style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
       >
         {whole}
         {cents && (

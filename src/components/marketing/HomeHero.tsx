@@ -28,31 +28,22 @@ export function HomeHero({ initialRole = "practice" }: { initialRole?: Audience 
           </div>
           <h1
             className="font-display max-w-[1080px] mb-5 text-[56px] md:text-[88px] lg:text-[96px] font-medium leading-[0.96] text-ink tracking-[-0.012em]"
-            style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
           >
             {isPractice ? (
               <>
-                Cover the chair.
+                Fill-in shifts,
                 <br />
                 <em
-                  className="not-italic text-rust"
-                  style={{
-                    fontVariationSettings: '"SOFT" 30, "WONK" 1',
-                    fontStyle: "italic",
-                  }}
+                  className="italic text-rust"
                 >
-                  Find your OD before lunch.
+                  on a platform.
                 </em>
               </>
             ) : (
               <>
                 Shifts that{" "}
                 <em
-                  className="not-italic text-sage"
-                  style={{
-                    fontVariationSettings: '"SOFT" 30, "WONK" 1',
-                    fontStyle: "italic",
-                  }}
+                  className="italic text-sage"
                 >
                   find
                 </em>{" "}
@@ -62,8 +53,8 @@ export function HomeHero({ initialRole = "practice" }: { initialRole?: Audience 
           </h1>
           <p className="max-w-[620px] mb-7 text-[19px] leading-[1.5] text-ink-2">
             {isPractice
-              ? "NotifEyes is the back-channel optometry has been running over text for years — now with a contract, a license check, and a payout that actually happens. Post a shift, vetted ODs apply, you book."
-              : "Stop hunting for shifts on Facebook groups. Draw the zones you would actually drive to, set the rate you would actually take, and let work come to you. Free, forever."}
+              ? "License-verified ODs in your zip apply within minutes of you posting. You pick. We handle the contract and the payout. $9.99 per booked match."
+              : "Draw the zones you'd work in. Set the rate you'd take. NotifEyes pings you when matching shifts go up. Free, forever."}
           </p>
 
           <div className="mb-5">

@@ -91,16 +91,11 @@ export default function ForOptometristsPage() {
             </div>
             <h1
               className="font-display mt-4 text-[56px] md:text-[84px] font-medium leading-[0.97] text-ink"
-              style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
             >
               Your phone buzzes.
               <br />
               <em
-                className="not-italic text-sage"
-                style={{
-                  fontVariationSettings: '"SOFT" 30, "WONK" 1',
-                  fontStyle: "italic",
-                }}
+                className="italic text-sage"
               >
                 Tap to claim.
               </em>
@@ -140,7 +135,6 @@ export default function ForOptometristsPage() {
             <div key={s.l}>
               <div
                 className="font-display text-5xl font-medium leading-[0.96] text-ink tracking-[-0.02em]"
-                style={{ fontVariationSettings: '"SOFT" 30' }}
               >
                 {s.n}
               </div>
@@ -160,15 +154,10 @@ export default function ForOptometristsPage() {
               </div>
               <h2
                 className="font-display mt-3.5 text-5xl md:text-[72px] font-medium leading-[1.05] text-[#f4f7fc]"
-                style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
               >
                 Watch{" "}
                 <em
-                  className="not-italic"
-                  style={{
-                    fontVariationSettings: '"SOFT" 30, "WONK" 1',
-                    fontStyle: "italic",
-                  }}
+                  className="italic"
                 >
                   zones.
                 </em>
@@ -259,15 +248,10 @@ export default function ForOptometristsPage() {
             </div>
             <h2
               className="font-display mt-3.5 text-5xl md:text-[60px] font-medium leading-[1.05] text-ink"
-              style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
             >
               Mon to Mon,{" "}
               <em
-                className="not-italic"
-                style={{
-                  fontVariationSettings: '"SOFT" 30, "WONK" 1',
-                  fontStyle: "italic",
-                }}
+                className="italic"
               >
                 no scrolling required.
               </em>
@@ -295,7 +279,6 @@ export default function ForOptometristsPage() {
         <Container className="max-w-[820px]">
           <p
             className="font-display text-[36px] italic leading-[1.3] text-ink"
-            style={{ fontVariationSettings: '"SOFT" 30, "WONK" 1' }}
           >
             <span className="text-rust">&ldquo;</span>I was on the bus. My phone
             buzzed. Tuesday morning at a clinic 4 miles away. I tapped apply.
@@ -322,7 +305,6 @@ export default function ForOptometristsPage() {
           </div>
           <h2
             className="font-display mt-3.5 mb-6 text-[56px] font-medium leading-[1.05] text-ink"
-            style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
           >
             Things ODs ask first.
           </h2>
@@ -335,7 +317,6 @@ export default function ForOptometristsPage() {
               >
                 <summary
                   className="flex cursor-pointer items-center justify-between font-display text-[22px] font-medium text-ink"
-                  style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
                 >
                   <span>{f.q}</span>
                   <span className="font-mono text-sm text-ink-3">—</span>
@@ -352,17 +333,12 @@ export default function ForOptometristsPage() {
         <Container className="text-center">
           <h2
             className="font-display mx-auto max-w-[900px] text-[64px] md:text-[80px] font-medium leading-[1.05] text-[#f4f7fc]"
-            style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
           >
-            Stop hunting.{" "}
+            Shifts that{" "}
             <em
-              className="not-italic"
-              style={{
-                fontVariationSettings: '"SOFT" 30, "WONK" 1',
-                fontStyle: "italic",
-              }}
+              className="italic"
             >
-              Let the shifts find you.
+              find you.
             </em>
           </h2>
           <div className="mt-8 flex flex-wrap justify-center gap-3.5">

@@ -47,12 +47,10 @@ export default function AboutPage() {
           </div>
           <h1
             className="font-display mt-4 max-w-[920px] text-[56px] md:text-[88px] font-medium leading-[0.97] text-ink"
-            style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
           >
             We&apos;re putting the optometry{" "}
             <em
-              className="not-italic"
-              style={{ fontVariationSettings: '"SOFT" 30, "WONK" 1', fontStyle: "italic" }}
+              className="italic"
             >
               group text on rails.
             </em>
@@ -79,12 +77,10 @@ export default function AboutPage() {
               </div>
               <h2
                 className="font-display mt-3.5 text-5xl md:text-[48px] font-medium leading-[1.05] text-ink"
-                style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
               >
                 Built by someone{" "}
                 <em
-                  className="not-italic"
-                  style={{ fontVariationSettings: '"SOFT" 30, "WONK" 1', fontStyle: "italic" }}
+                  className="italic"
                 >
                   who&apos;s done a Tuesday.
                 </em>
@@ -127,12 +123,10 @@ export default function AboutPage() {
             </div>
             <h2
               className="font-display mt-3.5 text-5xl md:text-[56px] font-medium leading-[1.05] text-ink"
-              style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
             >
               Small. Built{" "}
               <em
-                className="not-italic"
-                style={{ fontVariationSettings: '"SOFT" 30, "WONK" 1', fontStyle: "italic" }}
+                className="italic"
               >
                 for shipping V1.
               </em>
@@ -171,12 +165,10 @@ export default function AboutPage() {
             </div>
             <h2
               className="font-display mt-3.5 text-5xl md:text-[56px] font-medium leading-[1.05] text-ink"
-              style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
             >
               The road{" "}
               <em
-                className="not-italic"
-                style={{ fontVariationSettings: '"SOFT" 30, "WONK" 1', fontStyle: "italic" }}
+                className="italic"
               >
                 to V1.
               </em>

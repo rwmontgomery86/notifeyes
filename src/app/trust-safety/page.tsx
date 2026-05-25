@@ -77,15 +77,13 @@ export default function TrustSafetyPage() {
             </div>
             <h1
               className="font-display mt-4 text-[56px] md:text-[80px] font-medium leading-[0.97] text-ink"
-              style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
             >
               Verified ODs.
               <br />
               Real contracts.
               <br />
               <em
-                className="not-italic text-sage"
-                style={{ fontVariationSettings: '"SOFT" 30, "WONK" 1', fontStyle: "italic" }}
+                className="italic text-sage"
               >
                 Money where you can see it.
               </em>
@@ -122,12 +120,10 @@ export default function TrustSafetyPage() {
             </div>
             <h2
               className="font-display mt-3.5 text-5xl md:text-[60px] font-medium leading-[1.05] text-ink"
-              style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
             >
               Who we let on,{" "}
               <em
-                className="not-italic"
-                style={{ fontVariationSettings: '"SOFT" 30, "WONK" 1', fontStyle: "italic" }}
+                className="italic"
               >
                 and how.
               </em>
@@ -149,12 +145,10 @@ export default function TrustSafetyPage() {
             </div>
             <h2
               className="font-display mt-3.5 text-5xl md:text-[60px] font-medium leading-[1.05] text-ink"
-              style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
             >
               Payments are{" "}
               <em
-                className="not-italic"
-                style={{ fontVariationSettings: '"SOFT" 30, "WONK" 1', fontStyle: "italic" }}
+                className="italic"
               >
                 boring, on purpose.
               </em>
@@ -183,12 +177,10 @@ export default function TrustSafetyPage() {
             </div>
             <h2
               className="font-display mt-3.5 text-5xl md:text-[60px] font-medium leading-[1.05] text-ink"
-              style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
             >
               When plans change —{" "}
               <em
-                className="not-italic"
-                style={{ fontVariationSettings: '"SOFT" 30, "WONK" 1', fontStyle: "italic" }}
+                className="italic"
               >
                 what it costs.
               </em>
@@ -263,12 +255,10 @@ export default function TrustSafetyPage() {
             </div>
             <h2
               className="font-display mt-3.5 text-5xl md:text-[60px] font-medium leading-[1.05] text-ink"
-              style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
             >
               Honest, because{" "}
               <em
-                className="not-italic"
-                style={{ fontVariationSettings: '"SOFT" 30, "WONK" 1', fontStyle: "italic" }}
+                className="italic"
               >
                 both sides write blind.
               </em>
@@ -309,12 +299,10 @@ export default function TrustSafetyPage() {
             </div>
             <h2
               className="font-display mt-3.5 text-5xl md:text-[60px] font-medium leading-[1.05] text-ink"
-              style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
             >
               When something&apos;s off —{" "}
               <em
-                className="not-italic"
-                style={{ fontVariationSettings: '"SOFT" 30, "WONK" 1', fontStyle: "italic" }}
+                className="italic"
               >
                 what happens.
               </em>

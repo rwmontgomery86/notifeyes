@@ -25,6 +25,7 @@ export function Section({
   return (
     <section
       id={id}
+      data-theme={variant === "dark" ? "dark" : undefined}
       className={`${VARIANT_BG[variant]} ${tight ? "py-14" : "py-20"} ${className}`}
     >
       {children}

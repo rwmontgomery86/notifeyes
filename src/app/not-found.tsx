@@ -11,18 +11,15 @@ export default function NotFound() {
         <Container className="text-center">
           <div
             className="font-display text-[120px] md:text-[200px] italic leading-[0.9] text-rust"
-            style={{ fontVariationSettings: '"SOFT" 30, "WONK" 1' }}
           >
             4·0·4
           </div>
           <h1
             className="font-display mt-4 text-5xl md:text-[56px] font-medium leading-[1.05] text-ink"
-            style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
           >
             This shift&apos;s{" "}
             <em
-              className="not-italic text-sage"
-              style={{ fontVariationSettings: '"SOFT" 30, "WONK" 1', fontStyle: "italic" }}
+              className="italic text-sage"
             >
               already booked.
             </em>

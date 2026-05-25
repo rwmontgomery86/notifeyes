@@ -52,7 +52,6 @@ export function HelpClient({ categories }: { categories: HelpCategory[] }) {
       <div>
         <h2
           className="font-display border-b border-ink pb-2.5 mb-2 text-[40px] font-medium text-ink"
-          style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
         >
           {current.h}
         </h2>
@@ -65,7 +64,6 @@ export function HelpClient({ categories }: { categories: HelpCategory[] }) {
             >
               <summary
                 className="flex cursor-pointer items-center justify-between font-display text-[22px] font-medium text-ink"
-                style={{ fontVariationSettings: '"SOFT" 30, "WONK" 0' }}
               >
                 <span>{f.q}</span>
                 <span className="font-mono text-sm text-ink-3">—</span>

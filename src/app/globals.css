@@ -62,14 +62,8 @@
       "Helvetica Neue", Arial, "Noto Sans", sans-serif;
   }
   .font-display {
-    font-family: var(--font-display), Georgia, serif;
-    font-variation-settings: "SOFT" 30, "WONK" 0;
+    font-family: var(--font-display), system-ui, sans-serif;
     letter-spacing: -0.012em;
-  }
-  .font-display.italic,
-  .font-display em,
-  em.font-display {
-    font-variation-settings: "SOFT" 30, "WONK" 1;
   }
 }
 
