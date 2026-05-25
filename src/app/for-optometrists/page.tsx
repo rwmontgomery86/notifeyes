@@ -65,10 +65,6 @@ const FAQS: { q: string; a: string }[] = [
     q: "What about taxes / 1099?",
     a: "We collect W-9 at payout setup. 1099-NEC issued by Jan 31. Manual the first season; automated by V2.",
   },
-  {
-    q: "Will my home practice see I'm on NotifEyes?",
-    a: "Your profile is opt-in public. Run dark if you want — only invitable, or only reachable via direct link.",
-  },
 ];
 
 export default function ForOptometristsPage() {

@@ -197,12 +197,7 @@ export default function HowItWorksPage() {
             <h2
               className="font-display mt-3.5 text-5xl md:text-[56px] font-medium leading-[1.05] text-ink"
             >
-              When the spine{" "}
-              <em
-                className="italic"
-              >
-                bends.
-              </em>
+              When things don&apos;t go to plan.
             </h2>
             <p className="mt-3.5 text-[19px] leading-[1.5] text-ink-2">
               The happy path covers ~85% of bookings. Here&apos;s what happens for

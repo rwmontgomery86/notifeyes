@@ -14,21 +14,21 @@ import {
 export const metadata: Metadata = {
   title: "For Practices — NotifEyes",
   description:
-    "Post a fill-in shift in 90 seconds. License-verified ODs in your zip get pinged. You pick. We handle the contract and the payout. Flat $9.99 per booked match.",
+    "Post a fill-in shift in 90 seconds. License-verified ODs watching your area get pinged. You pick. We handle the contract and the payout. Flat $9.99 per booked match.",
 };
 
 const STEPS: { t: string; d: string; note?: string }[] = [
-  { t: "Post", d: "Date, hours, rate, services. Pulls from your scheduler if you connect it." },
+  { t: "Post", d: "Date, hours, rate, services. Five fields and publish." },
   { t: "Sit back", d: "Matching ODs get pinged. Apps roll in.", note: "avg first app · 8 min" },
   { t: "Pick + book", d: "Compare applicants. One-tap to book. Contract auto-signed." },
   { t: "Day-of", d: "OD checks in. You confirm hours. We pay them." },
 ];
 
-const FEATURES: { t: string; d: string }[] = [
+const FEATURES: { t: string; d: string; comingSoon?: boolean }[] = [
   { t: "Calendar-first view", d: "Open · booked · no-shows in one month grid. Click any day to invite favorites." },
   { t: "Favorites + invites", d: "Tag ODs you would hire again. Invite them direct — they skip the queue." },
-  { t: "Team seats", d: "Owner + schedulers. Roles for who can post and who can pay." },
-  { t: "Built-in messaging", d: "Talk to your OD before they show up. Files, photos, EHR notes." },
+  { t: "Team seats", d: "Owner + schedulers. Roles for who can post and who can pay — invite flow coming soon.", comingSoon: true },
+  { t: "Built-in messaging", d: "Talk to your OD before they show up. Files and photos." },
   { t: "Cancel policy, written", d: "7-day, 48-hr, 4-hr tiers. We charge. You don't chase." },
   { t: "Invoices + receipts", d: "Monthly statement, per-shift breakout, downloadable PDFs." },
 ];
@@ -48,11 +48,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "Can my scheduler post without my login?",
-    a: "Yes. Add a Scheduler seat in Settings → Team. They can post shifts and book ODs but cannot see or change payment / billing.",
-  },
-  {
-    q: "Do you integrate with my EHR?",
-    a: "Read-only calendar pull on Crystal PM, RevolutionEHR, and OfficeMate at launch. Writes are V2.",
+    a: "Not yet. Scheduler logins are coming — for now, the practice owner is the single account. When it ships, schedulers will be able to post and book shifts but not see or change payment / billing.",
   },
 ];
 
@@ -79,8 +75,8 @@ export default function ForPracticesPage() {
               </em>
             </h1>
             <p className="mt-5 max-w-[500px] text-[19px] leading-[1.5] text-ink-2">
-              Post the shift. License-verified ODs in your zip get pinged. You
-              pick. We handle the contract and the payout.{" "}
+              Post the shift. License-verified ODs watching your area get
+              pinged. You pick. We handle the contract and the payout.{" "}
               {MARKETING_MATCH_FEE_DISPLAY} per booked match.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
@@ -166,7 +162,7 @@ export default function ForPracticesPage() {
               <ul className="m-0 mt-4 flex list-none flex-col gap-2.5 p-0">
                 {[
                   "Post the shift in 90 seconds.",
-                  "ODs in your zip with matching zones get pinged instantly.",
+                  "ODs whose watch zones cover your address get pinged instantly.",
                   "Pick from real applicants with real ratings.",
                   `One-tap book. Contract auto-signed. ${MARKETING_MATCH_FEE_DISPLAY} flat.`,
                 ].map((l) => (
@@ -249,7 +245,10 @@ export default function ForPracticesPage() {
                 key={f.t}
                 className="rounded-card border border-rule bg-paper-card p-6"
               >
-                <h3 className="font-display text-[19px] text-ink">{f.t}</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-display text-[19px] text-ink">{f.t}</h3>
+                  {f.comingSoon && <Chip>Coming soon</Chip>}
+                </div>
                 <p className="mt-1.5 text-sm text-ink-2 leading-[1.6]">{f.d}</p>
               </article>
             ))}

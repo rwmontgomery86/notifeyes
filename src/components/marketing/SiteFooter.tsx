@@ -88,7 +88,7 @@ export function SiteFooter() {
       </div>
 
       <div className="max-w-container mx-auto mt-9 flex justify-between border-t border-[#2a3a5e] pt-[18px] text-xs text-[#6e7990]">
-        <span>© 2026 NotifEyes Inc.</span>
+        <span>© 2026 Second Sight Technologies LLC</span>
         <span>Made for practitioners, by practitioners.</span>
       </div>
     </footer>
