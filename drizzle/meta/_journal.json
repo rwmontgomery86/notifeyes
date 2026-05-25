@@ -8,6 +8,13 @@
       "when": 1779297140970,
       "tag": "0000_talented_whizzer",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1779731902826,
+      "tag": "0001_sleepy_nomad",
+      "breakpoints": true
     }
   ]
 }

@@ -2,9 +2,11 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/db";
-import { practices, shifts } from "@/db/schema";
+import { odPracticeBlocks, practices, shifts } from "@/db/schema";
+import { auth } from "@/lib/auth";
 import { formatShiftWhen } from "@/lib/dates";
 import { formatUsd } from "@/lib/pricing";
+import { BlockButton } from "./BlockButton";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +22,23 @@ export default async function PracticePublicProfile({
     .where(eq(practices.id, id))
     .limit(1);
   if (!p) notFound();
+
+  const session = await auth();
+  const viewerOdId = session?.user.odId ?? null;
+  let isBlocked = false;
+  if (viewerOdId) {
+    const [b] = await db
+      .select({ odId: odPracticeBlocks.odId })
+      .from(odPracticeBlocks)
+      .where(
+        and(
+          eq(odPracticeBlocks.odId, viewerOdId),
+          eq(odPracticeBlocks.practiceId, id),
+        ),
+      )
+      .limit(1);
+    isBlocked = !!b;
+  }
 
   const openShifts = await db
     .select()
@@ -70,6 +89,15 @@ export default async function PracticePublicProfile({
             ) : null}
             {p.avgFillTimeHrs ? (
               <div>~{p.avgFillTimeHrs.toFixed(1)}h avg fill</div>
+            ) : null}
+            {viewerOdId ? (
+              <div className="pt-2">
+                <BlockButton
+                  practiceId={p.id}
+                  practiceName={p.name}
+                  initiallyBlocked={isBlocked}
+                />
+              </div>
             ) : null}
           </div>
         </div>

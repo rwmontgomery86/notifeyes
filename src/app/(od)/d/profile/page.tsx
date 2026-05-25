@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { optometrists } from "@/db/schema";
+import { odPracticeBlocks, optometrists, practices, users } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { OdProfileEditor } from "./OdProfileEditor";
 
@@ -17,6 +17,28 @@ export default async function OdProfilePage() {
     .where(eq(optometrists.id, session.user.odId))
     .limit(1);
   if (!me) redirect("/d/shifts");
+
+  const [u] = await db
+    .select({
+      email: users.email,
+      phone: users.phone,
+      emailOptedIn: users.emailOptedIn,
+      smsOptedIn: users.smsOptedIn,
+    })
+    .from(users)
+    .where(eq(users.id, session.user.id))
+    .limit(1);
+
+  const blocked = await db
+    .select({
+      practiceId: odPracticeBlocks.practiceId,
+      practiceName: practices.name,
+      blockedAt: odPracticeBlocks.blockedAt,
+    })
+    .from(odPracticeBlocks)
+    .innerJoin(practices, eq(practices.id, odPracticeBlocks.practiceId))
+    .where(eq(odPracticeBlocks.odId, session.user.odId))
+    .orderBy(desc(odPracticeBlocks.blockedAt));
 
   return (
     <div>
@@ -44,7 +66,15 @@ export default async function OdProfilePage() {
           verificationStatus: me.verificationStatus,
           verifiedAt: me.verifiedAt?.toISOString() ?? null,
           verificationNotes: me.verificationNotes,
+          email: u?.email ?? "",
+          phone: u?.phone ?? null,
+          emailOptedIn: u?.emailOptedIn ?? false,
+          smsOptedIn: u?.smsOptedIn ?? false,
         }}
+        blocked={blocked.map((b) => ({
+          practiceId: b.practiceId,
+          practiceName: b.practiceName,
+        }))}
       />
     </div>
   );

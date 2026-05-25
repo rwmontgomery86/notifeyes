@@ -58,6 +58,10 @@ export default async function OdShiftsPage({
             eq(shifts.status, "posted"),
             sql`${shifts.startsAt} > now()`,
             eq(practices.state, licenseState),
+            sql`NOT EXISTS (
+              SELECT 1 FROM od_practice_blocks opb
+              WHERE opb.od_id = ${odId} AND opb.practice_id = ${practices.id}
+            )`,
             watchZoneOnly
               ? sql`EXISTS (
                   SELECT 1 FROM watch_zones wz

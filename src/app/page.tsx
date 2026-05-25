@@ -18,6 +18,12 @@ import {
   MARKETING_MATCH_FEE_DISPLAY,
   MARKETING_SAMEDAY_DISPLAY,
 } from "@/lib/format";
+import {
+  detectStateFromRequest,
+  resolveStateOverride,
+  type DetectedState,
+} from "@/lib/geo/detectStateFromRequest";
+import { getOpenShiftsForState } from "@/lib/marketing/getOpenShiftsForState";
 
 function dashboardForRole(
   role?: "practice_owner" | "practice_scheduler" | "od" | "admin",
@@ -27,26 +33,35 @@ function dashboardForRole(
   return "/p/dashboard";
 }
 
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ state?: string }>;
+}) {
   const session = await auth();
   if (session?.user) redirect(dashboardForRole(session.user.role));
+
+  const sp = await searchParams;
+  const detected =
+    resolveStateOverride(sp.state) ?? (await detectStateFromRequest());
 
   return (
     <div className="bg-paper text-ink min-h-screen">
       <SiteHeader activeKey="home" />
       <HomeHero />
       <ProofBar />
-      <ShiftTicker />
+      <ShiftTicker state={detected} />
       <WhyBoth />
       <WatchZoneSection />
       <Compare />
-      <Quotes />
       <PricingTeaser />
       <FinalCTA />
       <SiteFooter />
     </div>
   );
 }
+
+export const dynamic = "force-dynamic";
 
 function ProofBar() {
   const stats = [
@@ -73,28 +88,52 @@ function ProofBar() {
   );
 }
 
-function ShiftTicker() {
-  const shifts = [
-    { c: "Marina Eye Group", d: "Tue Jun 02 · 9–5", r: "$95/hr", dist: "2.1 mi", tag: "Fill-in" },
-    { c: "Inner Sunset Optometry", d: "Wed Jun 03 · 12–8", r: "$110/hr", dist: "6.4 mi", tag: "Fill-in" },
-    { c: "Glen Park Vision", d: "Fri Jun 05 · 9–1", r: "$120/hr", dist: "0.8 mi", tag: "Half-day" },
-    { c: "Pacific Heights OD", d: "Sat Jun 06 · 10–4", r: "$130/hr", dist: "11 mi", tag: "Weekend" },
-    { c: "Lower Haight Vision", d: "Mon Jun 08 · 8–5", r: "$95/hr", dist: "4.7 mi", tag: "Fill-in" },
-    { c: "Mission Eye Co.", d: "Tue Jun 09 · 12–6", r: "$100/hr", dist: "3.2 mi", tag: "Half-day" },
-  ];
+const SHIFT_TYPE_LABEL: Record<
+  "fill_in" | "half_day" | "weekend" | "recurring" | "permanent",
+  string
+> = {
+  fill_in: "Fill-in",
+  half_day: "Half-day",
+  weekend: "Weekend",
+  recurring: "Recurring",
+  permanent: "Permanent",
+};
+
+function formatShiftWhen(starts: Date, ends: Date): string {
+  const dayFmt = new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "2-digit",
+  });
+  const hourFmt = (d: Date) => {
+    const h = d.getHours();
+    const m = d.getMinutes();
+    const suffix = h >= 12 ? "p" : "a";
+    const h12 = h % 12 === 0 ? 12 : h % 12;
+    return m === 0 ? `${h12}${suffix}` : `${h12}:${String(m).padStart(2, "0")}${suffix}`;
+  };
+  return `${dayFmt.format(starts)} · ${hourFmt(starts)}–${hourFmt(ends)}`;
+}
+
+async function ShiftTicker({ state }: { state: DetectedState | null }) {
+  if (!state) return null;
+  const rows = await getOpenShiftsForState(state.code);
+  if (rows.length === 0) return null;
+
   return (
     <Section tight>
       <div className="max-w-wide mx-auto px-7">
         <div className="mb-3.5 flex items-end justify-between">
           <div>
             <div className="text-xs font-semibold uppercase tracking-[0.14em] text-rust">
-              Open right now · SF Bay
+              Open right now · {state.name}
             </div>
             <h3 className="font-display mt-1.5 text-[22px] font-semibold text-ink">
-              Six shifts went live in the last hour.
+              {rows.length === 1
+                ? "One shift is live."
+                : `${rows.length} shifts are live.`}
             </h3>
           </div>
-          <span className="text-sm text-ink-2">See all open shifts →</span>
         </div>
         <div
           className="flex gap-4 overflow-hidden py-3.5"
@@ -103,22 +142,27 @@ function ShiftTicker() {
               "linear-gradient(90deg, transparent 0, #000 6%, #000 94%, transparent 100%)",
           }}
         >
-          {shifts.map((s, i) => (
-            <div
-              key={i}
-              className="flex min-w-[280px] flex-col gap-1.5 rounded-card border border-rule bg-paper-card p-3.5"
-            >
-              <div className="flex items-center justify-between">
-                <strong className="text-sm text-ink">{s.c}</strong>
-                <Chip>{s.tag}</Chip>
+          {rows.map((s) => {
+            const tag = s.urgent ? "Urgent" : SHIFT_TYPE_LABEL[s.type];
+            const rate = `$${Math.round(s.rateCentsPerHour / 100)}/hr`;
+            return (
+              <div
+                key={s.id}
+                className="flex min-w-[280px] flex-col gap-1.5 rounded-card border border-rule bg-paper-card p-3.5"
+              >
+                <div className="flex items-center justify-between">
+                  <strong className="text-sm text-ink">{s.practiceName}</strong>
+                  <Chip>{tag}</Chip>
+                </div>
+                <div className="text-sm text-ink-2">
+                  {formatShiftWhen(s.startsAt, s.endsAt)}
+                </div>
+                <div className="mt-1 flex items-center justify-between">
+                  <Chip variant="accent">{rate}</Chip>
+                </div>
               </div>
-              <div className="text-sm text-ink-2">{s.d}</div>
-              <div className="mt-1 flex items-center justify-between">
-                <Chip variant="accent">{s.r}</Chip>
-                <span className="text-xs text-ink-3">{s.dist}</span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </Section>
@@ -136,12 +180,7 @@ function WhyBoth() {
           <h2
             className="font-display mt-3.5 text-[56px] md:text-[72px] font-medium leading-[1.05] text-ink"
           >
-            One mechanic.{" "}
-            <em
-              className="italic"
-            >
-              Two doors.
-            </em>
+            Practices post. ODs watch. The match happens.
           </h2>
           <p className="mt-4 max-w-[580px] text-[19px] leading-[1.5] text-ink-2">
             The thing that makes NotifEyes work for practices is the same thing
@@ -224,7 +263,7 @@ function WatchZoneSection() {
             <p className="mt-4 text-[19px] leading-[1.5] text-[#a8b3c6]">
               ODs draw where and when they would actually work. Practices post a
               shift. If the post lands inside an OD&apos;s zone, their phone
-              buzzes. That&apos;s the whole product, mostly.
+              buzzes.
             </p>
             <p className="mt-3.5 text-sm leading-[1.6] text-[#a8b3c6]">
               No more browsing job boards. No more Facebook groups. No more being
@@ -382,58 +421,6 @@ function Compare() {
             },
           ]}
         />
-      </Container>
-    </Section>
-  );
-}
-
-function Quotes() {
-  return (
-    <Section variant="alt">
-      <Container>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-9">
-          {[
-            {
-              quote:
-                "I covered a same-day no-show in 40 minutes. I would have lost a full day of patients otherwise. The OD was license-verified before she even messaged me.",
-              name: "[Dr. Lorem Park]",
-              meta: "[Owner · Marina Eye Group · SF]",
-              accent: false,
-            },
-            {
-              quote:
-                "I was on the bus. My phone buzzed. Tuesday morning at a clinic 4 miles away. I tapped apply. Booked by the time I got off at my stop. Rent for the month.",
-              name: "[Dr. Lorem Lin, OD]",
-              meta: "[7 years · Oakland]",
-              accent: true,
-            },
-          ].map((q) => (
-            <article key={q.name}>
-              <p
-                className="font-display text-[28px] italic leading-[1.3] text-ink"
-              >
-                <span className="text-rust">&ldquo;</span>
-                {q.quote}
-                <span className="text-rust">&rdquo;</span>
-              </p>
-              <div className="mt-7 flex items-center gap-3.5">
-                <div
-                  className={`flex h-14 w-14 items-center justify-center rounded-full border text-lg font-semibold ${
-                    q.accent
-                      ? "bg-rust-soft border-[#a8d5f0] text-rust-2"
-                      : "bg-paper-card border-rule text-ink-2"
-                  }`}
-                >
-                  [ph]
-                </div>
-                <div>
-                  <div className="font-semibold text-ink">{q.name}</div>
-                  <div className="text-sm text-ink-2">{q.meta}</div>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
       </Container>
     </Section>
   );

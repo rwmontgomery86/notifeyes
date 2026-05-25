@@ -3,9 +3,10 @@
 import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
-import { watchZones } from "@/db/schema";
+import { users, watchZones } from "@/db/schema";
 import { requireOd } from "@/lib/auth/guards";
 import { geocoder } from "@/lib/geocode";
+import { hasAnyNotificationChannel } from "@/lib/notifications/optIn";
 
 const circleSchema = z.object({
   kind: z.literal("circle"),
@@ -26,10 +27,22 @@ const polygonSchema = z.object({
     .max(200),
 });
 
+const HHMM = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Use HH:MM (24-hour)");
+
 const createSchema = z.object({
   name: z.string().min(1).max(100),
   minRateCents: z.number().int().min(0).max(1_000_000),
   geometryMeta: z.union([circleSchema, polygonSchema]),
+  daysOfWeek: z.array(z.number().int().min(0).max(6)).min(1).max(7).optional(),
+  timeStart: HHMM.optional().nullable(),
+  timeEnd: HHMM.optional().nullable(),
+  shiftTypes: z
+    .array(z.enum(["fill_in", "half_day", "weekend", "recurring", "permanent"]))
+    .min(1)
+    .optional(),
+  notifyChannels: z.array(z.enum(["push", "email", "sms"])).min(1).optional(),
 });
 
 export async function createWatchZone(input: z.infer<typeof createSchema>) {
@@ -41,12 +54,36 @@ export async function createWatchZone(input: z.infer<typeof createSchema>) {
   const v = parsed.data;
   const odId = session.user.odId!;
 
+  const [u] = await db
+    .select({
+      email: users.email,
+      phone: users.phone,
+      emailOptedIn: users.emailOptedIn,
+      smsOptedIn: users.smsOptedIn,
+    })
+    .from(users)
+    .where(eq(users.id, session.user.id))
+    .limit(1);
+  if (!u || !hasAnyNotificationChannel(u)) {
+    return {
+      ok: false as const,
+      error:
+        "Enable at least one notification channel in your profile before creating a watch zone.",
+    };
+  }
+
+  const daysOfWeek = v.daysOfWeek ?? [0, 1, 2, 3, 4, 5, 6];
+  const shiftTypes = v.shiftTypes ?? ["fill_in", "half_day", "weekend"];
+  const notifyChannels = v.notifyChannels ?? ["push", "email"];
+  const timeStart = v.timeStart ?? null;
+  const timeEnd = v.timeEnd ?? null;
+
   // Build the PostGIS geometry. For circles, we approximate with ST_Buffer of
   // a point in meters (geography) and convert back to geometry for storage.
   if (v.geometryMeta.kind === "circle") {
     const { centerLat, centerLng, radiusMeters } = v.geometryMeta;
     await db.execute(sql`
-      INSERT INTO watch_zones (od_id, name, shape, geometry, geometry_meta, min_rate_cents)
+      INSERT INTO watch_zones (od_id, name, shape, geometry, geometry_meta, min_rate_cents, days_of_week, time_start, time_end, shift_types, notify_channels)
       VALUES (
         ${odId},
         ${v.name},
@@ -56,7 +93,12 @@ export async function createWatchZone(input: z.infer<typeof createSchema>) {
           ${radiusMeters}
         )::geometry::geography,
         ${JSON.stringify(v.geometryMeta)}::jsonb,
-        ${v.minRateCents}
+        ${v.minRateCents},
+        ${JSON.stringify(daysOfWeek)}::jsonb,
+        ${timeStart},
+        ${timeEnd},
+        ${JSON.stringify(shiftTypes)}::jsonb,
+        ${JSON.stringify(notifyChannels)}::jsonb
       );
     `);
   } else {
@@ -69,14 +111,19 @@ export async function createWatchZone(input: z.infer<typeof createSchema>) {
       ].join(", ") +
       "))";
     await db.execute(sql`
-      INSERT INTO watch_zones (od_id, name, shape, geometry, geometry_meta, min_rate_cents)
+      INSERT INTO watch_zones (od_id, name, shape, geometry, geometry_meta, min_rate_cents, days_of_week, time_start, time_end, shift_types, notify_channels)
       VALUES (
         ${odId},
         ${v.name},
         'polygon',
         ST_SetSRID(ST_GeomFromText(${ringWkt}), 4326)::geography,
         ${JSON.stringify(v.geometryMeta)}::jsonb,
-        ${v.minRateCents}
+        ${v.minRateCents},
+        ${JSON.stringify(daysOfWeek)}::jsonb,
+        ${timeStart},
+        ${timeEnd},
+        ${JSON.stringify(shiftTypes)}::jsonb,
+        ${JSON.stringify(notifyChannels)}::jsonb
       );
     `);
   }

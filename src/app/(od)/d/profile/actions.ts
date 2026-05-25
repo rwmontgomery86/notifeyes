@@ -1,9 +1,9 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
-import { optometrists } from "@/db/schema";
+import { odPracticeBlocks, optometrists, users } from "@/db/schema";
 import { requireOd } from "@/lib/auth/guards";
 
 // URL fields are widened to fit data-URL fallback payloads (dev mode without
@@ -23,6 +23,9 @@ const schema = z.object({
   npiNumber: z.string().max(20).nullable().optional(),
   ehrExperience: z.array(z.string().max(60)).max(20).optional(),
   specialties: z.array(z.string().max(60)).max(20).optional(),
+  phone: z.string().max(32).nullable().optional(),
+  smsOptedIn: z.boolean().optional(),
+  emailOptedIn: z.boolean().optional(),
 });
 
 export async function updateOdProfile(input: z.infer<typeof schema>) {
@@ -32,6 +35,14 @@ export async function updateOdProfile(input: z.infer<typeof schema>) {
     return { ok: false as const, error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
   const v = parsed.data;
+
+  const phone = v.phone?.trim() || null;
+  if (v.smsOptedIn && !phone) {
+    return {
+      ok: false as const,
+      error: "Add a phone number before opting in to SMS notifications.",
+    };
+  }
 
   await db
     .update(optometrists)
@@ -50,5 +61,27 @@ export async function updateOdProfile(input: z.infer<typeof schema>) {
     })
     .where(eq(optometrists.id, session.user.odId!));
 
+  await db
+    .update(users)
+    .set({
+      phone,
+      smsOptedIn: v.smsOptedIn ?? false,
+      emailOptedIn: v.emailOptedIn ?? false,
+    })
+    .where(eq(users.id, session.user.id));
+
+  return { ok: true as const };
+}
+
+export async function unblockPracticeFromProfile(practiceId: string) {
+  const session = await requireOd();
+  await db
+    .delete(odPracticeBlocks)
+    .where(
+      and(
+        eq(odPracticeBlocks.odId, session.user.odId!),
+        eq(odPracticeBlocks.practiceId, practiceId),
+      ),
+    );
   return { ok: true as const };
 }

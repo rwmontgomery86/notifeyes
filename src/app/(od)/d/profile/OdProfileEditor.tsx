@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { FileField } from "@/components/FileField";
-import { updateOdProfile } from "./actions";
+import { unblockPracticeFromProfile, updateOdProfile } from "./actions";
 
 type OdProfile = {
   id: string;
@@ -24,7 +24,13 @@ type OdProfile = {
   verificationStatus: string;
   verifiedAt: string | null;
   verificationNotes: string | null;
+  email: string;
+  phone: string | null;
+  emailOptedIn: boolean;
+  smsOptedIn: boolean;
 };
+
+type BlockedPractice = { practiceId: string; practiceName: string };
 
 const EHR_OPTIONS = [
   "RevolutionEHR",
@@ -43,7 +49,13 @@ const SPECIALTIES = [
   "Low vision",
 ];
 
-export function OdProfileEditor({ initial }: { initial: OdProfile }) {
+export function OdProfileEditor({
+  initial,
+  blocked,
+}: {
+  initial: OdProfile;
+  blocked: BlockedPractice[];
+}) {
   const router = useRouter();
   const [form, setForm] = useState(initial);
   const [pending, startTransition] = useTransition();
@@ -75,6 +87,9 @@ export function OdProfileEditor({ initial }: { initial: OdProfile }) {
         npiNumber: form.npiNumber,
         ehrExperience: form.ehrExperience,
         specialties: form.specialties,
+        phone: form.phone,
+        smsOptedIn: form.smsOptedIn,
+        emailOptedIn: form.emailOptedIn,
       });
       if (!res.ok) {
         setError(res.error ?? "Could not save");
@@ -85,9 +100,89 @@ export function OdProfileEditor({ initial }: { initial: OdProfile }) {
     });
   }
 
+  function unblock(practiceId: string) {
+    startTransition(async () => {
+      await unblockPracticeFromProfile(practiceId);
+      router.refresh();
+    });
+  }
+
+  const phoneTrimmed = (form.phone ?? "").trim();
+  const smsDisabled = phoneTrimmed.length === 0;
+
   return (
     <div className="mt-6 grid gap-6 lg:grid-cols-[2fr_1fr]">
       <div className="grid gap-6">
+        <section className="ne-card">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Notification contact
+          </h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            How we reach you when a shift matches one of your watch zones. At
+            least one channel must be enabled before you can create a watch zone.
+          </p>
+          <div className="mt-3 grid gap-4">
+            <label>
+              <span className="ne-label">Email</span>
+              <input
+                value={form.email}
+                readOnly
+                className="ne-input bg-muted/40"
+              />
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={form.emailOptedIn}
+                onChange={(e) =>
+                  setForm({ ...form, emailOptedIn: e.target.checked })
+                }
+              />
+              <span>Notify me by email about matching shifts.</span>
+            </label>
+            <label>
+              <span className="ne-label">Phone</span>
+              <input
+                type="tel"
+                value={form.phone ?? ""}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setForm({
+                    ...form,
+                    phone: next,
+                    smsOptedIn: next.trim().length === 0 ? false : form.smsOptedIn,
+                  });
+                }}
+                className="ne-input"
+                maxLength={32}
+                placeholder="+1 555 123 4567"
+              />
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={form.smsOptedIn}
+                disabled={smsDisabled}
+                onChange={(e) =>
+                  setForm({ ...form, smsOptedIn: e.target.checked })
+                }
+              />
+              <span
+                className={smsDisabled ? "text-muted-foreground" : undefined}
+              >
+                Notify me by SMS about matching shifts.
+                {smsDisabled ? " (add a phone number first)" : null}
+              </span>
+            </label>
+            <p className="text-xs text-muted-foreground">
+              We use your phone and email only to notify you about shifts that
+              match your watch zones and to send transactional account
+              messages. We do not sell or share your contact information with
+              marketing agencies.
+            </p>
+          </div>
+        </section>
+
         <section className="ne-card">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
             Basics
@@ -217,6 +312,40 @@ export function OdProfileEditor({ initial }: { initial: OdProfile }) {
               );
             })}
           </div>
+        </section>
+
+        <section className="ne-card">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Blocked practices
+          </h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Shifts from blocked practices are hidden from your feed and
+            notifications.
+          </p>
+          {blocked.length === 0 ? (
+            <p className="mt-3 text-sm text-muted-foreground">
+              You haven&apos;t blocked any practices.
+            </p>
+          ) : (
+            <ul className="mt-3 flex flex-col gap-2">
+              {blocked.map((b) => (
+                <li
+                  key={b.practiceId}
+                  className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm"
+                >
+                  <span>{b.practiceName}</span>
+                  <button
+                    type="button"
+                    onClick={() => unblock(b.practiceId)}
+                    disabled={pending}
+                    className="ne-btn-ghost text-xs"
+                  >
+                    Unblock
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
 
         {error ? (
