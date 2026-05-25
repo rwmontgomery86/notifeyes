@@ -36,6 +36,7 @@ export async function findOdsMatchingShift(shiftId: string): Promise<MatchedOd[]
     WITH s AS (
       SELECT
         sh.id AS shift_id,
+        sh.practice_id,
         sh.starts_at,
         sh.ends_at,
         sh.rate_cents_per_hour,
@@ -65,7 +66,11 @@ export async function findOdsMatchingShift(shiftId: string): Promise<MatchedOd[]
       AND wz.shift_types::jsonb @> to_jsonb(s.shift_type)
       AND (wz.time_start IS NULL OR wz.time_start <= s.starts_hhmm)
       AND (wz.time_end   IS NULL OR wz.time_end   >= s.ends_hhmm)
-      AND o.verification_status = 'verified';
+      AND o.verification_status = 'verified'
+      AND NOT EXISTS (
+        SELECT 1 FROM od_practice_blocks opb
+        WHERE opb.od_id = wz.od_id AND opb.practice_id = s.practice_id
+      );
   `);
 
   return result.rows.map((r) => ({

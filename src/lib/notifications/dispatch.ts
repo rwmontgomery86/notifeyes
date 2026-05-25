@@ -5,6 +5,7 @@ import { notifications } from "@/db/schema";
 import { emailChannel } from "./channels/email";
 import { pushChannel } from "./channels/push";
 import { smsChannel } from "./channels/sms";
+import { filterChannelsByOptIn, getOptInState } from "./optIn";
 import type { Channel, NotificationKind } from "./types";
 
 const channels = {
@@ -55,9 +56,15 @@ export async function dispatchNotification(input: DispatchInput): Promise<void> 
     })})`,
   );
 
+  // Honor user-level opt-in: skip email/sms unless explicitly consented.
+  const optIn = await getOptInState(input.userId);
+  const effectiveChannels = optIn
+    ? filterChannelsByOptIn(input.channels, optIn)
+    : input.channels.filter((ch) => ch === "push");
+
   // Fire external channels
   const results = await Promise.all(
-    input.channels.map((ch) =>
+    effectiveChannels.map((ch) =>
       channels[ch].send({
         kind: input.kind,
         recipientUserId: input.userId,

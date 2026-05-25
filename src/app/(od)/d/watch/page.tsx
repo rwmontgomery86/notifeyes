@@ -1,8 +1,10 @@
+import Link from "next/link";
 import { desc, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { optometrists, watchZones } from "@/db/schema";
+import { optometrists, users, watchZones } from "@/db/schema";
 import { capitalForState } from "@/lib/geo/state-capitals";
+import { hasAnyNotificationChannel } from "@/lib/notifications/optIn";
 import { WatchZoneEditor } from "./WatchZoneEditor";
 import { WatchZoneList } from "./WatchZoneList";
 
@@ -22,6 +24,19 @@ export default async function WatchPage() {
   const initialCenter: [number, number] | undefined = capital
     ? [capital.lat, capital.lng]
     : undefined;
+
+  const [u] = await db
+    .select({
+      email: users.email,
+      phone: users.phone,
+      emailOptedIn: users.emailOptedIn,
+      smsOptedIn: users.smsOptedIn,
+    })
+    .from(users)
+    .where(eq(users.id, session!.user.id))
+    .limit(1);
+  const optInOk = !!u && hasAnyNotificationChannel(u);
+  const smsOptInEnabled = !!(u && u.smsOptedIn && u.phone);
 
   const zones = await db
     .select()
@@ -56,9 +71,25 @@ export default async function WatchPage() {
         </div>
       </div>
 
+      {optInOk ? null : (
+        <div className="mt-6 rounded-md border border-amber-500/40 bg-amber-100/60 px-4 py-3 text-sm text-amber-900">
+          <strong className="font-semibold">Enable notifications first.</strong>{" "}
+          You need at least one notification channel (email or SMS) opted in
+          before you can create a watch zone — otherwise we can&apos;t reach
+          you when a matching shift posts.{" "}
+          <Link href="/d/profile" className="underline font-medium">
+            Set it up in your profile →
+          </Link>
+        </div>
+      )}
+
       <div className="mt-6 grid gap-6 lg:grid-cols-[3fr_2fr]">
         <div className="ne-card p-0 overflow-hidden">
-          <WatchZoneEditor initialCenter={initialCenter} />
+          <WatchZoneEditor
+            initialCenter={initialCenter}
+            disabled={!optInOk}
+            smsOptInEnabled={smsOptInEnabled}
+          />
         </div>
         <WatchZoneList zones={zonesForClient} />
       </div>

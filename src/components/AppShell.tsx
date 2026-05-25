@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { signOut } from "@/lib/auth";
 import { NotificationsLive } from "@/components/NotificationsLive";
 
@@ -25,15 +26,14 @@ export function AppShell({
       <aside className="border-r bg-card flex flex-col">
         <div className="px-5 py-5 border-b">
           <Link href="/" className="flex items-center gap-2 font-semibold text-sm">
-            <span
-              aria-hidden
-              className="inline-block h-4 w-4 rounded-full border-2 border-foreground"
-              style={{
-                background:
-                  "radial-gradient(circle at 50% 50%, hsl(var(--primary)) 0 30%, transparent 30%)",
-              }}
+            <Image
+              src="/notifeyes-mark.png"
+              alt=""
+              width={28}
+              height={28}
+              className="h-7 w-7 object-contain shrink-0"
             />
-            NotifEyes
+            <span>Notif<span className="text-primary">Eyes</span></span>
           </Link>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-1">

@@ -3,7 +3,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { optometrists } from "@/db/schema";
+import { optometrists, users } from "@/db/schema";
+import { hasAnyNotificationChannel } from "@/lib/notifications/optIn";
 
 export const metadata = { title: "You're verified · NotifEyes" };
 export const dynamic = "force-dynamic";
@@ -23,6 +24,18 @@ export default async function OdWelcomePage() {
     .limit(1);
 
   if (!me || me.verificationStatus !== "verified") redirect("/d/profile");
+
+  const [u] = await db
+    .select({
+      email: users.email,
+      phone: users.phone,
+      emailOptedIn: users.emailOptedIn,
+      smsOptedIn: users.smsOptedIn,
+    })
+    .from(users)
+    .where(eq(users.id, session.user.id))
+    .limit(1);
+  const needsOptIn = !u || !hasAnyNotificationChannel(u);
 
   const greetingName = me.displayName?.split(" ")[0] ?? me.name.split(" ")[0];
 
@@ -44,6 +57,19 @@ export default async function OdWelcomePage() {
             What&apos;s next
           </h2>
           <ol className="grid gap-2 text-sm">
+            {needsOptIn ? (
+              <li className="flex gap-3">
+                <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-100 text-xs font-semibold text-amber-900">
+                  !
+                </span>
+                <span>
+                  <strong>Pick how we reach you</strong> — opt in to email or
+                  SMS in your <Link href="/d/profile" className="underline">profile</Link>{" "}
+                  before creating a watch zone, otherwise we can&apos;t notify
+                  you.
+                </span>
+              </li>
+            ) : null}
             <li className="flex gap-3">
               <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
                 1

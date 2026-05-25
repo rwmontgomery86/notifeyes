@@ -20,10 +20,31 @@ const MAX_RADIUS_MILES = 100;
 const DEFAULT_ZOOM = 7;
 const FALLBACK_ZOOM = 11;
 
+const DAY_LABELS: { value: number; label: string }[] = [
+  { value: 1, label: "Mon" },
+  { value: 2, label: "Tue" },
+  { value: 3, label: "Wed" },
+  { value: 4, label: "Thu" },
+  { value: 5, label: "Fri" },
+  { value: 6, label: "Sat" },
+  { value: 0, label: "Sun" },
+];
+const SHIFT_TYPE_OPTIONS: { value: "fill_in" | "half_day" | "weekend"; label: string }[] = [
+  { value: "fill_in", label: "Fill-in" },
+  { value: "half_day", label: "Half-day" },
+  { value: "weekend", label: "Weekend" },
+];
+
+type Channel = "push" | "email" | "sms";
+
 export function WatchZoneEditor({
   initialCenter,
+  disabled = false,
+  smsOptInEnabled = false,
 }: {
   initialCenter?: [number, number];
+  disabled?: boolean;
+  smsOptInEnabled?: boolean;
 } = {}) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapInstance = useRef<unknown>(null);
@@ -37,8 +58,33 @@ export function WatchZoneEditor({
   const [drawn, setDrawn] = useState<DrawnShape | null>(null);
   const [name, setName] = useState("My zone");
   const [minRate, setMinRate] = useState(100);
+  const [daysOfWeek, setDaysOfWeek] = useState<number[]>([1, 2, 3, 4, 5, 6, 0]);
+  const [timeStart, setTimeStart] = useState<string>("");
+  const [timeEnd, setTimeEnd] = useState<string>("");
+  const [shiftTypes, setShiftTypes] = useState<("fill_in" | "half_day" | "weekend")[]>([
+    "fill_in",
+    "half_day",
+    "weekend",
+  ]);
+  const [notifyChannels, setNotifyChannels] = useState<Channel[]>(["push", "email"]);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+
+  function toggleDay(day: number) {
+    setDaysOfWeek((prev) =>
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day],
+    );
+  }
+  function toggleShiftType(t: "fill_in" | "half_day" | "weekend") {
+    setShiftTypes((prev) =>
+      prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t],
+    );
+  }
+  function toggleChannel(c: Channel) {
+    setNotifyChannels((prev) =>
+      prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c],
+    );
+  }
 
   // ZIP-mode state
   const [zip, setZip] = useState("");
@@ -234,11 +280,28 @@ export function WatchZoneEditor({
       );
       return;
     }
+    if (daysOfWeek.length === 0) {
+      setError("Pick at least one day of the week.");
+      return;
+    }
+    if (shiftTypes.length === 0) {
+      setError("Pick at least one shift type.");
+      return;
+    }
+    if (notifyChannels.length === 0) {
+      setError("Pick at least one notification channel.");
+      return;
+    }
     startTransition(async () => {
       const res = await createWatchZone({
         name,
         minRateCents: Math.round(minRate * 100),
         geometryMeta: drawn,
+        daysOfWeek,
+        timeStart: timeStart || null,
+        timeEnd: timeEnd || null,
+        shiftTypes,
+        notifyChannels,
       });
       if (!res.ok) {
         setError(res.error ?? "Could not save zone");
@@ -388,11 +451,107 @@ export function WatchZoneEditor({
         </div>
         <button
           onClick={save}
-          disabled={!drawn || pending}
+          disabled={!drawn || pending || disabled}
+          title={disabled ? "Enable a notification channel in your profile first." : undefined}
           className="ne-btn"
         >
           {pending ? "Saving…" : "Save zone"}
         </button>
+      </div>
+
+      {/* Filters */}
+      <div className="border-t p-3 grid gap-4">
+        <div>
+          <span className="ne-label">Days of week</span>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {DAY_LABELS.map((d) => {
+              const on = daysOfWeek.includes(d.value);
+              return (
+                <button
+                  key={d.value}
+                  type="button"
+                  onClick={() => toggleDay(d.value)}
+                  className={`ne-pill border ${on ? "bg-primary text-primary-foreground border-primary" : "border-border"}`}
+                >
+                  {d.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3 max-w-sm">
+          <label className="block">
+            <span className="ne-label">Earliest start (optional)</span>
+            <input
+              type="time"
+              value={timeStart}
+              onChange={(e) => setTimeStart(e.target.value)}
+              className="ne-input"
+            />
+          </label>
+          <label className="block">
+            <span className="ne-label">Latest end (optional)</span>
+            <input
+              type="time"
+              value={timeEnd}
+              onChange={(e) => setTimeEnd(e.target.value)}
+              className="ne-input"
+            />
+          </label>
+        </div>
+        <div>
+          <span className="ne-label">Shift types</span>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {SHIFT_TYPE_OPTIONS.map((t) => {
+              const on = shiftTypes.includes(t.value);
+              return (
+                <button
+                  key={t.value}
+                  type="button"
+                  onClick={() => toggleShiftType(t.value)}
+                  className={`ne-pill border ${on ? "bg-primary text-primary-foreground border-primary" : "border-border"}`}
+                >
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <div>
+          <span className="ne-label">Notify me via</span>
+          <div className="mt-2 flex flex-wrap gap-3 text-sm">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={notifyChannels.includes("push")}
+                onChange={() => toggleChannel("push")}
+              />
+              <span>Push</span>
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={notifyChannels.includes("email")}
+                onChange={() => toggleChannel("email")}
+              />
+              <span>Email</span>
+            </label>
+            <label
+              className="flex items-center gap-2"
+              title={smsOptInEnabled ? undefined : "Enable SMS in your profile to use this channel."}
+            >
+              <input
+                type="checkbox"
+                checked={notifyChannels.includes("sms")}
+                disabled={!smsOptInEnabled}
+                onChange={() => toggleChannel("sms")}
+              />
+              <span className={smsOptInEnabled ? undefined : "text-muted-foreground"}>
+                SMS{smsOptInEnabled ? null : " (opt in via profile)"}
+              </span>
+            </label>
+          </div>
+        </div>
       </div>
 
       {error ? (

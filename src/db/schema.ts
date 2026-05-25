@@ -116,6 +116,8 @@ export const users = pgTable(
     email: varchar("email", { length: 320 }).notNull(),
     emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
     phone: varchar("phone", { length: 32 }),
+    smsOptedIn: boolean("sms_opted_in").default(false).notNull(),
+    emailOptedIn: boolean("email_opted_in").default(false).notNull(),
     passwordHash: text("password_hash"),
     role: userRoleEnum("role").notNull(),
     practiceId: uuid("practice_id"),
@@ -583,6 +585,20 @@ export const followedPractices = pgTable(
       .notNull()
       .references(() => practices.id, { onDelete: "cascade" }),
     addedAt: timestamp("added_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.odId, t.practiceId] })],
+);
+
+export const odPracticeBlocks = pgTable(
+  "od_practice_blocks",
+  {
+    odId: uuid("od_id")
+      .notNull()
+      .references(() => optometrists.id, { onDelete: "cascade" }),
+    practiceId: uuid("practice_id")
+      .notNull()
+      .references(() => practices.id, { onDelete: "cascade" }),
+    blockedAt: timestamp("blocked_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [primaryKey({ columns: [t.odId, t.practiceId] })],
 );
