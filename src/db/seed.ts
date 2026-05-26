@@ -173,7 +173,7 @@ async function main() {
       .returning({ id: practices.id });
     practiceIds.push(row.id);
 
-    // Owner user
+    // Owner user — email opt-in defaults to true since the address is verified.
     await db.insert(users).values({
       email: `owner@${slugify(p.name)}.dev`,
       passwordHash,
@@ -181,6 +181,7 @@ async function main() {
       practiceId: row.id,
       name: `Owner · ${p.name}`,
       emailVerifiedAt: sql`now()`,
+      emailOptedIn: true,
     });
     // Scheduler user (subset)
     if (Math.random() > 0.4) {
@@ -191,6 +192,7 @@ async function main() {
         practiceId: row.id,
         name: `Scheduler · ${p.name}`,
         emailVerifiedAt: sql`now()`,
+        emailOptedIn: true,
       });
     }
   }
@@ -239,6 +241,7 @@ async function main() {
       odId: row.id,
       name: `Dr. ${first} ${last}`,
       emailVerifiedAt: sql`now()`,
+      emailOptedIn: true,
     });
   }
   console.log(`[seed] inserted ${odIds.length} ODs (16 verified, 4 pending)`);
@@ -250,6 +253,7 @@ async function main() {
     role: "admin",
     name: "NotifEyes Admin",
     emailVerifiedAt: sql`now()`,
+    emailOptedIn: true,
   });
   console.log(`[seed] inserted admin user`);
 
