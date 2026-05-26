@@ -17,6 +17,10 @@ import {
   type FanoutShiftPostedData,
 } from "./jobs/fanout-shift-posted";
 import {
+  fanoutShiftBumped,
+  type FanoutShiftBumpedData,
+} from "./jobs/fanout-shift-bumped";
+import {
   bookingCompletedFollowups,
   type BookingCompletedData,
 } from "./jobs/booking-completed-followups";
@@ -27,6 +31,7 @@ import { shiftRemindersScan } from "./jobs/shift-reminders";
 import { credentialExpiringScan } from "./jobs/credential-expiring";
 
 const QUEUE_FANOUT = "fanout-shift-posted";
+const QUEUE_FANOUT_BUMPED = "fanout-shift-bumped";
 const QUEUE_BOOKING_COMPLETED = "booking-completed-followups";
 const QUEUE_REVIEW_CRON = "publish-pending-reviews";
 const QUEUE_BOOKING_PROGRESSION = "booking-progression";
@@ -37,6 +42,7 @@ const QUEUE_CREDENTIAL_EXPIRING = "credential-expiring";
 async function main() {
   const boss = await getBoss();
   await boss.createQueue(QUEUE_FANOUT);
+  await boss.createQueue(QUEUE_FANOUT_BUMPED);
   await boss.createQueue(QUEUE_BOOKING_COMPLETED);
   await boss.createQueue(QUEUE_REVIEW_CRON);
   await boss.createQueue(QUEUE_BOOKING_PROGRESSION);
@@ -53,6 +59,24 @@ async function main() {
           await fanoutShiftPosted(job.data);
         } catch (err) {
           console.error(`[worker] ${QUEUE_FANOUT} job ${job.id} failed:`, err);
+          throw err;
+        }
+      }
+    },
+  );
+
+  await boss.work<FanoutShiftBumpedData>(
+    QUEUE_FANOUT_BUMPED,
+    { batchSize: 5 },
+    async (jobs) => {
+      for (const job of jobs) {
+        try {
+          await fanoutShiftBumped(job.data);
+        } catch (err) {
+          console.error(
+            `[worker] ${QUEUE_FANOUT_BUMPED} job ${job.id} failed:`,
+            err,
+          );
           throw err;
         }
       }
@@ -113,7 +137,7 @@ async function main() {
   ]);
 
   console.log(
-    `[worker] listening on: ${QUEUE_FANOUT}, ${QUEUE_BOOKING_COMPLETED}, ${QUEUE_REVIEW_CRON} (cron), ${QUEUE_BOOKING_PROGRESSION} (cron), ${QUEUE_NO_SHOW_CHECK} (cron), ${QUEUE_SHIFT_REMINDERS} (cron), ${QUEUE_CREDENTIAL_EXPIRING} (cron)`,
+    `[worker] listening on: ${QUEUE_FANOUT}, ${QUEUE_FANOUT_BUMPED}, ${QUEUE_BOOKING_COMPLETED}, ${QUEUE_REVIEW_CRON} (cron), ${QUEUE_BOOKING_PROGRESSION} (cron), ${QUEUE_NO_SHOW_CHECK} (cron), ${QUEUE_SHIFT_REMINDERS} (cron), ${QUEUE_CREDENTIAL_EXPIRING} (cron)`,
   );
 
   // Graceful shutdown

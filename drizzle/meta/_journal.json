@@ -15,6 +15,13 @@
       "when": 1779731902826,
       "tag": "0001_sleepy_nomad",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1779734673261,
+      "tag": "0002_ambiguous_jack_murdock",
+      "breakpoints": true
     }
   ]
 }

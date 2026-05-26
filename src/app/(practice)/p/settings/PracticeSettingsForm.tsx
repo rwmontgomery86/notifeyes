@@ -19,6 +19,11 @@ type PracticeForm = {
   state: string | null;
   zip: string | null;
   photos: string[];
+  email: string;
+  phone: string | null;
+  emailOptedIn: boolean;
+  smsOptedIn: boolean;
+  marketingOptedIn: boolean;
 };
 
 const SERVICE_OPTIONS = [
@@ -74,6 +79,10 @@ export function PracticeSettingsForm({ initial }: { initial: PracticeForm }) {
         state: form.state,
         zip: form.zip,
         photos: form.photos,
+        phone: form.phone,
+        emailOptedIn: form.emailOptedIn,
+        smsOptedIn: form.smsOptedIn,
+        marketingOptedIn: form.marketingOptedIn,
       });
       if (!res.ok) {
         setError(res.error ?? "Could not save");
@@ -84,8 +93,93 @@ export function PracticeSettingsForm({ initial }: { initial: PracticeForm }) {
     });
   }
 
+  const phoneTrimmed = (form.phone ?? "").trim();
+  const smsDisabled = phoneTrimmed.length === 0;
+
   return (
     <div className="mt-6 grid gap-6">
+      <section id="contact" className="ne-card grid gap-4">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          Notification contact
+        </h2>
+        <p className="text-xs text-muted-foreground">
+          How we reach you when an OD applies, books, or messages. At least one
+          channel must be enabled before you can post a shift.
+        </p>
+        <label>
+          <span className="ne-label">Email</span>
+          <input
+            value={form.email}
+            readOnly
+            className="ne-input bg-muted/40"
+          />
+        </label>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={form.emailOptedIn}
+            onChange={(e) =>
+              setForm({ ...form, emailOptedIn: e.target.checked })
+            }
+          />
+          <span>Notify me by email about applicants, bookings, and messages.</span>
+        </label>
+        <label>
+          <span className="ne-label">Phone</span>
+          <input
+            type="tel"
+            value={form.phone ?? ""}
+            onChange={(e) => {
+              const next = e.target.value;
+              setForm({
+                ...form,
+                phone: next,
+                smsOptedIn:
+                  next.trim().length === 0 ? false : form.smsOptedIn,
+              });
+            }}
+            className="ne-input"
+            maxLength={32}
+            placeholder="+1 555 123 4567"
+          />
+        </label>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={form.smsOptedIn}
+            disabled={smsDisabled}
+            onChange={(e) =>
+              setForm({ ...form, smsOptedIn: e.target.checked })
+            }
+          />
+          <span className={smsDisabled ? "text-muted-foreground" : undefined}>
+            Notify me by SMS about applicants and bookings.
+            {smsDisabled ? " (add a phone number first)" : null}
+          </span>
+        </label>
+        <label className="flex items-start gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={form.marketingOptedIn}
+            onChange={(e) =>
+              setForm({ ...form, marketingOptedIn: e.target.checked })
+            }
+            className="mt-1"
+          />
+          <span>
+            Send me occasional product updates and tips (optional, separate
+            from transactional alerts).
+          </span>
+        </label>
+        <p className="text-xs text-muted-foreground">
+          We use your phone and email only to notify you about applicants,
+          bookings, and your account. Marketing updates (product news, tips)
+          are separate and require opt-in above. We do not sell or share your
+          contact info with marketing agencies. Standard message and data
+          rates may apply for SMS. Reply STOP to opt out at any time.
+        </p>
+      </section>
+
       <section className="ne-card grid gap-4">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
           Basics

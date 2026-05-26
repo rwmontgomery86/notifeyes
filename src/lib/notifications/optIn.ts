@@ -9,6 +9,7 @@ export interface OptInState {
   phone: string | null;
   emailOptedIn: boolean;
   smsOptedIn: boolean;
+  marketingOptedIn: boolean;
 }
 
 export function hasAnyNotificationChannel(state: OptInState): boolean {
@@ -35,6 +36,7 @@ export async function getOptInState(userId: string): Promise<OptInState | null> 
       phone: users.phone,
       emailOptedIn: users.emailOptedIn,
       smsOptedIn: users.smsOptedIn,
+      marketingOptedIn: users.marketingOptedIn,
     })
     .from(users)
     .where(eq(users.id, userId))

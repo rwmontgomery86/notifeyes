@@ -31,6 +31,7 @@ export default async function WatchPage() {
       phone: users.phone,
       emailOptedIn: users.emailOptedIn,
       smsOptedIn: users.smsOptedIn,
+      marketingOptedIn: users.marketingOptedIn,
     })
     .from(users)
     .where(eq(users.id, session!.user.id))

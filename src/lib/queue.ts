@@ -26,6 +26,11 @@ export async function enqueueFanoutShiftPosted(shiftId: string): Promise<void> {
   await boss.send("fanout-shift-posted", { shiftId });
 }
 
+export async function enqueueFanoutShiftBumped(shiftId: string): Promise<void> {
+  const boss = await getProducerBoss();
+  await boss.send("fanout-shift-bumped", { shiftId });
+}
+
 export async function enqueueBookingCompletedFollowups(
   bookingId: string,
   options: { delaySeconds?: number } = {},

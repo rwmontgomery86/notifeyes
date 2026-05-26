@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { practices } from "@/db/schema";
+import { practices, users } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { PracticeSettingsForm } from "./PracticeSettingsForm";
 
@@ -17,6 +17,18 @@ export default async function PracticeSettingsPage() {
     .where(eq(practices.id, session.user.practiceId))
     .limit(1);
   if (!p) redirect("/p/dashboard");
+
+  const [u] = await db
+    .select({
+      email: users.email,
+      phone: users.phone,
+      emailOptedIn: users.emailOptedIn,
+      smsOptedIn: users.smsOptedIn,
+      marketingOptedIn: users.marketingOptedIn,
+    })
+    .from(users)
+    .where(eq(users.id, session.user.id))
+    .limit(1);
 
   return (
     <div>
@@ -40,6 +52,11 @@ export default async function PracticeSettingsPage() {
           state: p.state,
           zip: p.zip,
           photos: p.photos,
+          email: u?.email ?? "",
+          phone: u?.phone ?? null,
+          emailOptedIn: u?.emailOptedIn ?? false,
+          smsOptedIn: u?.smsOptedIn ?? false,
+          marketingOptedIn: u?.marketingOptedIn ?? false,
         }}
       />
     </div>

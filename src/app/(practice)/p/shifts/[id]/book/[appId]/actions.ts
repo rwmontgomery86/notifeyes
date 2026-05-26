@@ -89,8 +89,11 @@ export async function confirmBooking(
     .where(eq(users.odId, row.od.id))
     .limit(1);
 
+  // When boosted, the bumped rate IS the new headline rate everyone gets paid at.
+  const effectiveRate =
+    row.shift.bumpRateCentsPerHour ?? row.shift.rateCentsPerHour;
   const cost = computeShiftCost({
-    rateCentsPerHour: row.shift.rateCentsPerHour,
+    rateCentsPerHour: effectiveRate,
     startsAt: row.shift.startsAt,
     endsAt: row.shift.endsAt,
     lunchMinutes: row.shift.lunchMinutes,
@@ -226,7 +229,7 @@ export async function confirmBooking(
         recipientEmail: odUserRow?.email,
         recipientPhone: odUserRow?.phone ?? undefined,
         subject: `Booking confirmed · ${row.practice.name}`,
-        body: `${formatShiftWhen(row.shift.startsAt, row.shift.endsAt)} · ${formatUsd(row.shift.rateCentsPerHour)}/hr. Sign the engagement on the booking page.`,
+        body: `${formatShiftWhen(row.shift.startsAt, row.shift.endsAt)} · ${formatUsd(effectiveRate)}/hr. Sign the engagement on the booking page.`,
         actionUrl: `/bookings/${bookingId}`,
         channels: ["push", "email"],
         payload: { bookingId, shiftId: row.shift.id, role: "od" },
@@ -237,7 +240,7 @@ export async function confirmBooking(
       userId: session.user.id,
       recipientEmail: session.user.email!,
       subject: `Booking confirmed with ${row.od.name}`,
-      body: `${formatShiftWhen(row.shift.startsAt, row.shift.endsAt)} · ${formatUsd(row.shift.rateCentsPerHour)}/hr. Practice charge: ${formatUsd(cost.totalCents)}.`,
+      body: `${formatShiftWhen(row.shift.startsAt, row.shift.endsAt)} · ${formatUsd(effectiveRate)}/hr. Practice charge: ${formatUsd(cost.totalCents)}.`,
       actionUrl: `/bookings/${bookingId}`,
       channels: ["push", "email"],
       payload: { bookingId, shiftId: row.shift.id, role: "practice" },

@@ -121,8 +121,10 @@ export async function respondToInvite(
     // No envelope (very old invites). Practice signs again via /bookings/:id.
   }
 
+  const effectiveRate =
+    row.shift.bumpRateCentsPerHour ?? row.shift.rateCentsPerHour;
   const cost = computeShiftCost({
-    rateCentsPerHour: row.shift.rateCentsPerHour,
+    rateCentsPerHour: effectiveRate,
     startsAt: row.shift.startsAt,
     endsAt: row.shift.endsAt,
     lunchMinutes: row.shift.lunchMinutes,
@@ -138,7 +140,7 @@ export async function respondToInvite(
     odName: row.od.name,
     shiftStartsAt: row.shift.startsAt,
     shiftEndsAt: row.shift.endsAt,
-    ratePerHour: formatUsd(row.shift.rateCentsPerHour),
+    ratePerHour: formatUsd(effectiveRate),
     totalAmount: formatUsd(cost.totalCents),
     matchFee: matchFeeDisplay,
   });
@@ -271,7 +273,7 @@ export async function respondToInvite(
         userId: practiceUser.id,
         recipientEmail: practiceUser.email,
         subject: `${row.od.name} accepted — booking locked in`,
-        body: `${formatShiftWhen(row.shift.startsAt, row.shift.endsAt)} · ${formatUsd(row.shift.rateCentsPerHour)}/hr. They&apos;ll sign the engagement next.`,
+        body: `${formatShiftWhen(row.shift.startsAt, row.shift.endsAt)} · ${formatUsd(effectiveRate)}/hr. They&apos;ll sign the engagement next.`,
         actionUrl: `/bookings/${bookingId}`,
         channels: ["push", "email"],
         payload: { bookingId, shiftId: row.shift.id, viaInvite: true },

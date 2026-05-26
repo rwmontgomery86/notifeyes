@@ -3,7 +3,7 @@
 import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
-import { practices } from "@/db/schema";
+import { practices, users } from "@/db/schema";
 import { requirePractice } from "@/lib/auth/guards";
 import { geocoder } from "@/lib/geocode";
 
@@ -20,6 +20,10 @@ const schema = z.object({
   state: z.string().length(2).nullable().optional(),
   zip: z.string().max(10).nullable().optional(),
   photos: z.array(z.string().max(2_000_000)).max(6).optional(),
+  phone: z.string().max(32).nullable().optional(),
+  emailOptedIn: z.boolean().optional(),
+  smsOptedIn: z.boolean().optional(),
+  marketingOptedIn: z.boolean().optional(),
 });
 
 export async function updatePracticeSettings(input: z.infer<typeof schema>) {
@@ -90,6 +94,18 @@ export async function updatePracticeSettings(input: z.infer<typeof schema>) {
       ...(geocodedLocationSql ? { location: geocodedLocationSql } : {}),
     })
     .where(eq(practices.id, practiceId));
+
+  // Contact + opt-ins live on the user record. SMS auto-disables when phone empty.
+  const phoneClean = (v.phone ?? "").trim() || null;
+  await db
+    .update(users)
+    .set({
+      phone: phoneClean,
+      emailOptedIn: v.emailOptedIn ?? false,
+      smsOptedIn: phoneClean == null ? false : v.smsOptedIn ?? false,
+      marketingOptedIn: v.marketingOptedIn ?? false,
+    })
+    .where(eq(users.id, session.user.id));
 
   return {
     ok: true as const,

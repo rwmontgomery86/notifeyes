@@ -7,6 +7,7 @@ import { shifts } from "@/db/schema";
 import { requirePractice } from "@/lib/auth/guards";
 import { enqueueFanoutShiftPosted } from "@/lib/queue";
 import { assertShiftTransition } from "@/lib/state/shift";
+import { getOptInState, hasAnyNotificationChannel } from "@/lib/notifications/optIn";
 
 const updateSchema = z.object({
   action: z.enum(["draft", "post"]),
@@ -53,7 +54,19 @@ export async function updateShift(shiftId: string, formData: FormData) {
   }
 
   const willPost = v.action === "post";
-  if (willPost) assertShiftTransition("draft", "posted");
+  if (willPost) {
+    assertShiftTransition("draft", "posted");
+    const session = await requirePractice();
+    const optIn = await getOptInState(session.user.id);
+    if (!optIn || !hasAnyNotificationChannel(optIn)) {
+      return {
+        ok: false as const,
+        error:
+          "Add a phone or enable email notifications in Settings before posting.",
+        redirectTo: "/p/settings#contact",
+      };
+    }
+  }
 
   await db
     .update(shifts)
@@ -86,6 +99,16 @@ export async function postShiftDraft(shiftId: string) {
     return { ok: false as const, error: "Only drafts can be posted." };
   }
   assertShiftTransition("draft", "posted");
+  const session = await requirePractice();
+  const optIn = await getOptInState(session.user.id);
+  if (!optIn || !hasAnyNotificationChannel(optIn)) {
+    return {
+      ok: false as const,
+      error:
+        "Add a phone or enable email notifications in Settings before posting.",
+      redirectTo: "/p/settings#contact",
+    };
+  }
 
   const updated = await db
     .update(shifts)

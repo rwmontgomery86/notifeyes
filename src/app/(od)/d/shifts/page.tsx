@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { optometrists, practices, shifts, watchZones } from "@/db/schema";
 import { formatShiftWhen, relativeTime } from "@/lib/dates";
-import { formatUsd } from "@/lib/pricing";
+import { formatUsd } from "@/lib/format";
 import { ShiftsMap } from "./ShiftsMap";
 import { ScopeToggle } from "./ScopeToggle";
 
@@ -49,6 +49,21 @@ export default async function OdShiftsPage({
                 "distance_meters",
               )
             : sql<number>`0`.as("distance_meters"),
+          // True when ALL of: shift is boosted, no zone of mine contains the
+          // practice, and at least one of my zones is within the bump radius.
+          isBumpedForMe: sql<boolean>`(
+            ${shifts.bumpRadiusMeters} IS NOT NULL
+            AND NOT EXISTS (
+              SELECT 1 FROM watch_zones wz
+              WHERE wz.od_id = ${odId} AND wz.paused = false
+                AND ST_Contains(wz.geometry::geometry, ${practices.location}::geometry)
+            )
+            AND EXISTS (
+              SELECT 1 FROM watch_zones wz
+              WHERE wz.od_id = ${odId} AND wz.paused = false
+                AND ST_DWithin(wz.geometry, ${practices.location}, ${shifts.bumpRadiusMeters})
+            )
+          )`.as("is_bumped_for_me"),
         })
         .from(shifts)
         .innerJoin(practices, eq(shifts.practiceId, practices.id))
@@ -67,8 +82,14 @@ export default async function OdShiftsPage({
                   SELECT 1 FROM watch_zones wz
                   WHERE wz.od_id = ${odId}
                     AND wz.paused = false
-                    AND ST_Contains(wz.geometry::geometry, ${practices.location}::geometry)
-                    AND wz.min_rate_cents <= ${shifts.rateCentsPerHour}
+                    AND wz.min_rate_cents <= COALESCE(${shifts.bumpRateCentsPerHour}, ${shifts.rateCentsPerHour})
+                    AND (
+                      ST_Contains(wz.geometry::geometry, ${practices.location}::geometry)
+                      OR (
+                        ${shifts.bumpRadiusMeters} IS NOT NULL
+                        AND ST_DWithin(wz.geometry, ${practices.location}, ${shifts.bumpRadiusMeters})
+                      )
+                    )
                 )`
               : sql`TRUE`,
           ),
@@ -96,7 +117,7 @@ export default async function OdShiftsPage({
       lat: Number(r.lat),
       lng: Number(r.lng),
       label: r.practice.name,
-      rateCents: r.shift.rateCentsPerHour,
+      rateCents: r.shift.bumpRateCentsPerHour ?? r.shift.rateCentsPerHour,
       city: `${r.practice.city ?? ""}, ${r.practice.state ?? ""}`,
       whenLabel: formatShiftWhen(r.shift.startsAt, r.shift.endsAt),
     }))
@@ -169,43 +190,54 @@ export default async function OdShiftsPage({
               </div>
             )
           ) : null}
-          {rows.map(({ shift, practice, distanceMeters }) => (
-            <Link
-              key={shift.id}
-              href={`/shifts/${shift.id}`}
-              className="ne-card hover:border-primary transition-colors"
-              data-shift-id={shift.id}
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <div className="font-semibold">{practice.name}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {practice.city}, {practice.state}
-                    {distanceMeters > 0
-                      ? ` · ${(distanceMeters / 1609.34).toFixed(1)} mi away`
-                      : ""}
+          {rows.map(({ shift, practice, distanceMeters, isBumpedForMe }) => {
+            const displayRate =
+              shift.bumpRateCentsPerHour ?? shift.rateCentsPerHour;
+            return (
+              <Link
+                key={shift.id}
+                href={`/shifts/${shift.id}`}
+                className="ne-card hover:border-primary transition-colors"
+                data-shift-id={shift.id}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="font-semibold">{practice.name}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {practice.city}, {practice.state}
+                      {distanceMeters > 0
+                        ? ` · ${(distanceMeters / 1609.34).toFixed(1)} mi away`
+                        : ""}
+                    </div>
+                    <div className="mt-2 text-sm">
+                      {formatShiftWhen(shift.startsAt, shift.endsAt)}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {relativeTime(shift.startsAt)} · {shift.lunchMinutes} min lunch
+                    </div>
+                    {isBumpedForMe ? (
+                      <div className="mt-2">
+                        <span className="ne-pill border-amber-500/40 bg-amber-100/60 text-amber-900">
+                          Boosted · outside your zone
+                        </span>
+                      </div>
+                    ) : null}
                   </div>
-                  <div className="mt-2 text-sm">
-                    {formatShiftWhen(shift.startsAt, shift.endsAt)}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {relativeTime(shift.startsAt)} · {shift.lunchMinutes} min lunch
+                  <div className="text-right">
+                    <div className="text-lg font-bold">
+                      {formatUsd(displayRate)}
+                      <span className="text-xs font-medium text-muted-foreground">
+                        /hr
+                      </span>
+                    </div>
+                    <div className="text-xs uppercase tracking-wide text-muted-foreground capitalize">
+                      {shift.type.replace("_", " ")}
+                    </div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-lg font-bold">
-                    {formatUsd(shift.rateCentsPerHour)}
-                    <span className="text-xs font-medium text-muted-foreground">
-                      /hr
-                    </span>
-                  </div>
-                  <div className="text-xs uppercase tracking-wide text-muted-foreground capitalize">
-                    {shift.type.replace("_", " ")}
-                  </div>
-                </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
       </div>
     </div>

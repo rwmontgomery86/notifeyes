@@ -15,6 +15,7 @@ import { formatShiftWhen } from "@/lib/dates";
 import { formatUsd, computeShiftCost } from "@/lib/pricing";
 import { buildContractBody, CONTRACT_TEMPLATE_VERSION } from "@/lib/contract";
 import { ApplicantActions } from "./ApplicantActions";
+import { BoostModal } from "./BoostModal";
 import { CancelShift } from "./CancelShift";
 import { InvitePanel } from "./InvitePanel";
 
@@ -52,8 +53,9 @@ export default async function ShiftAdminPage({
     .where(eq(applications.shiftId, id))
     .orderBy(desc(applications.createdAt));
 
+  const effectiveRate = shift.bumpRateCentsPerHour ?? shift.rateCentsPerHour;
   const cost = computeShiftCost({
-    rateCentsPerHour: shift.rateCentsPerHour,
+    rateCentsPerHour: effectiveRate,
     startsAt: shift.startsAt,
     endsAt: shift.endsAt,
     lunchMinutes: shift.lunchMinutes,
@@ -97,6 +99,13 @@ export default async function ShiftAdminPage({
           <span className="ne-pill capitalize border-border">
             {shift.status}
           </span>
+          {shift.status === "posted" ? (
+            <BoostModal
+              shiftId={shift.id}
+              baseRateCentsPerHour={shift.rateCentsPerHour}
+              currentBumpRateCentsPerHour={shift.bumpRateCentsPerHour}
+            />
+          ) : null}
           <CancelShift
             shiftId={shift.id}
             status={shift.status}
@@ -116,9 +125,20 @@ export default async function ShiftAdminPage({
             </div>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold">
-              {formatUsd(shift.rateCentsPerHour)}/hr
-            </div>
+            {shift.bumpRateCentsPerHour != null ? (
+              <>
+                <div className="text-2xl font-bold">
+                  {formatUsd(shift.bumpRateCentsPerHour)}/hr
+                </div>
+                <div className="text-xs text-amber-700">
+                  Boosted from {formatUsd(shift.rateCentsPerHour)}/hr
+                </div>
+              </>
+            ) : (
+              <div className="text-2xl font-bold">
+                {formatUsd(shift.rateCentsPerHour)}/hr
+              </div>
+            )}
             <div className="text-xs text-muted-foreground">
               Est. {formatUsd(cost.totalCents)} total ({matchFeeDisplay} match fee)
             </div>
@@ -138,7 +158,7 @@ export default async function ShiftAdminPage({
               odName: "[Invited OD]",
               shiftStartsAt: shift.startsAt,
               shiftEndsAt: shift.endsAt,
-              ratePerHour: formatUsd(shift.rateCentsPerHour),
+              ratePerHour: formatUsd(effectiveRate),
               totalAmount: formatUsd(cost.totalCents),
               matchFee: matchFeeDisplay,
             })}

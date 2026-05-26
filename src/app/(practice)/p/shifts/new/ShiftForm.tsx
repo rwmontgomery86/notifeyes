@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createShift } from "./actions";
+import { createShift, previewReach } from "./actions";
 import { updateShift } from "../[id]/edit/actions";
 
 const SHIFT_TYPES = [
@@ -36,39 +36,6 @@ export function ShiftForm({
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  function handle(e: React.SyntheticEvent, action: "draft" | "post") {
-    e.preventDefault();
-    setError(null);
-    const target = e.currentTarget as HTMLElement;
-    const form =
-      target instanceof HTMLFormElement ? target : target.closest("form");
-    if (!(form instanceof HTMLFormElement)) {
-      setError("Form not found");
-      return;
-    }
-    const fd = new FormData(form);
-    fd.set("action", action);
-    startTransition(async () => {
-      const res =
-        mode === "edit" && shiftId
-          ? await updateShift(shiftId, fd)
-          : await createShift(fd);
-      if (!res.ok) {
-        setError(res.error ?? "Could not save shift");
-        return;
-      }
-      // On post, jump to the shift detail. On draft save, return to the draft list.
-      if (action === "post") {
-        router.push(`/p/shifts/${"shiftId" in res ? res.shiftId : shiftId}`);
-      } else if (mode === "edit") {
-        router.push("/p/shifts?status=draft");
-      } else {
-        router.push(`/p/shifts/${"shiftId" in res ? res.shiftId : shiftId}`);
-      }
-    });
-  }
-
-  // Default values that make filling out the form fast in dev
   const today = new Date();
   const tomorrow = new Date(today.getTime() + 24 * 3600 * 1000);
   const yyyymmdd = tomorrow.toISOString().slice(0, 10);
@@ -83,6 +50,89 @@ export function ShiftForm({
     notesForOd: "",
   };
 
+  // Form-level state for the fields the reach estimate depends on.
+  const [date, setDate] = useState(v.date);
+  const [startTime, setStartTime] = useState(v.startTime);
+  const [endTime, setEndTime] = useState(v.endTime);
+  const [shiftType, setShiftType] = useState<typeof v.type>(v.type);
+  const [ratePerHour, setRatePerHour] = useState<number>(v.ratePerHour);
+  const [boostOn, setBoostOn] = useState(false);
+  const [bumpRatePerHour, setBumpRatePerHour] = useState<number>(
+    v.ratePerHour + 20,
+  );
+
+  // Debounced reach preview.
+  const [reach, setReach] = useState<{
+    count: number;
+    bumpedCount: number;
+  } | null>(null);
+  const [reachPending, setReachPending] = useState(false);
+  const [reachError, setReachError] = useState<string | null>(null);
+  useEffect(() => {
+    setReachPending(true);
+    const t = setTimeout(async () => {
+      const res = await previewReach({
+        date,
+        startTime,
+        endTime,
+        type: shiftType,
+        ratePerHour,
+        bumpRatePerHour: boostOn ? bumpRatePerHour : null,
+      });
+      if (res.ok) {
+        setReach({ count: res.count, bumpedCount: res.bumpedCount });
+        setReachError(null);
+      } else {
+        setReach(null);
+        setReachError(res.error);
+      }
+      setReachPending(false);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [date, startTime, endTime, shiftType, ratePerHour, boostOn, bumpRatePerHour]);
+
+  function handle(e: React.SyntheticEvent, action: "draft" | "post") {
+    e.preventDefault();
+    setError(null);
+    const target = e.currentTarget as HTMLElement;
+    const form =
+      target instanceof HTMLFormElement ? target : target.closest("form");
+    if (!(form instanceof HTMLFormElement)) {
+      setError("Form not found");
+      return;
+    }
+    const fd = new FormData(form);
+    fd.set("action", action);
+    // Only include bumpRatePerHour when boost is on. Empty/zero is the signal it's off.
+    if (boostOn && bumpRatePerHour > ratePerHour) {
+      fd.set("bumpRatePerHour", String(bumpRatePerHour));
+    } else {
+      fd.delete("bumpRatePerHour");
+    }
+    startTransition(async () => {
+      const res =
+        mode === "edit" && shiftId
+          ? await updateShift(shiftId, fd)
+          : await createShift(fd);
+      if (!res.ok) {
+        const redirectTo = "redirectTo" in res ? res.redirectTo : undefined;
+        if (redirectTo) {
+          router.push(redirectTo);
+          return;
+        }
+        setError(res.error ?? "Could not save shift");
+        return;
+      }
+      if (action === "post") {
+        router.push(`/p/shifts/${"shiftId" in res ? res.shiftId : shiftId}`);
+      } else if (mode === "edit") {
+        router.push("/p/shifts?status=draft");
+      } else {
+        router.push(`/p/shifts/${"shiftId" in res ? res.shiftId : shiftId}`);
+      }
+    });
+  }
+
   return (
     <form className="mt-8 grid gap-5" onSubmit={(e) => handle(e, "post")}>
       <Section title="When">
@@ -93,7 +143,8 @@ export function ShiftForm({
               type="date"
               name="date"
               required
-              defaultValue={v.date}
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
               className="ne-input"
             />
           </label>
@@ -103,7 +154,8 @@ export function ShiftForm({
               type="time"
               name="startTime"
               required
-              defaultValue={v.startTime}
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
               className="ne-input"
             />
           </label>
@@ -113,7 +165,8 @@ export function ShiftForm({
               type="time"
               name="endTime"
               required
-              defaultValue={v.endTime}
+              value={endTime}
+              onChange={(e) => setEndTime(e.target.value)}
               className="ne-input"
             />
           </label>
@@ -135,7 +188,13 @@ export function ShiftForm({
         <div className="grid gap-4 md:grid-cols-2">
           <label>
             <span className="ne-label">Type</span>
-            <select name="type" defaultValue={v.type} className="ne-input" required>
+            <select
+              name="type"
+              value={shiftType}
+              onChange={(e) => setShiftType(e.target.value as typeof v.type)}
+              className="ne-input"
+              required
+            >
               {SHIFT_TYPES.map((t) => (
                 <option key={t.v} value={t.v}>
                   {t.label}
@@ -148,7 +207,8 @@ export function ShiftForm({
             <input
               type="number"
               name="ratePerHour"
-              defaultValue={v.ratePerHour}
+              value={ratePerHour}
+              onChange={(e) => setRatePerHour(Number(e.target.value) || 0)}
               min={50}
               max={500}
               step={5}
@@ -157,6 +217,59 @@ export function ShiftForm({
             />
           </label>
         </div>
+
+        <div className="mt-3">
+          <ReachPill
+            reach={reach}
+            pending={reachPending}
+            error={reachError}
+            boostOn={boostOn}
+          />
+        </div>
+      </Section>
+
+      <Section title="Boost — reach ODs outside their watch zones">
+        <label className="flex items-start gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={boostOn}
+            onChange={(e) => {
+              const on = e.target.checked;
+              setBoostOn(on);
+              if (on && bumpRatePerHour <= ratePerHour) {
+                setBumpRatePerHour(ratePerHour + 20);
+              }
+            }}
+            className="mt-1"
+          />
+          <span>
+            Pay extra to surface this shift to ODs within 25 miles whose watch
+            zones don&apos;t include you. Useful when in-zone supply is thin or a
+            shift sits unfilled.
+          </span>
+        </label>
+        {boostOn ? (
+          <div className="mt-3 max-w-xs">
+            <label>
+              <span className="ne-label">Boosted rate (USD per hour)</span>
+              <input
+                type="number"
+                value={bumpRatePerHour}
+                onChange={(e) =>
+                  setBumpRatePerHour(Number(e.target.value) || 0)
+                }
+                min={ratePerHour + 5}
+                max={500}
+                step={5}
+                className="ne-input"
+              />
+            </label>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Must be at least ${ratePerHour + 5}/hr. The boosted rate replaces
+              the base rate for every OD who books.
+            </p>
+          </div>
+        ) : null}
       </Section>
 
       <Section title="Notes for the OD">
@@ -195,6 +308,43 @@ export function ShiftForm({
         </button>
       </div>
     </form>
+  );
+}
+
+function ReachPill({
+  reach,
+  pending,
+  error,
+  boostOn,
+}: {
+  reach: { count: number; bumpedCount: number } | null;
+  pending: boolean;
+  error: string | null;
+  boostOn: boolean;
+}) {
+  if (error) {
+    return (
+      <span className="ne-pill border-border bg-muted/40 text-muted-foreground">
+        Reach: — ({error})
+      </span>
+    );
+  }
+  if (!reach && pending) {
+    return (
+      <span className="ne-pill border-border bg-muted/40 text-muted-foreground">
+        Estimating reach…
+      </span>
+    );
+  }
+  if (!reach) return null;
+  const base = reach.count - reach.bumpedCount;
+  return (
+    <span className="ne-pill border-amber-500/40 bg-amber-100/60 text-amber-900">
+      ~{reach.count} OD{reach.count === 1 ? "" : "s"} would be notified
+      {boostOn && reach.bumpedCount > 0
+        ? ` · ${base} in zone + ${reach.bumpedCount} added by boost`
+        : ""}
+    </span>
   );
 }
 

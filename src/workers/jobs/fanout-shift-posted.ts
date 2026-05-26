@@ -40,10 +40,12 @@ export async function fanoutShiftPosted(
   const matches = await findOdsMatchingShift(data.shiftId);
   console.log(`[fanout] shift ${data.shiftId} → ${matches.length} matching ODs`);
 
+  const effectiveRate =
+    row.shift.bumpRateCentsPerHour ?? row.shift.rateCentsPerHour;
   const subject = `${row.practice.name} just posted a shift`;
   const body =
     `${formatShiftWhen(row.shift.startsAt, row.shift.endsAt)}\n` +
-    `${formatUsd(row.shift.rateCentsPerHour)}/hr · ${row.practice.city}, ${row.practice.state}`;
+    `${formatUsd(effectiveRate)}/hr · ${row.practice.city}, ${row.practice.state}`;
   const actionUrl = `/shifts/${row.shift.id}`;
 
   // Look up emails for matched users in a single query
@@ -70,13 +72,17 @@ export async function fanoutShiftPosted(
           recipientEmail: u?.email,
           recipientPhone: u?.phone ?? undefined,
           subject,
-          body: `${body}\n\nMatched your watch zone "${m.zoneName}".`,
+          body:
+            m.matchKind === "bumped"
+              ? `${body}\n\nBoosted — outside your watch zone "${m.zoneName}" but reached via a nearby-shift boost.`
+              : `${body}\n\nMatched your watch zone "${m.zoneName}".`,
           actionUrl,
           channels: m.channels,
           payload: {
             shiftId: row.shift.id,
             practiceId: row.practice.id,
             watchZoneId: m.watchZoneId,
+            matchKind: m.matchKind,
           },
         });
       }),

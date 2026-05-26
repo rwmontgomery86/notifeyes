@@ -60,6 +60,7 @@ export async function createWatchZone(input: z.infer<typeof createSchema>) {
       phone: users.phone,
       emailOptedIn: users.emailOptedIn,
       smsOptedIn: users.smsOptedIn,
+      marketingOptedIn: users.marketingOptedIn,
     })
     .from(users)
     .where(eq(users.id, session.user.id))
