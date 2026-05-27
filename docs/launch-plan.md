@@ -6,7 +6,7 @@
 > resume. When work lands, the commit that lands it must also tick the
 > checkbox here and bump `Last touched`.
 
-**Last touched:** 2026-05-27 (initial bootstrap)
+**Last touched:** 2026-05-27 (registrar decision logged)
 **Cursor:** Phase 1 — waiting on Ross to complete out-of-band signups
 (LLC, Google Workspace, SaaS accounts). First Claude-actionable step:
 provision Supabase project once credentials are in hand.
@@ -37,7 +37,7 @@ everywhere, no DIY ops.
 | Auth | Auth.js v5: password (existing) + Google OAuth |
 | Errors | Sentry |
 | Product analytics | PostHog |
-| Domain | notifeyes.com (registrar TBD) |
+| Domain | notifeyes.com (GoDaddy) |
 | Support email | `support@notifeyes.com` |
 | Account email | `rosswmont@notifeyes.com` (Google Workspace) |
 
@@ -69,8 +69,10 @@ old one; do not edit history.
   (Resend, Twilio, Stripe, UploadThing). No half-measures.
 - **2026-05-27** Beta money: real, $1–5 denominations. Exercises full
   Stripe flow with minimal exposure.
-- **2026-05-27** Domain: `notifeyes.com` (owned). Registrar still to
-  confirm (Namecheap/GoDaddy/Google Domains category).
+- **2026-05-27** Domain: `notifeyes.com` (owned), registered at **GoDaddy**.
+  DNS will be managed at GoDaddy by default. If propagation or UI friction
+  becomes a problem during Phase 1, fallback is to move nameservers to
+  Cloudflare or Vercel DNS while keeping registration at GoDaddy.
 - **2026-05-27** Business entity: in progress. Stripe stays in test mode
   until LLC + EIN clear.
 - **2026-05-27** Legal: winging it for beta. Mitigation = beta
@@ -193,7 +195,6 @@ previous step has slipped at least once on every project ever — use it.
 
 - **LLC formation timeline.** Affects when Stripe can flip to live mode.
 - **Beta cohort list.** Names needed by start of Phase 3.
-- **Domain registrar.** Needed before Vercel DNS step in Phase 1.
 
 ---
 
