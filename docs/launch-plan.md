@@ -6,10 +6,15 @@
 > resume. When work lands, the commit that lands it must also tick the
 > checkbox here and bump `Last touched`.
 
-**Last touched:** 2026-05-27 (registrar decision logged)
-**Cursor:** Phase 1 — waiting on Ross to complete out-of-band signups
-(LLC, Google Workspace, SaaS accounts). First Claude-actionable step:
-provision Supabase project once credentials are in hand.
+**Last touched:** 2026-05-27 (core hosting signups complete: Google
+Workspace, Vercel Pro, Supabase Pro, Railway. LLC filed, awaiting approval.)
+**Cursor:** Phase 1 — Supabase/Vercel/Railway accounts active. Ready to
+start Claude-side provisioning as soon as Ross (a) confirms a Supabase
+*project* exists (account ≠ project) and shares the direct-connection
+`DATABASE_URL` via a safe channel, and (b) links the GitHub repo from
+the Vercel and Railway dashboards. Remaining SaaS signups (Resend,
+Twilio, Stripe completion, UploadThing, Mapbox, Sentry, PostHog, Google
+Cloud OAuth) can proceed in parallel.
 
 ---
 
@@ -102,15 +107,17 @@ old one; do not edit history.
 
 ### Out-of-band tasks (Ross)
 - [ ] File LLC + obtain EIN (or accelerate via Stripe Atlas).
-- [ ] Set up Google Workspace for `notifeyes.com`. Create
+      _Status 2026-05-27: LLC submitted, awaiting approval. EIN
+      application + business bank account follow._
+- [x] Set up Google Workspace for `notifeyes.com`. Create
       `rosswmont@notifeyes.com` and `support@notifeyes.com`.
 - [ ] Sign up for SaaS accounts using `rosswmont@notifeyes.com`:
-  - [ ] Vercel (Pro tier)
-  - [ ] Railway
-  - [ ] Supabase (Pro tier)
+  - [x] Vercel (Pro tier)
+  - [x] Railway
+  - [x] Supabase (Pro tier)
   - [ ] Resend
   - [ ] Twilio (purchase one US phone number)
-  - [ ] Stripe (test mode for now)
+  - [ ] Stripe (test mode for now) — _account started, signup incomplete_
   - [ ] UploadThing
   - [ ] Mapbox
   - [ ] Sentry
@@ -206,13 +213,13 @@ env vars.
 
 | Service | Tier | Account email | Status |
 |---|---|---|---|
-| Google Workspace | Business Starter | rosswmont@notifeyes.com | not signed up |
-| Vercel | Pro | rosswmont@notifeyes.com | not signed up |
-| Railway | Hobby | rosswmont@notifeyes.com | not signed up |
-| Supabase | Pro | rosswmont@notifeyes.com | not signed up |
+| Google Workspace | Business Starter | rosswmont@notifeyes.com | active |
+| Vercel | Pro | rosswmont@notifeyes.com | active |
+| Railway | Hobby | rosswmont@notifeyes.com | active |
+| Supabase | Pro | rosswmont@notifeyes.com | active (account; project TBC) |
 | Resend | Free | rosswmont@notifeyes.com | not signed up |
 | Twilio | Pay-as-you-go | rosswmont@notifeyes.com | not signed up |
-| Stripe | Standard | rosswmont@notifeyes.com | not signed up |
+| Stripe | Standard | rosswmont@notifeyes.com | started, signup incomplete |
 | UploadThing | Free | rosswmont@notifeyes.com | not signed up |
 | Mapbox | Free | rosswmont@notifeyes.com | not signed up |
 | Sentry | Developer (free) | rosswmont@notifeyes.com | not signed up |
