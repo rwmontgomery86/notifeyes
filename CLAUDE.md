@@ -114,7 +114,7 @@ Cross-cutting public routes that BOTH sides render (treat carefully): `src/app/s
 
 ## State of play
 
-V1 is functionally complete. **CI is currently RED on `main`** — the spine Playwright e2e regressed on 2026-05-26 (shift-posting no longer redirects; likely the notification-channel gate from `12a5f65` vs. stale seed/test fixtures). See **Known blockers** in [`docs/launch-plan.md`](docs/launch-plan.md). Active workstream is the closed beta launch — see that file for the cursor, decisions log, and step-by-step checklist.
+V1 is functionally complete. The spine Playwright e2e that regressed on 2026-05-26 (post-shift no longer redirected) is **fixed on this branch, pending merge to `main`** — the cause was a client navigation bug in `ShiftForm.tsx` (a `useTransition` `router.push` discarded by the new reach-estimate effect), not the notification gate. See **Known blockers** in [`docs/launch-plan.md`](docs/launch-plan.md). Active workstream is the closed beta launch — see that file for the cursor, decisions log, and step-by-step checklist.
 
 Longer-horizon buckets after beta:
 

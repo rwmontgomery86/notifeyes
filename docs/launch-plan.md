@@ -6,9 +6,10 @@
 > resume. When work lands, the commit that lands it must also tick the
 > checkbox here and bump `Last touched`.
 
-**Last touched:** 2026-05-28 (discovered `main` CI is red — spine e2e
-regression; see Known blockers below. Core hosting signups complete;
-LLC filed, awaiting approval.)
+**Last touched:** 2026-05-28 (root-caused and fixed the red `main` CI —
+spine e2e regression was a client navigation bug, not the notification
+gate; see Known blockers below. Core hosting signups complete; LLC
+filed, awaiting approval.)
 **Cursor:** Phase 1 — Ross is standing up the Supabase project and
 running `npm run db:migrate` + `npm run db:seed` against it (7-step
 standup laid out in the 2026-05-27 session). **RESUME on next machine:**
@@ -19,14 +20,21 @@ Twilio, Stripe completion, UploadThing, Mapbox, Sentry, PostHog, Google
 Cloud OAuth) proceed in parallel.
 
 **Known blockers:**
-- **`main` CI has been RED since 2026-05-26.** The spine Playwright e2e
-  (`tests/spine.spec.ts`) fails: posting a shift no longer redirects to
-  `/p/shifts/<id>` — it stays stuck on `/p/shifts/new`. Likely cause:
-  commit `12a5f65` gated shift posting on "at least one notification
-  channel enabled," but the seed/spine-test fixtures don't enable one.
-  V1 blocker for beta (can't post shifts). Tracked as a separate task —
-  must go green before the beta opens. Our docs PR #5 inherits this red;
-  it is NOT caused by the docs change.
+- **`main` CI was RED 2026-05-26 → fixed 2026-05-28 (pending merge).**
+  The spine Playwright e2e (`tests/spine.spec.ts`) failed: posting a
+  shift no longer redirected to `/p/shifts/<id>` — it stayed on
+  `/p/shifts/new`. The earlier guess (notification-channel gate vs.
+  seed fixtures) was wrong — the action succeeds and the gate passes;
+  the seed default `emailOptedIn=true` (`792211a`) didn't help because
+  the gate was never the problem. **Actual root cause:** in
+  `src/app/(practice)/p/shifts/new/ShiftForm.tsx` the success-path
+  `router.push` ran inside a `useTransition` action, and the new reach-
+  estimate effect (`previewReach`, added in `12a5f65`) re-renders the
+  form right as the push fires, discarding the pending navigation
+  transition — the destination is fetched (`GET /p/shifts/<id> 200`)
+  but the URL never commits. **Fix:** move submit/navigation out of the
+  transition (manual `pending` state). Verified locally: spine test
+  passes, `tsc` clean. `main` goes green once this merges.
 
 ---
 
@@ -244,7 +252,7 @@ env vars.
 
 | Risk | Status | Mitigation |
 |---|---|---|
-| **main CI red — spine e2e regression (shift-posting gate)** | OPEN, blocker | Fix seed/spine-test fixtures (or re-calibrate the notification-channel gate from `12a5f65`); tracked as a separate task. See Known blockers. |
+| **main CI red — spine e2e regression (post-shift navigation)** | FIXED 2026-05-28 (pending merge) | Root cause was a `useTransition` navigation clobbered by the new reach-estimate effect, not the notification gate. Fixed in `ShiftForm.tsx`. See Known blockers. |
 | LLC delay blocks Stripe live mode | open | Stripe test mode in parallel; switch keys when ready |
 | Email deliverability (DKIM not propagated) | open | DKIM/SPF/DMARC on day 1 of Phase 1; verify via mail-tester.com |
 | Repo is public, secrets risk | open | Audit before Phase 1 commits; consider going private |

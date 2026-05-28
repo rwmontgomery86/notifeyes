@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createShift, previewReach } from "./actions";
 import { updateShift } from "../[id]/edit/actions";
@@ -33,7 +33,7 @@ export function ShiftForm({
   initial?: ShiftFormInitial;
 }) {
   const router = useRouter();
-  const [pending, startTransition] = useTransition();
+  const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const today = new Date();
@@ -91,7 +91,7 @@ export function ShiftForm({
     return () => clearTimeout(t);
   }, [date, startTime, endTime, shiftType, ratePerHour, boostOn, bumpRatePerHour]);
 
-  function handle(e: React.SyntheticEvent, action: "draft" | "post") {
+  async function handle(e: React.SyntheticEvent, action: "draft" | "post") {
     e.preventDefault();
     setError(null);
     const target = e.currentTarget as HTMLElement;
@@ -109,28 +109,32 @@ export function ShiftForm({
     } else {
       fd.delete("bumpRatePerHour");
     }
-    startTransition(async () => {
-      const res =
-        mode === "edit" && shiftId
-          ? await updateShift(shiftId, fd)
-          : await createShift(fd);
-      if (!res.ok) {
-        const redirectTo = "redirectTo" in res ? res.redirectTo : undefined;
-        if (redirectTo) {
-          router.push(redirectTo);
-          return;
-        }
-        setError(res.error ?? "Could not save shift");
+    // Navigation must NOT run inside a useTransition action: the concurrent
+    // reach-estimate effect re-renders the form and discards the pending
+    // navigation transition, leaving the user stuck on the form.
+    setPending(true);
+    const res =
+      mode === "edit" && shiftId
+        ? await updateShift(shiftId, fd)
+        : await createShift(fd);
+    if (!res.ok) {
+      const redirectTo = "redirectTo" in res ? res.redirectTo : undefined;
+      if (redirectTo) {
+        router.push(redirectTo);
         return;
       }
-      if (action === "post") {
-        router.push(`/p/shifts/${"shiftId" in res ? res.shiftId : shiftId}`);
-      } else if (mode === "edit") {
-        router.push("/p/shifts?status=draft");
-      } else {
-        router.push(`/p/shifts/${"shiftId" in res ? res.shiftId : shiftId}`);
-      }
-    });
+      setError(res.error ?? "Could not save shift");
+      setPending(false);
+      return;
+    }
+    // Leave pending true on success — the form unmounts on navigation.
+    if (action === "post") {
+      router.push(`/p/shifts/${"shiftId" in res ? res.shiftId : shiftId}`);
+    } else if (mode === "edit") {
+      router.push("/p/shifts?status=draft");
+    } else {
+      router.push(`/p/shifts/${"shiftId" in res ? res.shiftId : shiftId}`);
+    }
   }
 
   return (
