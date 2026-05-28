@@ -1,6 +1,6 @@
 import { type NextRequest } from "next/server";
 import { type PoolClient } from "pg";
-import { pool } from "@/db";
+import { listenPool } from "@/db";
 import { auth } from "@/lib/auth";
 
 export const runtime = "nodejs";
@@ -55,7 +55,7 @@ export async function GET(req: NextRequest) {
       }
 
       try {
-        client = await pool.connect();
+        client = await listenPool.connect();
         await client.query("LISTEN notification_inserted");
 
         client.on("notification", (msg) => {
