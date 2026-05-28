@@ -6,23 +6,22 @@
 > resume. When work lands, the commit that lands it must also tick the
 > checkbox here and bump `Last touched`.
 
-**Last touched:** 2026-05-28 (Railway worker deployed + online; the spine
-works end-to-end in prod — a posted shift reaches the OD. BUT prod logins
-were intermittently 500ing: **DB connection exhaustion** on the session
-pooler against `max_connections=60`. Fix in flight: split the connection
-paths — Drizzle query pool → transaction pooler, dedicated session pool for
-SSE; pg-boss unchanged. Code done + `tsc` clean; needs `DATABASE_URL_POOLED`
-(6543) added on Vercel + a redeploy. Supabase verified; `main` CI green.
-LLC filed, awaiting approval.)
-**Cursor:** Phase 1 — fixing prod DB connection exhaustion. NEXT: land the
-connection-split PR, then **Ross adds `DATABASE_URL_POOLED` = Supabase
-transaction pooler (`…pooler.supabase.com:6543`) on Vercel** (keep
-`DATABASE_URL` = session pooler) and redeploys. Re-test login stability,
-then finish the end-to-end smoke test (<10s alert). In parallel: attach
-`notifeyes.com` (set `AUTH_URL` + redeploy after) and the remaining SaaS
-signups (Resend, Twilio, Stripe completion, UploadThing, Mapbox, Sentry,
-PostHog, Google Cloud OAuth). **Pooler rule:** SSE `LISTEN` + pg-boss MUST
-stay on the session pooler (5432); only the query pool uses 6543.
+**Last touched:** 2026-05-28 (Connection-exhaustion fix is **LIVE and
+verified** — `DATABASE_URL_POOLED` (transaction pooler) set on Vercel +
+redeployed; prod logins now stable under churn (PR #7). Both halves of the
+spine run in prod: Vercel app + Railway worker against verified
+`notifeyes-prod`, and a posted shift reaches the OD. `main` CI green. LLC
+filed, awaiting approval.)
+**Cursor:** Phase 1 plumbing — infra is stable. NEXT: run the **end-to-end
+smoke test** — OD `maya.patel@notifeyes.dev` draws a watch zone → practice
+`owner@bayview-eye-care.dev` posts a shift inside it → alert lands via SSE
+within 10s (Claude can verify the `notifications` rows server-side via the
+Supabase MCP). Then **attach `notifeyes.com`** (set
+`AUTH_URL=https://notifeyes.com` + redeploy after). In parallel: remaining
+SaaS signups + wiring (Resend, Twilio, Stripe completion, UploadThing,
+Mapbox, Sentry, PostHog, Google Cloud OAuth). **Pooler rule stands:** SSE
+`LISTEN` + pg-boss on the session pooler (5432); query pool on the
+transaction pooler (6543) via `DATABASE_URL_POOLED`.
 
 **Known blockers:** none open. (Most recent, now resolved, kept for the
 post-mortem.)
@@ -332,4 +331,4 @@ env vars.
 | Worker on Railway killed → jobs stuck | open | pg-boss is resilient (jobs persist in PG); set Railway healthcheck to restart |
 | Beta user disputes a $5 charge with no legal docs | open | Beta participant agreement + instant-refund policy |
 | Vercel serverless caps SSE connection duration → reconnect gaps in the <10s alert | open | `EventSource` auto-reconnects; only the held-open browser stream is affected (the worker→DB `NOTIFY` path is not). Bump function `maxDuration` / enable Fluid compute if gaps bite at beta. |
-| **Prod DB connection exhaustion (session pooler, max_connections=60)** | FIXED 2026-05-28 (pending Vercel env + redeploy) | Intermittent "A server error occurred" on login. Split pools: query pool → transaction pooler (`DATABASE_URL_POOLED`:6543), dedicated session pool for SSE, pg-boss unchanged. Lands once Vercel gets `DATABASE_URL_POOLED` + redeploy. Watch `pg_stat_activity` as users grow; bump compute if needed. |
+| **Prod DB connection exhaustion (session pooler, max_connections=60)** | RESOLVED 2026-05-28 (verified live) | Intermittent "A server error occurred" on login. Split pools shipped (PR #7): query pool → transaction pooler (`DATABASE_URL_POOLED`:6543), dedicated session pool for SSE, pg-boss unchanged. `DATABASE_URL_POOLED` set on Vercel + redeployed; logins stable under churn. Watch `pg_stat_activity` as users grow; bump compute if needed. |
