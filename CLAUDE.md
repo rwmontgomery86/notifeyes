@@ -114,7 +114,7 @@ Cross-cutting public routes that BOTH sides render (treat carefully): `src/app/s
 
 ## State of play
 
-V1 is functionally complete. CI is green. Active workstream is the closed beta launch — see [`docs/launch-plan.md`](docs/launch-plan.md) for the cursor, decisions log, and step-by-step checklist.
+V1 is functionally complete. **CI is currently RED on `main`** — the spine Playwright e2e regressed on 2026-05-26 (shift-posting no longer redirects; likely the notification-channel gate from `12a5f65` vs. stale seed/test fixtures). See **Known blockers** in [`docs/launch-plan.md`](docs/launch-plan.md). Active workstream is the closed beta launch — see that file for the cursor, decisions log, and step-by-step checklist.
 
 Longer-horizon buckets after beta:
 

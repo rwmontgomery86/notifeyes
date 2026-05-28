@@ -6,15 +6,27 @@
 > resume. When work lands, the commit that lands it must also tick the
 > checkbox here and bump `Last touched`.
 
-**Last touched:** 2026-05-27 (core hosting signups complete: Google
-Workspace, Vercel Pro, Supabase Pro, Railway. LLC filed, awaiting approval.)
-**Cursor:** Phase 1 — Supabase/Vercel/Railway accounts active. Ready to
-start Claude-side provisioning as soon as Ross (a) confirms a Supabase
-*project* exists (account ≠ project) and shares the direct-connection
-`DATABASE_URL` via a safe channel, and (b) links the GitHub repo from
-the Vercel and Railway dashboards. Remaining SaaS signups (Resend,
+**Last touched:** 2026-05-28 (discovered `main` CI is red — spine e2e
+regression; see Known blockers below. Core hosting signups complete;
+LLC filed, awaiting approval.)
+**Cursor:** Phase 1 — Ross is standing up the Supabase project and
+running `npm run db:migrate` + `npm run db:seed` against it (7-step
+standup laid out in the 2026-05-27 session). **RESUME on next machine:**
+when Ross confirms both ran clean against cloud Supabase, Claude verifies
+PostGIS + LISTEN/NOTIFY, then configures Vercel env + triggers first
+deploy. Vercel/Railway repo-linking + remaining SaaS signups (Resend,
 Twilio, Stripe completion, UploadThing, Mapbox, Sentry, PostHog, Google
-Cloud OAuth) can proceed in parallel.
+Cloud OAuth) proceed in parallel.
+
+**Known blockers:**
+- **`main` CI has been RED since 2026-05-26.** The spine Playwright e2e
+  (`tests/spine.spec.ts`) fails: posting a shift no longer redirects to
+  `/p/shifts/<id>` — it stays stuck on `/p/shifts/new`. Likely cause:
+  commit `12a5f65` gated shift posting on "at least one notification
+  channel enabled," but the seed/spine-test fixtures don't enable one.
+  V1 blocker for beta (can't post shifts). Tracked as a separate task —
+  must go green before the beta opens. Our docs PR #5 inherits this red;
+  it is NOT caused by the docs change.
 
 ---
 
@@ -232,6 +244,7 @@ env vars.
 
 | Risk | Status | Mitigation |
 |---|---|---|
+| **main CI red — spine e2e regression (shift-posting gate)** | OPEN, blocker | Fix seed/spine-test fixtures (or re-calibrate the notification-channel gate from `12a5f65`); tracked as a separate task. See Known blockers. |
 | LLC delay blocks Stripe live mode | open | Stripe test mode in parallel; switch keys when ready |
 | Email deliverability (DKIM not propagated) | open | DKIM/SPF/DMARC on day 1 of Phase 1; verify via mail-tester.com |
 | Repo is public, secrets risk | open | Audit before Phase 1 commits; consider going private |
