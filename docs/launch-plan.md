@@ -26,15 +26,23 @@ Cloud OAuth) proceed in parallel.
   `/p/shifts/new`. The earlier guess (notification-channel gate vs.
   seed fixtures) was wrong — the action succeeds and the gate passes;
   the seed default `emailOptedIn=true` (`792211a`) didn't help because
-  the gate was never the problem. **Actual root cause:** in
-  `src/app/(practice)/p/shifts/new/ShiftForm.tsx` the success-path
-  `router.push` ran inside a `useTransition` action, and the new reach-
-  estimate effect (`previewReach`, added in `12a5f65`) re-renders the
-  form right as the push fires, discarding the pending navigation
-  transition — the destination is fetched (`GET /p/shifts/<id> 200`)
-  but the URL never commits. **Fix:** move submit/navigation out of the
-  transition (manual `pending` state). Verified locally: spine test
-  passes, `tsc` clean. `main` goes green once this merges.
+  the gate was never the problem. **Actual root cause:** the new reach-
+  estimate effect (`previewReach`, added in `12a5f65`) runs a 300ms-
+  debounced server action whose `setReach()` re-renders the post-shift
+  form. When that re-render lands *during* the success-path
+  `router.push`, it aborts the navigation — the destination is fetched
+  (`GET /p/shifts/<id> 200`) but the URL never commits. It was
+  timing-sensitive: warm the preview resolved before the click and
+  committed; **cold (always, in CI) the debounce collided with the
+  navigation and it never committed** — which is why the first attempted
+  fix passed locally (warm) but CI stayed red. **Fix (two parts, in
+  `ShiftForm.tsx`):** (1) move submit/navigation out of the
+  `useTransition` action; (2) guard the reach-estimate effect — skip
+  while submitting and cancel any in-flight preview so `setReach` can't
+  fire mid-navigation. Verified locally with 3/3 *cold* spine runs,
+  `tsc` clean. `main` goes green once this merges.
+  *Lesson:* run the e2e against a **cold** dev server when reproducing —
+  `reuseExistingServer` hides cold-only races.
 
 ---
 
@@ -252,7 +260,7 @@ env vars.
 
 | Risk | Status | Mitigation |
 |---|---|---|
-| **main CI red — spine e2e regression (post-shift navigation)** | FIXED 2026-05-28 (pending merge) | Root cause was a `useTransition` navigation clobbered by the new reach-estimate effect, not the notification gate. Fixed in `ShiftForm.tsx`. See Known blockers. |
+| **main CI red — spine e2e regression (post-shift navigation)** | FIXED 2026-05-28 (pending merge) | Cold-only race: the new reach-estimate effect's `setReach` aborted the post-shift `router.push`. Fixed in `ShiftForm.tsx` (move nav out of `useTransition` + guard the effect during submit). See Known blockers. |
 | LLC delay blocks Stripe live mode | open | Stripe test mode in parallel; switch keys when ready |
 | Email deliverability (DKIM not propagated) | open | DKIM/SPF/DMARC on day 1 of Phase 1; verify via mail-tester.com |
 | Repo is public, secrets risk | open | Audit before Phase 1 commits; consider going private |

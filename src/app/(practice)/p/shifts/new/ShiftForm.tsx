@@ -69,6 +69,13 @@ export function ShiftForm({
   const [reachPending, setReachPending] = useState(false);
   const [reachError, setReachError] = useState<string | null>(null);
   useEffect(() => {
+    // Don't run the reach preview while submitting: a setReach() landing mid-
+    // navigation re-renders the form and aborts the pending router.push,
+    // leaving the user stuck on the form (flaky cold, where the debounce
+    // collides with the post). The `cancelled` flag also drops any in-flight
+    // preview so it can't setState after submit starts.
+    if (pending) return;
+    let cancelled = false;
     setReachPending(true);
     const t = setTimeout(async () => {
       const res = await previewReach({
@@ -79,6 +86,7 @@ export function ShiftForm({
         ratePerHour,
         bumpRatePerHour: boostOn ? bumpRatePerHour : null,
       });
+      if (cancelled) return;
       if (res.ok) {
         setReach({ count: res.count, bumpedCount: res.bumpedCount });
         setReachError(null);
@@ -88,8 +96,11 @@ export function ShiftForm({
       }
       setReachPending(false);
     }, 300);
-    return () => clearTimeout(t);
-  }, [date, startTime, endTime, shiftType, ratePerHour, boostOn, bumpRatePerHour]);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [date, startTime, endTime, shiftType, ratePerHour, boostOn, bumpRatePerHour, pending]);
 
   async function handle(e: React.SyntheticEvent, action: "draft" | "post") {
     e.preventDefault();
