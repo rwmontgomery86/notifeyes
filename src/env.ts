@@ -3,6 +3,13 @@ import { z } from "zod";
 
 const envSchema = z.object({
   DATABASE_URL: z.string().url(),
+  // Optional transaction-pooler URL for the high-churn Drizzle query pool.
+  // On serverless (Vercel) this multiplexes many clients onto few Postgres
+  // backends, avoiding session-pooler connection exhaustion. When unset, the
+  // query pool falls back to DATABASE_URL (local dev, the worker process).
+  // NEVER point the SSE LISTEN or pg-boss at this — transaction pooling has
+  // no session/LISTEN support; those stay on DATABASE_URL.
+  DATABASE_URL_POOLED: z.string().url().optional(),
   AUTH_SECRET: z.string().min(16),
   AUTH_URL: z.string().url().optional(),
   EMAIL_FROM: z.string().default("NotifEyes <hello@notifeyes.local>"),

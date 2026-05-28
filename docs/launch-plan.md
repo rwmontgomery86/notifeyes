@@ -6,22 +6,23 @@
 > resume. When work lands, the commit that lands it must also tick the
 > checkbox here and bump `Last touched`.
 
-**Last touched:** 2026-05-28 (Vercel first deploy LIVE on `*.vercel.app` —
-login verified with seeded creds against the cloud DB. Deploy config is in
-the worktree but **uncommitted**: `railway.json` (worker start command,
-1 replica) + `tsx` moved to dependencies — **must reach the remote before
-the Railway deploy.** Supabase `notifeyes-prod` verified; `main` CI green.
+**Last touched:** 2026-05-28 (Railway worker deployed + online; the spine
+works end-to-end in prod — a posted shift reaches the OD. BUT prod logins
+were intermittently 500ing: **DB connection exhaustion** on the session
+pooler against `max_connections=60`. Fix in flight: split the connection
+paths — Drizzle query pool → transaction pooler, dedicated session pool for
+SSE; pg-boss unchanged. Code done + `tsc` clean; needs `DATABASE_URL_POOLED`
+(6543) added on Vercel + a redeploy. Supabase verified; `main` CI green.
 LLC filed, awaiting approval.)
-**Cursor:** Phase 1 — Vercel app is live (domain not yet attached). NEXT:
-land the worktree deploy-config changes on the remote (`railway.json` +
-`tsx`→deps + doc ticks), THEN deploy the worker to Railway (same repo,
-session-pooler `DATABASE_URL` + `AUTH_SECRET`, **one worker per DB only**).
-After the worker boots, run the end-to-end smoke test (<10s alert). In
-parallel: attach `notifeyes.com` (set `AUTH_URL` + redeploy after) and the
-remaining SaaS signups (Resend, Twilio, Stripe completion, UploadThing,
-Mapbox, Sentry, PostHog, Google Cloud OAuth). **`DATABASE_URL` reminder:**
-session-mode pooler (5432), never the transaction pooler (6543) — it
-silently breaks the SSE `LISTEN`.
+**Cursor:** Phase 1 — fixing prod DB connection exhaustion. NEXT: land the
+connection-split PR, then **Ross adds `DATABASE_URL_POOLED` = Supabase
+transaction pooler (`…pooler.supabase.com:6543`) on Vercel** (keep
+`DATABASE_URL` = session pooler) and redeploys. Re-test login stability,
+then finish the end-to-end smoke test (<10s alert). In parallel: attach
+`notifeyes.com` (set `AUTH_URL` + redeploy after) and the remaining SaaS
+signups (Resend, Twilio, Stripe completion, UploadThing, Mapbox, Sentry,
+PostHog, Google Cloud OAuth). **Pooler rule:** SSE `LISTEN` + pg-boss MUST
+stay on the session pooler (5432); only the query pool uses 6543.
 
 **Known blockers:** none open. (Most recent, now resolved, kept for the
 post-mortem.)
@@ -165,6 +166,20 @@ old one; do not edit history.
   worker's TypeScript runtime is present in prod regardless of `NODE_ENV`
   or install flags. Vercel hosts the Next app (auto-detected, no config
   file). Both services need the **session-pooler** `DATABASE_URL`.
+- **2026-05-28** Prod DB connection architecture: split the paths to
+  survive serverless against a 60-connection ceiling. The Drizzle **query
+  pool** (high churn) routes through the **transaction pooler** via
+  `DATABASE_URL_POOLED` (port 6543) — multiplexes many Vercel clients onto
+  few Postgres backends; `pg_notify` works there (single statement). The
+  SSE `LISTEN` relay uses a separate small **session** pool (`listenPool`)
+  on `DATABASE_URL`, and pg-boss stays on `DATABASE_URL` — both need a
+  persistent session. Pool maxes lowered (query 5, listen 4). Drove by
+  intermittent "A server error occurred" on login when the session pooler
+  saturated. The worker (Railway, single process) leaves
+  `DATABASE_URL_POOLED` unset → query pool falls back to the session
+  connection; its connection count is low and stable. Supersedes the
+  earlier "both services need the session pooler" note for the Vercel app's
+  query traffic only.
 
 ---
 
@@ -317,3 +332,4 @@ env vars.
 | Worker on Railway killed → jobs stuck | open | pg-boss is resilient (jobs persist in PG); set Railway healthcheck to restart |
 | Beta user disputes a $5 charge with no legal docs | open | Beta participant agreement + instant-refund policy |
 | Vercel serverless caps SSE connection duration → reconnect gaps in the <10s alert | open | `EventSource` auto-reconnects; only the held-open browser stream is affected (the worker→DB `NOTIFY` path is not). Bump function `maxDuration` / enable Fluid compute if gaps bite at beta. |
+| **Prod DB connection exhaustion (session pooler, max_connections=60)** | FIXED 2026-05-28 (pending Vercel env + redeploy) | Intermittent "A server error occurred" on login. Split pools: query pool → transaction pooler (`DATABASE_URL_POOLED`:6543), dedicated session pool for SSE, pg-boss unchanged. Lands once Vercel gets `DATABASE_URL_POOLED` + redeploy. Watch `pg_stat_activity` as users grow; bump compute if needed. |
