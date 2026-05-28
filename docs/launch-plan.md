@@ -6,21 +6,26 @@
 > resume. When work lands, the commit that lands it must also tick the
 > checkbox here and bump `Last touched`.
 
-**Last touched:** 2026-05-28 (root-caused and fixed the red `main` CI —
-spine e2e regression was a client navigation bug, not the notification
-gate; see Known blockers below. Core hosting signups complete; LLC
-filed, awaiting approval.)
-**Cursor:** Phase 1 — Ross is standing up the Supabase project and
-running `npm run db:migrate` + `npm run db:seed` against it (7-step
-standup laid out in the 2026-05-27 session). **RESUME on next machine:**
-when Ross confirms both ran clean against cloud Supabase, Claude verifies
-PostGIS + LISTEN/NOTIFY, then configures Vercel env + triggers first
-deploy. Vercel/Railway repo-linking + remaining SaaS signups (Resend,
-Twilio, Stripe completion, UploadThing, Mapbox, Sentry, PostHog, Google
-Cloud OAuth) proceed in parallel.
+**Last touched:** 2026-05-28 (Vercel first deploy LIVE on `*.vercel.app` —
+login verified with seeded creds against the cloud DB. Deploy config is in
+the worktree but **uncommitted**: `railway.json` (worker start command,
+1 replica) + `tsx` moved to dependencies — **must reach the remote before
+the Railway deploy.** Supabase `notifeyes-prod` verified; `main` CI green.
+LLC filed, awaiting approval.)
+**Cursor:** Phase 1 — Vercel app is live (domain not yet attached). NEXT:
+land the worktree deploy-config changes on the remote (`railway.json` +
+`tsx`→deps + doc ticks), THEN deploy the worker to Railway (same repo,
+session-pooler `DATABASE_URL` + `AUTH_SECRET`, **one worker per DB only**).
+After the worker boots, run the end-to-end smoke test (<10s alert). In
+parallel: attach `notifeyes.com` (set `AUTH_URL` + redeploy after) and the
+remaining SaaS signups (Resend, Twilio, Stripe completion, UploadThing,
+Mapbox, Sentry, PostHog, Google Cloud OAuth). **`DATABASE_URL` reminder:**
+session-mode pooler (5432), never the transaction pooler (6543) — it
+silently breaks the SSE `LISTEN`.
 
-**Known blockers:**
-- **`main` CI was RED 2026-05-26 → fixed 2026-05-28 (pending merge).**
+**Known blockers:** none open. (Most recent, now resolved, kept for the
+post-mortem.)
+- **`main` CI was RED 2026-05-26 → FIXED + MERGED 2026-05-28 (PR #5; `main` CI now GREEN).**
   The spine Playwright e2e (`tests/spine.spec.ts`) failed: posting a
   shift no longer redirected to `/p/shifts/<id>` — it stayed on
   `/p/shifts/new`. The earlier guess (notification-channel gate vs.
@@ -40,7 +45,8 @@ Cloud OAuth) proceed in parallel.
   `useTransition` action; (2) guard the reach-estimate effect — skip
   while submitting and cancel any in-flight preview so `setReach` can't
   fire mid-navigation. Verified locally with 3/3 *cold* spine runs,
-  `tsc` clean. `main` goes green once this merges.
+  `tsc` clean. **Merged via PR #5 (commits `f8275c0` + `6954d4c`); the
+  `main` CI run on that merge passed — `main` is GREEN as of 2026-05-28.**
   *Lesson:* run the e2e against a **cold** dev server when reproducing —
   `reuseExistingServer` hides cold-only races.
 
@@ -128,6 +134,37 @@ old one; do not edit history.
   browser. Native mobile is V2.
 - **2026-05-27** SaaS account email: `rosswmont@notifeyes.com` (Google
   Workspace on `notifeyes.com`). Don't sign up under a personal email.
+- **2026-05-28** Supabase project `notifeyes-prod` (ref
+  `vlmrqsslkxpjwsuvdjue`, us-east-1) provisioned and verified: migrate +
+  seed ran clean, PostGIS 3.3.7 + the three GIST spatial indexes confirmed.
+- **2026-05-28** `DATABASE_URL` must use the Supabase **session-mode
+  pooler (port 5432)** or the direct connection — **never** the
+  transaction pooler (6543). The single `pg.Pool` in `src/db/index.ts`
+  backs both Drizzle queries and the SSE `LISTEN notification_inserted`;
+  transaction pooling doesn't support LISTEN, which would silently break
+  the <10s watch-alert SLA. Session pooler is also IPv4-friendly
+  (Vercel/Railway); the direct connection is IPv6-only.
+- **2026-05-28** Supabase Data API / RLS posture: OPEN, decision pending.
+  All 22 public tables have RLS disabled — expected for this app (it talks
+  to Postgres via Drizzle as the `postgres` role, not supabase-js /
+  PostgREST). But the project's auto-generated Data API + anon key are
+  still live, so anyone holding the anon key + project URL could read or
+  write every row. Preferred fix: disable the Data API in project settings
+  (the app never uses it); alternative: enable RLS on all tables (the
+  app's `postgres`-role connection is unaffected). Must settle before any
+  anon key could leak — repo is public. Tracked in Risks.
+- **2026-05-28** Supabase Data API / RLS — RESOLVED (supersedes the entry
+  directly above). The Data API is already **disabled** on `notifeyes-prod`
+  (Settings → API: "Enable Data API" unchecked; page reports no schemas can
+  be queried), so the anon key exposes nothing and the RLS-off state on the
+  22 tables is moot. No action needed; keep the Data API off.
+- **2026-05-28** Deploy config: the Railway worker is pinned via
+  `railway.json` — `startCommand: npm run worker`, **1 replica** (honors
+  the single-worker-per-DB rule), restart on failure, and no Next build on
+  that service. `tsx` moved from devDependencies to dependencies so the
+  worker's TypeScript runtime is present in prod regardless of `NODE_ENV`
+  or install flags. Vercel hosts the Next app (auto-detected, no config
+  file). Both services need the **session-pooler** `DATABASE_URL`.
 
 ---
 
@@ -153,9 +190,19 @@ old one; do not edit history.
   - [ ] Google Cloud Console (OAuth credentials)
 
 ### Code + config (Claude)
-- [ ] Provision Supabase project. Run migrations + seed. Verify PostGIS +
-      LISTEN/NOTIFY work end-to-end against the cloud DB.
-- [ ] Deploy Next.js to Vercel. Attach `notifeyes.com`.
+- [x] Provision Supabase project (`notifeyes-prod`, ref
+      `vlmrqsslkxpjwsuvdjue`, us-east-1). Run migrations + seed. Verify
+      PostGIS + LISTEN/NOTIFY against the cloud DB. _Done 2026-05-28:
+      PostGIS 3.3.7, `geography(Point,4326)` columns, all 3 GIST indexes,
+      `ST_DWithin`, and `pg_notify` confirmed; seed loaded (30 shifts / 20
+      ODs / 5 practices / 28 users). LISTEN sender verified; the receiver
+      round-trip is config-gated on `DATABASE_URL` connection mode (see
+      Cursor) and gets its final end-to-end proof in the post-deploy smoke
+      test._
+- [x] Deploy Next.js to Vercel. _Done 2026-05-28: first deploy live on
+      `*.vercel.app`; login verified with seeded creds against the cloud
+      DB._ **Attach `notifeyes.com` still pending — set
+      `AUTH_URL=https://notifeyes.com` + redeploy after.**
 - [ ] Deploy worker to Railway (same repo, separate service).
 - [ ] Wire Resend into `src/lib/notifications/channels/email.ts`. Add
       DKIM/SPF/DMARC records to `notifeyes.com` DNS.
@@ -244,7 +291,7 @@ env vars.
 | Google Workspace | Business Starter | rosswmont@notifeyes.com | active |
 | Vercel | Pro | rosswmont@notifeyes.com | active |
 | Railway | Hobby | rosswmont@notifeyes.com | active |
-| Supabase | Pro | rosswmont@notifeyes.com | active (account; project TBC) |
+| Supabase | Pro | rosswmont@notifeyes.com | active (project `notifeyes-prod`) |
 | Resend | Free | rosswmont@notifeyes.com | not signed up |
 | Twilio | Pay-as-you-go | rosswmont@notifeyes.com | not signed up |
 | Stripe | Standard | rosswmont@notifeyes.com | started, signup incomplete |
@@ -260,7 +307,8 @@ env vars.
 
 | Risk | Status | Mitigation |
 |---|---|---|
-| **main CI red — spine e2e regression (post-shift navigation)** | FIXED 2026-05-28 (pending merge) | Cold-only race: the new reach-estimate effect's `setReach` aborted the post-shift `router.push`. Fixed in `ShiftForm.tsx` (move nav out of `useTransition` + guard the effect during submit). See Known blockers. |
+| **main CI red — spine e2e regression (post-shift navigation)** | RESOLVED 2026-05-28 (PR #5 merged, `main` green) | Cold-only race: the new reach-estimate effect's `setReach` aborted the post-shift `router.push`. Fixed in `ShiftForm.tsx` (move nav out of `useTransition` + guard the effect during submit). See Known blockers. |
+| **Supabase Data API exposes all rows (RLS off, anon key live)** | RESOLVED 2026-05-28 | Data API is disabled on `notifeyes-prod` (no schemas queryable), so the anon key exposes nothing — RLS-off on the 22 tables is moot. App connects via Drizzle as `postgres`, unaffected. Keep the Data API off. |
 | LLC delay blocks Stripe live mode | open | Stripe test mode in parallel; switch keys when ready |
 | Email deliverability (DKIM not propagated) | open | DKIM/SPF/DMARC on day 1 of Phase 1; verify via mail-tester.com |
 | Repo is public, secrets risk | open | Audit before Phase 1 commits; consider going private |
@@ -268,3 +316,4 @@ env vars.
 | Sentry/PostHog leak PII | open | Audit `beforeSend` + autocapture config during Phase 1 wiring |
 | Worker on Railway killed → jobs stuck | open | pg-boss is resilient (jobs persist in PG); set Railway healthcheck to restart |
 | Beta user disputes a $5 charge with no legal docs | open | Beta participant agreement + instant-refund policy |
+| Vercel serverless caps SSE connection duration → reconnect gaps in the <10s alert | open | `EventSource` auto-reconnects; only the held-open browser stream is affected (the worker→DB `NOTIFY` path is not). Bump function `maxDuration` / enable Fluid compute if gaps bite at beta. |
