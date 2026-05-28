@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createShift, previewReach } from "./actions";
 import { updateShift } from "../[id]/edit/actions";
@@ -33,7 +33,7 @@ export function ShiftForm({
   initial?: ShiftFormInitial;
 }) {
   const router = useRouter();
-  const [pending, startTransition] = useTransition();
+  const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const today = new Date();
@@ -69,6 +69,13 @@ export function ShiftForm({
   const [reachPending, setReachPending] = useState(false);
   const [reachError, setReachError] = useState<string | null>(null);
   useEffect(() => {
+    // Don't run the reach preview while submitting: a setReach() landing mid-
+    // navigation re-renders the form and aborts the pending router.push,
+    // leaving the user stuck on the form (flaky cold, where the debounce
+    // collides with the post). The `cancelled` flag also drops any in-flight
+    // preview so it can't setState after submit starts.
+    if (pending) return;
+    let cancelled = false;
     setReachPending(true);
     const t = setTimeout(async () => {
       const res = await previewReach({
@@ -79,6 +86,7 @@ export function ShiftForm({
         ratePerHour,
         bumpRatePerHour: boostOn ? bumpRatePerHour : null,
       });
+      if (cancelled) return;
       if (res.ok) {
         setReach({ count: res.count, bumpedCount: res.bumpedCount });
         setReachError(null);
@@ -88,10 +96,13 @@ export function ShiftForm({
       }
       setReachPending(false);
     }, 300);
-    return () => clearTimeout(t);
-  }, [date, startTime, endTime, shiftType, ratePerHour, boostOn, bumpRatePerHour]);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [date, startTime, endTime, shiftType, ratePerHour, boostOn, bumpRatePerHour, pending]);
 
-  function handle(e: React.SyntheticEvent, action: "draft" | "post") {
+  async function handle(e: React.SyntheticEvent, action: "draft" | "post") {
     e.preventDefault();
     setError(null);
     const target = e.currentTarget as HTMLElement;
@@ -109,28 +120,32 @@ export function ShiftForm({
     } else {
       fd.delete("bumpRatePerHour");
     }
-    startTransition(async () => {
-      const res =
-        mode === "edit" && shiftId
-          ? await updateShift(shiftId, fd)
-          : await createShift(fd);
-      if (!res.ok) {
-        const redirectTo = "redirectTo" in res ? res.redirectTo : undefined;
-        if (redirectTo) {
-          router.push(redirectTo);
-          return;
-        }
-        setError(res.error ?? "Could not save shift");
+    // Navigation must NOT run inside a useTransition action: the concurrent
+    // reach-estimate effect re-renders the form and discards the pending
+    // navigation transition, leaving the user stuck on the form.
+    setPending(true);
+    const res =
+      mode === "edit" && shiftId
+        ? await updateShift(shiftId, fd)
+        : await createShift(fd);
+    if (!res.ok) {
+      const redirectTo = "redirectTo" in res ? res.redirectTo : undefined;
+      if (redirectTo) {
+        router.push(redirectTo);
         return;
       }
-      if (action === "post") {
-        router.push(`/p/shifts/${"shiftId" in res ? res.shiftId : shiftId}`);
-      } else if (mode === "edit") {
-        router.push("/p/shifts?status=draft");
-      } else {
-        router.push(`/p/shifts/${"shiftId" in res ? res.shiftId : shiftId}`);
-      }
-    });
+      setError(res.error ?? "Could not save shift");
+      setPending(false);
+      return;
+    }
+    // Leave pending true on success — the form unmounts on navigation.
+    if (action === "post") {
+      router.push(`/p/shifts/${"shiftId" in res ? res.shiftId : shiftId}`);
+    } else if (mode === "edit") {
+      router.push("/p/shifts?status=draft");
+    } else {
+      router.push(`/p/shifts/${"shiftId" in res ? res.shiftId : shiftId}`);
+    }
   }
 
   return (

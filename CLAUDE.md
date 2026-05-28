@@ -8,6 +8,24 @@ NotifEyes — a two-sided optometry staffing marketplace. Practices post fill-in
 
 **Stack:** Next.js 16 (App Router) + TypeScript · Postgres + PostGIS via Drizzle ORM · Auth.js v5 (JWT sessions) · pg-boss workers · Postgres `LISTEN/NOTIFY` → SSE for the <10s watch alert SLA · Leaflet maps on OpenStreetMap tiles · stubbed Stripe and SMS behind clean adapter interfaces · UploadThing for files (with a dev data-URL fallback).
 
+## Current focus
+
+Active workstream: **closed beta launch**. Plan, cursor, decisions log, and open questions live in [`docs/launch-plan.md`](docs/launch-plan.md).
+
+Before doing any work in a fresh session:
+1. Read `docs/launch-plan.md` end-to-end — especially the **Cursor** line at the top.
+2. Report back the cursor + last-touched line + last relevant commit. Confirm with the user which checkbox to start on.
+3. Do not drift past the cursor without explicit confirmation. If asked to do something off-plan, treat it as a side quest — do the work, but do **not** check off any plan steps.
+
+When work lands, the same commit that lands it must:
+- Tick the corresponding checkbox in `docs/launch-plan.md`.
+- Bump the `Last touched` line at the top of the file.
+- Move the `Cursor` line to the next actionable step.
+
+Decisions settled in conversation (vendor switches, scope changes, dates, etc.) get appended to the **Decisions log** section of the plan file as they happen — never deferred to "end of session."
+
+The Decisions log is append-only. Re-opening a settled decision means adding a new dated entry that supersedes the old one; don't edit prior entries.
+
 ## Non-obvious rules — break these and the build dies
 
 ### Server-only boundary
@@ -96,9 +114,10 @@ Cross-cutting public routes that BOTH sides render (treat carefully): `src/app/s
 
 ## State of play
 
-V1 is functionally complete. CI is green. Remaining buckets, in priority order:
+V1 is functionally complete. The spine Playwright e2e that regressed on 2026-05-26 (post-shift no longer redirected) is **fixed on this branch, pending merge to `main`** — a cold-only client navigation race in `ShiftForm.tsx` (the new reach-estimate effect's `setReach` aborted the post-shift `router.push`), not the notification gate. See **Known blockers** in [`docs/launch-plan.md`](docs/launch-plan.md). Active workstream is the closed beta launch — see that file for the cursor, decisions log, and step-by-step checklist.
 
-- **Ops (next)** — Deploy to Vercel + cloud Postgres (Supabase/Neon), sign up for Stripe/Resend/Twilio/UploadThing accounts and swap real keys in for the stubs, add Sentry + PostHog, configure DB backups, legal review on the `--TODO: legal review` placeholders.
+Longer-horizon buckets after beta:
+
 - **Tests** — Playwright coverage for flows B (invite), D (cancel), E (no-show), F (review publish), and watch-zone fanout. Vitest units for `matching.ts`, state machines, `cancellation.ts`, `pricing.ts`.
 - **V2 per brief §10** — Stripe Connect (real OD payouts), Verifiable/Medallion auto-verify, recurring/permanent shifts, native mobile, multi-metro.
 
