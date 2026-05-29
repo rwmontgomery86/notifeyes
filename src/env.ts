@@ -17,6 +17,11 @@ const envSchema = z.object({
   UPLOADTHING_TOKEN: z.string().optional(),
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  // Maps + geocoding. MAPBOX_TOKEN is the server-side token for the geocoder;
+  // when unset the geocoder falls back to Nominatim. The client tile token is
+  // NEXT_PUBLIC_MAPBOX_TOKEN (read directly in map-tiles.ts; NEXT_PUBLIC vars
+  // are inlined into the client bundle and aren't validated here).
+  MAPBOX_TOKEN: z.string().optional(),
   NEXT_PUBLIC_VAPID_PUBLIC_KEY: z.string().optional(),
   VAPID_PRIVATE_KEY: z.string().optional(),
   VAPID_SUBJECT: z.string().default("mailto:admin@notifeyes.local"),

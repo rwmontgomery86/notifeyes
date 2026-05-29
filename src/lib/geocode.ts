@@ -5,12 +5,14 @@
  * and requires a meaningful User-Agent per their usage policy:
  *   https://operations.osmfoundation.org/policies/nominatim/
  *
- * For production with real volume, swap to Mapbox / Google / Smarty by
- * implementing the `Geocoder` interface below — `signupPractice` and
- * `updatePracticeSettings` both call the exported `geocoder` singleton.
+ * Prod: Mapbox when `MAPBOX_TOKEN` is set (higher rate limits, no UA policy);
+ * otherwise Nominatim. Both implement the `Geocoder` interface below, and
+ * `signupPractice` / `updatePracticeSettings` call the exported `geocoder`
+ * singleton.
  */
 
 import "server-only";
+import { env } from "@/env";
 
 export interface GeocodeInput {
   addressLine: string | null;
@@ -87,4 +89,54 @@ export const nominatimGeocoder: Geocoder = {
   },
 };
 
-export const geocoder: Geocoder = nominatimGeocoder;
+/**
+ * Mapbox geocoder. Uses the same access token as the map tiles (a public
+ * `pk.…` token is fine). Returns `[lng, lat]` in `feature.center`.
+ */
+export const mapboxGeocoder: Geocoder = {
+  async geocode(input: GeocodeInput): Promise<GeocodeResult | null> {
+    const token = env.MAPBOX_TOKEN;
+    if (!token) return null;
+
+    const q = [input.addressLine, input.city, input.state, input.zip]
+      .filter(Boolean)
+      .join(", ");
+    if (!q.trim()) return null;
+
+    const url = new URL(
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(q)}.json`,
+    );
+    url.searchParams.set("access_token", token);
+    url.searchParams.set("limit", "1");
+    url.searchParams.set("country", "us");
+    url.searchParams.set("types", "address,postcode,place");
+
+    try {
+      const res = await fetch(url, {
+        headers: { Accept: "application/json" },
+        signal: AbortSignal.timeout(5000),
+      });
+      if (!res.ok) {
+        console.warn(`[geocode] mapbox ${res.status} for "${q}"`);
+        return null;
+      }
+      const data = (await res.json()) as {
+        features?: { center?: [number, number] }[];
+      };
+      const feature = data.features?.[0];
+      const center = feature?.center;
+      if (!center) return null;
+      const [lng, lat] = center;
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+      return { lat, lng, source: "mapbox", raw: feature };
+    } catch (err) {
+      console.warn("[geocode] mapbox failed:", err);
+      return null;
+    }
+  },
+};
+
+// Prefer Mapbox when a token is present; otherwise the no-token Nominatim path.
+export const geocoder: Geocoder = env.MAPBOX_TOKEN
+  ? mapboxGeocoder
+  : nominatimGeocoder;
