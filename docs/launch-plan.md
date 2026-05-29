@@ -6,22 +6,25 @@
 > resume. When work lands, the commit that lands it must also tick the
 > checkbox here and bump `Last touched`.
 
-**Last touched:** 2026-05-28 (Connection-exhaustion fix is **LIVE and
-verified** — `DATABASE_URL_POOLED` (transaction pooler) set on Vercel +
-redeployed; prod logins now stable under churn (PR #7). Both halves of the
-spine run in prod: Vercel app + Railway worker against verified
-`notifeyes-prod`, and a posted shift reaches the OD. `main` CI green. LLC
-filed, awaiting approval.)
-**Cursor:** Phase 1 plumbing — infra is stable. NEXT: run the **end-to-end
-smoke test** — OD `maya.patel@notifeyes.dev` draws a watch zone → practice
-`owner@bayview-eye-care.dev` posts a shift inside it → alert lands via SSE
-within 10s (Claude can verify the `notifications` rows server-side via the
-Supabase MCP). Then **attach `notifeyes.com`** (set
-`AUTH_URL=https://notifeyes.com` + redeploy after). In parallel: remaining
-SaaS signups + wiring (Resend, Twilio, Stripe completion, UploadThing,
-Mapbox, Sentry, PostHog, Google Cloud OAuth). **Pooler rule stands:** SSE
-`LISTEN` + pg-boss on the session pooler (5432); query pool on the
-transaction pooler (6543) via `DATABASE_URL_POOLED`.
+**Last touched:** 2026-05-29 (In-app live watch-alert **fixed + verified**.
+Smoke test surfaced that a posted shift never updated the OD's *open* window
+live (only on navigation) — Postgres NOTIFY doesn't survive the Supabase
+pooler to the SSE relay. Fix: a 5s polling fallback in `NotificationsLive`
+(SSE kept as a fast-path). Verified live on the PR #9 preview against
+`notifeyes-prod` — Maya's Notifications badge ticked 2→3 within ~5s with no
+navigation. Also fixed a spine-e2e navigation race the polling first
+introduced (poll `router.refresh()` clobbered the booking `router.push`);
+resolved with an interaction-quiet guard. **PR #9 CI green incl. the cold
+spine e2e; awaiting merge.** LLC filed, awaiting approval.)
+**Cursor:** Phase 1 plumbing — infra stable, in-app live-alert leg of the
+smoke test **verified** (via polling). NEXT: **merge PR #9**, then **attach
+`notifeyes.com`** (set `AUTH_URL=https://notifeyes.com` + redeploy after). In
+parallel: remaining SaaS signups + wiring (Resend, Twilio, Stripe completion,
+UploadThing, Mapbox, Sentry, PostHog, Google Cloud OAuth) — these also
+complete the email+SMS legs of the Phase 1 end-to-end smoke checkbox (still
+unchecked until those land). **Pooler rule stands:** SSE `LISTEN` + pg-boss on
+the session pooler (5432); query pool on the transaction pooler (6543) via
+`DATABASE_URL_POOLED`.
 
 **Known blockers:** none open. (Most recent, now resolved, kept for the
 post-mortem.)
