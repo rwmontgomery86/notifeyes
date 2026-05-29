@@ -19,6 +19,11 @@ const envSchema = z.object({
   AUTH_GOOGLE_SECRET: z.string().optional(),
   EMAIL_FROM: z.string().default("NotifEyes <hello@notifeyes.local>"),
   RESEND_API_KEY: z.string().optional(),
+  // Twilio SMS (optional). All three required to send; otherwise the channel
+  // falls back to the console stub.
+  TWILIO_ACCOUNT_SID: z.string().optional(),
+  TWILIO_AUTH_TOKEN: z.string().optional(),
+  TWILIO_FROM_NUMBER: z.string().optional(),
   UPLOADTHING_TOKEN: z.string().optional(),
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
