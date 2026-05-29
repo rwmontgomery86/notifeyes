@@ -37,12 +37,14 @@ export async function GET(req: NextRequest) {
 
       let client: PoolClient | null = null;
       let heartbeat: NodeJS.Timeout | null = null;
+      let lifeTimer: NodeJS.Timeout | null = null;
       let closed = false;
 
       async function cleanup() {
         if (closed) return;
         closed = true;
         if (heartbeat) clearInterval(heartbeat);
+        if (lifeTimer) clearTimeout(lifeTimer);
         if (client) {
           try {
             await client.query("UNLISTEN notification_inserted");
@@ -85,6 +87,16 @@ export async function GET(req: NextRequest) {
             cleanup();
           }
         }, 25_000);
+
+        // Bounded stream lifetime. On serverless (Vercel) the request-abort
+        // doesn't reliably fire when the browser disconnects, so the LISTEN
+        // connection leaks and the small listenPool (max 4) caps out — we saw
+        // idle LISTEN backends lingering for hours. Recycle proactively: close
+        // the stream, release the connection, and let the browser's EventSource
+        // reconnect. The polling fallback in NotificationsLive covers the gap.
+        lifeTimer = setTimeout(() => {
+          void cleanup();
+        }, 10 * 60 * 1000);
 
         req.signal.addEventListener("abort", () => {
           void cleanup();

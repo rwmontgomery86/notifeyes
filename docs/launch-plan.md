@@ -6,22 +6,25 @@
 > resume. When work lands, the commit that lands it must also tick the
 > checkbox here and bump `Last touched`.
 
-**Last touched:** 2026-05-28 (Connection-exhaustion fix is **LIVE and
-verified** — `DATABASE_URL_POOLED` (transaction pooler) set on Vercel +
-redeployed; prod logins now stable under churn (PR #7). Both halves of the
-spine run in prod: Vercel app + Railway worker against verified
-`notifeyes-prod`, and a posted shift reaches the OD. `main` CI green. LLC
-filed, awaiting approval.)
-**Cursor:** Phase 1 plumbing — infra is stable. NEXT: run the **end-to-end
-smoke test** — OD `maya.patel@notifeyes.dev` draws a watch zone → practice
-`owner@bayview-eye-care.dev` posts a shift inside it → alert lands via SSE
-within 10s (Claude can verify the `notifications` rows server-side via the
-Supabase MCP). Then **attach `notifeyes.com`** (set
-`AUTH_URL=https://notifeyes.com` + redeploy after). In parallel: remaining
-SaaS signups + wiring (Resend, Twilio, Stripe completion, UploadThing,
-Mapbox, Sentry, PostHog, Google Cloud OAuth). **Pooler rule stands:** SSE
-`LISTEN` + pg-boss on the session pooler (5432); query pool on the
-transaction pooler (6543) via `DATABASE_URL_POOLED`.
+**Last touched:** 2026-05-29 (In-app live watch-alert **fixed + verified**.
+Smoke test surfaced that a posted shift never updated the OD's *open* window
+live (only on navigation) — Postgres NOTIFY doesn't survive the Supabase
+pooler to the SSE relay. Fix: a 5s polling fallback in `NotificationsLive`
+(SSE kept as a fast-path). Verified live on the PR #9 preview against
+`notifeyes-prod` — Maya's Notifications badge ticked 2→3 within ~5s with no
+navigation. Also fixed a spine-e2e navigation race the polling first
+introduced (poll `router.refresh()` clobbered the booking `router.push`);
+resolved with an interaction-quiet guard. **PR #9 CI green incl. the cold
+spine e2e; awaiting merge.** LLC filed, awaiting approval.)
+**Cursor:** Phase 1 plumbing — infra stable, in-app live-alert leg of the
+smoke test **verified** (via polling). NEXT: **merge PR #9**, then **attach
+`notifeyes.com`** (set `AUTH_URL=https://notifeyes.com` + redeploy after). In
+parallel: remaining SaaS signups + wiring (Resend, Twilio, Stripe completion,
+UploadThing, Mapbox, Sentry, PostHog, Google Cloud OAuth) — these also
+complete the email+SMS legs of the Phase 1 end-to-end smoke checkbox (still
+unchecked until those land). **Pooler rule stands:** SSE `LISTEN` + pg-boss on
+the session pooler (5432); query pool on the transaction pooler (6543) via
+`DATABASE_URL_POOLED`.
 
 **Known blockers:** none open. (Most recent, now resolved, kept for the
 post-mortem.)
@@ -179,6 +182,29 @@ old one; do not edit history.
   connection; its connection count is low and stable. Supersedes the
   earlier "both services need the session pooler" note for the Vercel app's
   query traffic only.
+- **2026-05-29** In-app live watch-alert delivery: **client-side polling**,
+  not Postgres NOTIFY → SSE. Smoke test surfaced that a shift posted inside an
+  OD's watch zone never updated the OD's *open* window live (it only appeared
+  on navigation to the Watch list). Root cause: the SSE relay's `LISTEN
+  notification_inserted` runs through the Supabase **pooler (Supavisor)**, and
+  Supavisor does not forward async `NOTIFY` to a pooled client — the `LISTEN`
+  command succeeds (4 idle LISTEN backends confirmed live in `pg_stat_activity`)
+  but the notification is dropped on the way back, so the relay never wakes.
+  The row still inserts, which is why navigation showed it. Fix:
+  `NotificationsLive` now polls a cheap `/api/notifications/unread-count` probe
+  every 5s (visibility-gated) and `router.refresh()`es only when the unread
+  total rises — robust regardless of pooler/Vercel SSE quirks, comfortably
+  inside the <10s SLA at beta scale. SSE is kept wired as an instant fast-path
+  (a `notification` event just kicks an immediate poll) for environments where
+  NOTIFY delivery works (local dev / a future direct connection). Also bounded
+  the SSE stream lifetime to 10 min in the relay: on Vercel the request-abort
+  doesn't reliably fire on browser disconnect, so LISTEN connections were
+  leaking and capping the max-4 `listenPool` (idle backends seen lingering for
+  hours). **Deferred:** true direct-connection SSE (instant push without
+  polling) needs the Supabase **IPv4 add-on (~$4/mo)** because the direct
+  Postgres endpoint is IPv6-only and Vercel/Railway are IPv4 — revisit
+  post-beta if the polling cadence isn't snappy enough. Email + SMS remain the
+  authoritative <10s alert channels regardless.
 
 ---
 
@@ -330,5 +356,6 @@ env vars.
 | Sentry/PostHog leak PII | open | Audit `beforeSend` + autocapture config during Phase 1 wiring |
 | Worker on Railway killed → jobs stuck | open | pg-boss is resilient (jobs persist in PG); set Railway healthcheck to restart |
 | Beta user disputes a $5 charge with no legal docs | open | Beta participant agreement + instant-refund policy |
-| Vercel serverless caps SSE connection duration → reconnect gaps in the <10s alert | open | `EventSource` auto-reconnects; only the held-open browser stream is affected (the worker→DB `NOTIFY` path is not). Bump function `maxDuration` / enable Fluid compute if gaps bite at beta. |
+| Vercel serverless caps SSE connection duration → reconnect gaps in the <10s alert | mitigated 2026-05-29 | In-app live updates no longer depend on the held-open SSE stream — `NotificationsLive` polls `/api/notifications/unread-count` every 5s (see Decisions log). SSE relay lifetime now bounded to 10 min so leaked `LISTEN` connections recycle. `EventSource` still auto-reconnects as a fast-path. |
+| **Supabase pooler drops async NOTIFY → SSE relay never wakes** | mitigated 2026-05-29 | `LISTEN/NOTIFY` doesn't propagate through Supavisor to the relay's pooled connection, so the in-app live alert silently never arrived. Switched to client-side polling (Decisions log 2026-05-29). True direct-connection SSE deferred — needs the Supabase IPv4 add-on (direct endpoint is IPv6-only). |
 | **Prod DB connection exhaustion (session pooler, max_connections=60)** | RESOLVED 2026-05-28 (verified live) | Intermittent "A server error occurred" on login. Split pools shipped (PR #7): query pool → transaction pooler (`DATABASE_URL_POOLED`:6543), dedicated session pool for SSE, pg-boss unchanged. `DATABASE_URL_POOLED` set on Vercel + redeployed; logins stable under churn. Watch `pg_stat_activity` as users grow; bump compute if needed. |
