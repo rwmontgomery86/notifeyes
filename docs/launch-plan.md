@@ -6,25 +6,36 @@
 > resume. When work lands, the commit that lands it must also tick the
 > checkbox here and bump `Last touched`.
 
-**Last touched:** 2026-05-29 (In-app live watch-alert **fixed + verified**.
-Smoke test surfaced that a posted shift never updated the OD's *open* window
-live (only on navigation) — Postgres NOTIFY doesn't survive the Supabase
-pooler to the SSE relay. Fix: a 5s polling fallback in `NotificationsLive`
-(SSE kept as a fast-path). Verified live on the PR #9 preview against
-`notifeyes-prod` — Maya's Notifications badge ticked 2→3 within ~5s with no
-navigation. Also fixed a spine-e2e navigation race the polling first
-introduced (poll `router.refresh()` clobbered the booking `router.push`);
-resolved with an interaction-quiet guard. **PR #9 CI green incl. the cold
-spine e2e; awaiting merge.** LLC filed, awaiting approval.)
-**Cursor:** Phase 1 plumbing — infra stable, in-app live-alert leg of the
-smoke test **verified** (via polling). NEXT: **merge PR #9**, then **attach
-`notifeyes.com`** (set `AUTH_URL=https://notifeyes.com` + redeploy after). In
-parallel: remaining SaaS signups + wiring (Resend, Twilio, Stripe completion,
-UploadThing, Mapbox, Sentry, PostHog, Google Cloud OAuth) — these also
-complete the email+SMS legs of the Phase 1 end-to-end smoke checkbox (still
-unchecked until those land). **Pooler rule stands:** SSE `LISTEN` + pg-boss on
-the session pooler (5432); query pool on the transaction pooler (6543) via
-`DATABASE_URL_POOLED`.
+**Last touched:** 2026-05-29 (Two threads landed today. (1) In-app live
+watch-alert **fixed, verified, merged, and LIVE in prod** — PR #9: a 5s
+polling fallback in `NotificationsLive` (Postgres NOTIFY doesn't survive the
+Supabase pooler to the SSE relay); verified on the preview (badge ticked 2→3
+in ~5s, no navigation); `main` CI green, Vercel + Railway deployed. (2)
+Pre-wired three integrations as **stacked, env-gated PRs awaiting merge +
+keys**: **#10 Mapbox** (geocode + tiles, base `main`, CI green), **#11 Google
+OAuth** (existing-accounts-only, base `#10`), **#12 Twilio SMS** (un-stub,
+base `#11`). All dormant until their keys are set; each validated locally
+(tsc + build). **Sentry + PostHog deferred** until those accounts exist (new
+deps + `next.config`; worth verifying live). Ross is creating the remaining
+SaaS accounts. **Switching machines — resuming on a different computer
+tomorrow.** LLC filed, awaiting approval.)
+**Cursor:** Phase 1 plumbing. RESUME HERE (fresh machine): the live-alert leg
+is done and in prod; three integration PRs are staged. NEXT, in order:
+1. **Merge the stacked PRs #10 → #11 → #12** (in that order). They target
+   each other, so GitHub retargets each to `main` as the one below merges, and
+   the full CI (incl. cold spine e2e) runs at the front of the queue. `gh pr
+   list` to find them.
+2. **Create remaining SaaS accounts + set the keys** in the Vercel/Railway
+   dashboards. Per-service signup steps + the exact env-var names were handed
+   off 2026-05-29 (see the PR descriptions and `.env.example`). Resend +
+   UploadThing need no code — key-only. [V]=Vercel, [V+R]=Vercel+Railway.
+3. **Attach `notifeyes.com`** (Vercel domain + GoDaddy DNS + `AUTH_URL=
+   https://notifeyes.com` + redeploy). Batch with Resend's DKIM/SPF/DMARC —
+   same GoDaddy zone.
+4. Then **wire Sentry + PostHog** (deferred) and run the email+SMS legs of the
+   Phase 1 end-to-end smoke checkbox (still unchecked until those land).
+**Pooler rule stands:** SSE `LISTEN` + pg-boss on the session pooler (5432);
+query pool on the transaction pooler (6543) via `DATABASE_URL_POOLED`.
 
 **Known blockers:** none open. (Most recent, now resolved, kept for the
 post-mortem.)
@@ -205,6 +216,27 @@ old one; do not edit history.
   Postgres endpoint is IPv6-only and Vercel/Railway are IPv4 — revisit
   post-beta if the polling cadence isn't snappy enough. Email + SMS remain the
   authoritative <10s alert channels regardless.
+- **2026-05-29** Integration wiring: **pre-wire the code now, env-gated, ahead
+  of the SaaS signups**, as separate stacked PRs (each dormant until its keys
+  are set, so prod behavior is unchanged until activation). Landed three:
+  **#10 Mapbox** (geocode + tiles; `MAPBOX_TOKEN` server / `NEXT_PUBLIC_MAPBOX_TOKEN`
+  client; falls back to Nominatim + OSM), **#11 Google OAuth**, **#12 Twilio
+  SMS** (`TWILIO_ACCOUNT_SID`/`TWILIO_AUTH_TOKEN`/`TWILIO_FROM_NUMBER`;
+  un-stubs the SMS seam per the locked beta decision). Resend + UploadThing
+  needed no code (already key-gated). No new deps in any of the three. Env-var
+  names live in the PR descriptions + `.env.example`.
+- **2026-05-29** Google OAuth = **existing accounts only**. Sign-in matches a
+  *verified* Google email to an existing `users` row; unknown emails are
+  denied (no auto-provisioning — new users go through the OD/practice signup
+  flow, which collects role-specific onboarding Google can't supply). JWT
+  session (no DB adapter), so the `jwt` callback enriches the token from our
+  `users` row on OAuth sign-in. Easy to revisit if Google should create
+  accounts later.
+- **2026-05-29** Sentry + PostHog: **deferred until those accounts exist.**
+  Unlike the other seams they need new deps (`@sentry/nextjs`, `posthog-js`) +
+  a `next.config` wrapper + instrumentation (build-affecting for everyone), and
+  observability is best verified live (do events land? source maps upload?).
+  Wire + verify in one pass once the DSN/key are in hand, rather than blind.
 
 ---
 
