@@ -32,6 +32,11 @@ const envSchema = z.object({
   // NEXT_PUBLIC_MAPBOX_TOKEN (read directly in map-tiles.ts; NEXT_PUBLIC vars
   // are inlined into the client bundle and aren't validated here).
   MAPBOX_TOKEN: z.string().optional(),
+  // Sentry (optional). Server DSN; the client reads NEXT_PUBLIC_SENTRY_DSN
+  // directly (inlined at build). Build-time-only vars (SENTRY_AUTH_TOKEN,
+  // SENTRY_ORG, SENTRY_PROJECT) are read straight from process.env in
+  // next.config.ts and aren't validated here. All dormant when unset.
+  SENTRY_DSN: z.string().optional(),
   NEXT_PUBLIC_VAPID_PUBLIC_KEY: z.string().optional(),
   VAPID_PRIVATE_KEY: z.string().optional(),
   VAPID_SUBJECT: z.string().default("mailto:admin@notifeyes.local"),
