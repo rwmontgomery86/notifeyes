@@ -11,23 +11,30 @@
 (dormant without keys, prod-only send, no Session Replay, `sendDefaultPii:false`);
 Ross confirmed Sentry capture (incl. source-mapped stacks) + PostHog
 pageview/autocapture on prod. The temporary `/api/debug-sentry` smoke-test route
-was removed. **Stripe (#18) — foundational adapter, OPEN +
-HELD for review** (not merged): real `PaymentProvider` + signature-verified
-`/api/payments/webhook`, selected by an explicit `PAYMENTS_PROVIDER` flag so the
-stub stays default even though `STRIPE_SECRET_KEY` is already in prod — merging
-won't change behavior. No card-collection UI yet, so a real intent sits at
-`requires_payment_method`; a Payment Element step is a deliberate follow-up.
+was removed. **Stripe (#18) — foundational adapter, reviewed + MERGED** (flag-
+gated behind `PAYMENTS_PROVIDER`, default `stub`): real `PaymentProvider` +
+signature-verified `/api/payments/webhook`. Verified inert in prod — homepage
+200, webhook rejects unsigned POSTs (400), stub still active. No card-collection
+UI yet, so a real intent sits at `requires_payment_method`; a Payment Element
+step is a deliberate follow-up. **Deployed-system check:** prod routes healthy
+(public 200, auth-gated 302, no 500s); worker boot-safety confirmed by code
+review (today's changes don't touch its boot path/deps). Still pending Ross:
+confirm the Railway worker is *running* (logs) + an e2e smoke with a real email.
 Earlier today: #10 Mapbox, #14 Google OAuth, #12 Twilio merged + live. LLC
 filed, awaiting approval.)
-**Cursor:** Phase 1 plumbing — final leg. RESUME HERE: Sentry + PostHog are
-merged, live, and verified; the Stripe foundational PR (#18) is open + held.
-NEXT:
-1. **Review Stripe #18** (foundational, flag-gated — no behavior change on
-   merge). Then decide the **Payment Element checkout** follow-up (the card
-   step that lets a real test PaymentIntent actually authorize + capture).
-2. **Verify the Railway worker boots cleanly** (deploy box still open) — logs.
-3. **Run the Phase-1 e2e smoke** (signup OD → watch zone → post shift → alert
-   via SSE + email; the **SMS leg is blocked on Twilio compliance**).
+**Cursor:** Phase 1 plumbing — final leg. RESUME HERE: all five integrations
+(Mapbox/Google/Twilio/Sentry/PostHog) + the Stripe foundational adapter (#18)
+are merged + deployed. Web surface verified healthy. NEXT:
+1. **Confirm the Railway worker is RUNNING** (only Ross can — Railway logs):
+   look for `[worker] listening on: fanout-shift-posted, …` and no
+   `[worker] fatal:`; confirm `DATABASE_URL` + `AUTH_SECRET` set on the service.
+2. **Run the Phase-1 e2e smoke with a REAL email** (signup OD → watch zone →
+   post matching shift → in-app notification + email within ~10s). Do NOT use
+   the seeded `@notifeyes.dev` accounts — bounces hurt Resend reputation. The
+   **SMS leg stays blocked on Twilio compliance**.
+3. **Payment Element checkout** follow-up (the card step that lets a real
+   test-mode PaymentIntent authorize + capture), then flip `PAYMENTS_PROVIDER=
+   stripe`. Live mode still blocked on the LLC.
 4. **On Twilio approval + number:** set `TWILIO_ACCOUNT_SID` /
    `TWILIO_AUTH_TOKEN` / `TWILIO_FROM_NUMBER` on **both** Vercel + Railway —
    no code change (the adapter is already merged and env-gated).
@@ -289,6 +296,19 @@ old one; do not edit history.
   events. The debug route (#20) was then **removed**. Both observability seams
   are now done; only the Stripe checkout follow-up remains of the integration
   work.
+- **2026-05-30** Stripe **#18 reviewed + merged** (self-review: signature-
+  verified webhook, idempotent reconciliation, all payment callers already
+  try/catch-wrapped → graceful failure; nits noted — no webhook event dedup,
+  unpinned `apiVersion` — left for the checkout follow-up). Merge verified inert
+  in prod (homepage 200, webhook 400 on unsigned POST, stub still active).
+- **2026-05-30** Deployed-system verification (what's checkable headless):
+  prod route surface healthy (public 200, auth-gated 302→login, no 500s); worker
+  **boot-safety** confirmed by code review — no job imports `@/lib/payments`, so
+  #18 didn't add the Stripe SDK to the worker's deps; Sentry/PostHog are
+  Next-only; only `env.ts`/`sms.ts` reached the worker, both boot-safe. **Not**
+  headless-checkable, left to Ross: the worker actually *running* on Railway
+  (logs) and an e2e smoke with a real email (seeded `@notifeyes.dev` addresses
+  deliberately avoided — bounces would hurt Resend's sender reputation).
 
 ---
 
@@ -329,18 +349,20 @@ old one; do not edit history.
       `AUTH_URL=https://notifeyes.com` set + redeployed 2026-05-30. Homepage
       200, login verified._
 - [ ] Deploy worker to Railway (same repo, separate service). _Railway env
-      vars set (2026-05-30); confirm a clean boot in the Railway logs to tick
-      this._
+      vars set (2026-05-30); boot-safety confirmed by code review (today's
+      integration changes don't touch the worker's boot path or deps). Tick
+      once a `[worker] listening on: …` line (no `[worker] fatal:`) is seen in
+      the Railway logs._
 - [x] Wire Resend into `src/lib/notifications/channels/email.ts`. _Code was
       key-gated; key set + `notifeyes.com` DKIM/SPF/DMARC verified 2026-05-30._
 - [x] Wire Twilio into `src/lib/notifications/channels/sms.ts`. _Merged #12,
       env-gated; **dormant on the console stub** until Twilio compliance
       clears + a number is bought + the 3 `TWILIO_*` vars are set._
 - [ ] Replace Stripe stub (`src/lib/payments/stub.ts`) with real
-      (test-mode) PaymentIntent calls. _Foundational adapter + webhook built in
-      **PR #18 (open, HELD for review)**, flag-gated behind `PAYMENTS_PROVIDER`
-      (default stub) — merging won't change behavior. Box stays unchecked until
-      the Payment Element checkout step lands + the flag is flipped._
+      (test-mode) PaymentIntent calls. _Foundational adapter + webhook **merged
+      (PR #18)**, flag-gated behind `PAYMENTS_PROVIDER` (default stub) — verified
+      inert in prod. Box stays unchecked until the Payment Element checkout step
+      lands + the flag is flipped to `stripe`._
 - [x] Set `UPLOADTHING_TOKEN` in Vercel env (un-stubs uploads). _Set
       2026-05-30; the worker doesn't upload, so Railway doesn't need it._
 - [x] Swap Nominatim for Mapbox in `src/lib/geocode.ts` + Leaflet tile URL.
