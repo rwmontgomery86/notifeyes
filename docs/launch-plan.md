@@ -6,31 +6,29 @@
 > resume. When work lands, the commit that lands it must also tick the
 > checkbox here and bump `Last touched`.
 
-**Last touched:** 2026-05-30 (Integration batch LANDED. All three staged
-adapter PRs merged to `main` and deployed to prod: **#10 Mapbox**, **#14
-Google OAuth** (re-cut from the auto-closed #11 — see Decisions log), **#12
-Twilio**. SaaS accounts created and keys set in Vercel (+ Railway where the
-worker needs them); `notifeyes.com` attached with `AUTH_URL` set; Resend
-domain DNS-verified. Prod verified live — `/login` renders "Continue with
-Google" (Google env-gate active), homepage 200, `main` CI green, local
-typecheck + `next build` clean. **Gap found:** Sentry, PostHog, and real
-(test-mode) Stripe have keys in Vercel but **no code wiring yet** — that is
-the remaining Phase 1 work. Twilio stays on the console stub until compliance
-clears and a number is purchased. LLC filed, awaiting approval.)
-**Cursor:** Phase 1 plumbing — final leg. RESUME HERE: the Mapbox/Google/
-Twilio adapters are merged + live; accounts + keys are in. NEXT, in order:
-1. **Wire the three deferred integrations** (keys already in Vercel, code
-   missing): **Sentry** (`@sentry/nextjs` + `next.config` wrapper +
-   instrumentation + source maps), **PostHog** (`posthog-js` + client
-   provider), and **real test-mode Stripe** (swap the `stripe` SDK into the
-   `src/lib/payments` seam — a spine file; the stub stays as the no-key
-   fallback). New deps + build-affecting, so verify live (events land? source
-   maps upload? a test PaymentIntent succeeds?).
-2. **Verify the Railway worker boots cleanly** (deploy box still open; only
-   `sms.ts`/`env.ts` changed and Twilio is dormant) — check the Railway logs.
-3. **Run the Phase-1 e2e smoke** (signup OD → watch zone → post shift → alert
+**Last touched:** 2026-05-30 (Deferred integrations wired. **Sentry (#16)** and
+**PostHog (#17)** merged + deployed — both env-gated (dormant without keys,
+prod-only send, no Session Replay, `sendDefaultPii:false`); awaiting Ross's
+live dashboard verification. **Stripe (#18) — foundational adapter, OPEN +
+HELD for review** (not merged): real `PaymentProvider` + signature-verified
+`/api/payments/webhook`, selected by an explicit `PAYMENTS_PROVIDER` flag so the
+stub stays default even though `STRIPE_SECRET_KEY` is already in prod — merging
+won't change behavior. No card-collection UI yet, so a real intent sits at
+`requires_payment_method`; a Payment Element step is a deliberate follow-up.
+Earlier today: #10 Mapbox, #14 Google OAuth, #12 Twilio merged + live. LLC
+filed, awaiting approval.)
+**Cursor:** Phase 1 plumbing — final leg. RESUME HERE: Sentry + PostHog are
+merged + live; the Stripe foundational PR (#18) is open + held. NEXT:
+1. **Live-verify Sentry + PostHog** (only Ross can — needs the dashboards):
+   trigger a prod error → Sentry issue with an un-minified stack (source maps);
+   browse prod → `$pageview`/autocapture land in PostHog.
+2. **Review Stripe #18** (foundational, flag-gated — no behavior change on
+   merge). Then decide the **Payment Element checkout** follow-up (the card
+   step that lets a real test PaymentIntent actually authorize + capture).
+3. **Verify the Railway worker boots cleanly** (deploy box still open) — logs.
+4. **Run the Phase-1 e2e smoke** (signup OD → watch zone → post shift → alert
    via SSE + email; the **SMS leg is blocked on Twilio compliance**).
-4. **On Twilio approval + number:** set `TWILIO_ACCOUNT_SID` /
+5. **On Twilio approval + number:** set `TWILIO_ACCOUNT_SID` /
    `TWILIO_AUTH_TOKEN` / `TWILIO_FROM_NUMBER` on **both** Vercel + Railway —
    no code change (the adapter is already merged and env-gated).
 **Pooler rule stands:** SSE `LISTEN` + pg-boss on the session pooler (5432);
@@ -265,6 +263,26 @@ old one; do not edit history.
   the `"lint": "next lint"` script is vestigial (CI never ran it). Either set
   up an ESLint flat config (`eslint.config.mjs`) or drop the dead script —
   deferred, tracked here.
+- **2026-05-30** Deferred integrations wired as **3 independent sequential
+  PRs** (not a stack — stacking bought nothing but the #11 auto-close pain):
+  **#16 Sentry** (`@sentry/nextjs` v10; `withSentryConfig` wraps only when a
+  DSN is set; instrumentation + server/edge/client configs gated on DSN,
+  prod-only send) and **#17 PostHog** (`posthog-js` client provider in the root
+  layout; gated on `NEXT_PUBLIC_POSTHOG_KEY`+`HOST`, prod-only; manual App
+  Router `$pageview` + autocapture) — both **merged + deployed**. Each verified
+  by building twice (with + without the integration's env). Live dashboard
+  verification is Ross's (can't be done headless).
+- **2026-05-30** Stripe scope decision: **foundational adapter only**, not a
+  full checkout (chosen over full Payment Element checkout / defer). PR **#18
+  open + HELD for review** (the money/spine change): `src/lib/payments/stripe.ts`
+  (real `PaymentProvider` via the `stripe` SDK) + signature-verified
+  `/api/payments/webhook`, selected by a new **`PAYMENTS_PROVIDER`** env flag
+  (default `"stub"`). Rationale for the flag vs. key-presence gating:
+  `STRIPE_SECRET_KEY` is **already in prod**, so key-presence gating would flip
+  prod onto a half-built flow the instant it deployed. With the flag default
+  `"stub"`, merging #18 changes nothing. Known limit: no card-collection UI, so
+  a real intent stays at `requires_payment_method` until a Payment Element step
+  (deliberate follow-up) authorizes it. Live mode is blocked on the LLC anyway.
 
 ---
 
@@ -287,8 +305,8 @@ old one; do not edit history.
         exposure)
   - [x] UploadThing
   - [x] Mapbox
-  - [x] Sentry — _account/keys only; code not wired yet_
-  - [x] PostHog — _account/keys only; code not wired yet_
+  - [x] Sentry — keys set + code wired (#16)
+  - [x] PostHog — keys set + code wired (#17)
   - [x] Google Cloud Console (OAuth credentials)
 
 ### Code + config (Claude)
@@ -313,17 +331,20 @@ old one; do not edit history.
       env-gated; **dormant on the console stub** until Twilio compliance
       clears + a number is bought + the 3 `TWILIO_*` vars are set._
 - [ ] Replace Stripe stub (`src/lib/payments/stub.ts`) with real
-      (test-mode) PaymentIntent calls. _Keys set in Vercel but **not wired** —
-      `payments/index.ts` still returns the stub. Remaining work._
+      (test-mode) PaymentIntent calls. _Foundational adapter + webhook built in
+      **PR #18 (open, HELD for review)**, flag-gated behind `PAYMENTS_PROVIDER`
+      (default stub) — merging won't change behavior. Box stays unchecked until
+      the Payment Element checkout step lands + the flag is flipped._
 - [x] Set `UPLOADTHING_TOKEN` in Vercel env (un-stubs uploads). _Set
       2026-05-30; the worker doesn't upload, so Railway doesn't need it._
 - [x] Swap Nominatim for Mapbox in `src/lib/geocode.ts` + Leaflet tile URL.
       _Merged #10; `MAPBOX_TOKEN` + `NEXT_PUBLIC_MAPBOX_TOKEN` set._
 - [x] Add Google OAuth provider to `src/lib/auth/config.ts`. _Merged #14;
       existing-accounts-only; verified live (button on `/login`)._
-- [ ] Wire Sentry + PostHog SDKs. Configure source maps on Vercel build.
-      _Keys set in Vercel but **not wired** (no deps, no `next.config`
-      wrapper, no instrumentation). Remaining work._
+- [x] Wire Sentry + PostHog SDKs. Configure source maps on Vercel build.
+      _Sentry #16 (`withSentryConfig` + instrumentation, source maps on the
+      prod build) + PostHog #17 (client provider, App Router pageviews), both
+      merged + deployed, env-gated. Live dashboard verification pending Ross._
 - [ ] End-to-end smoke: sign up as OD → draw watch zone → post shift as
       practice → alert lands via SSE + email + SMS within 10s. _Email leg
       ready; **SMS leg blocked** on Twilio activation._
@@ -408,8 +429,8 @@ env vars.
 | Stripe | Standard | rosswmont@notifeyes.com | active (test mode; keys not yet wired) |
 | UploadThing | Free | rosswmont@notifeyes.com | active |
 | Mapbox | Free | rosswmont@notifeyes.com | active |
-| Sentry | Developer (free) | rosswmont@notifeyes.com | active (keys set; code not wired) |
-| PostHog | Free | rosswmont@notifeyes.com | active (keys set; code not wired) |
+| Sentry | Developer (free) | rosswmont@notifeyes.com | active (wired #16; live check pending) |
+| PostHog | Free | rosswmont@notifeyes.com | active (wired #17; live check pending) |
 | Google Cloud (OAuth) | Free | rosswmont@notifeyes.com | active |
 
 ---
