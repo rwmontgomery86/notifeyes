@@ -6,34 +6,33 @@
 > resume. When work lands, the commit that lands it must also tick the
 > checkbox here and bump `Last touched`.
 
-**Last touched:** 2026-05-29 (Two threads landed today. (1) In-app live
-watch-alert **fixed, verified, merged, and LIVE in prod** — PR #9: a 5s
-polling fallback in `NotificationsLive` (Postgres NOTIFY doesn't survive the
-Supabase pooler to the SSE relay); verified on the preview (badge ticked 2→3
-in ~5s, no navigation); `main` CI green, Vercel + Railway deployed. (2)
-Pre-wired three integrations as **stacked, env-gated PRs awaiting merge +
-keys**: **#10 Mapbox** (geocode + tiles, base `main`, CI green), **#11 Google
-OAuth** (existing-accounts-only, base `#10`), **#12 Twilio SMS** (un-stub,
-base `#11`). All dormant until their keys are set; each validated locally
-(tsc + build). **Sentry + PostHog deferred** until those accounts exist (new
-deps + `next.config`; worth verifying live). Ross is creating the remaining
-SaaS accounts. **Switching machines — resuming on a different computer
-tomorrow.** LLC filed, awaiting approval.)
-**Cursor:** Phase 1 plumbing. RESUME HERE (fresh machine): the live-alert leg
-is done and in prod; three integration PRs are staged. NEXT, in order:
-1. **Merge the stacked PRs #10 → #11 → #12** (in that order). They target
-   each other, so GitHub retargets each to `main` as the one below merges, and
-   the full CI (incl. cold spine e2e) runs at the front of the queue. `gh pr
-   list` to find them.
-2. **Create remaining SaaS accounts + set the keys** in the Vercel/Railway
-   dashboards. Per-service signup steps + the exact env-var names were handed
-   off 2026-05-29 (see the PR descriptions and `.env.example`). Resend +
-   UploadThing need no code — key-only. [V]=Vercel, [V+R]=Vercel+Railway.
-3. **Attach `notifeyes.com`** (Vercel domain + GoDaddy DNS + `AUTH_URL=
-   https://notifeyes.com` + redeploy). Batch with Resend's DKIM/SPF/DMARC —
-   same GoDaddy zone.
-4. Then **wire Sentry + PostHog** (deferred) and run the email+SMS legs of the
-   Phase 1 end-to-end smoke checkbox (still unchecked until those land).
+**Last touched:** 2026-05-30 (Integration batch LANDED. All three staged
+adapter PRs merged to `main` and deployed to prod: **#10 Mapbox**, **#14
+Google OAuth** (re-cut from the auto-closed #11 — see Decisions log), **#12
+Twilio**. SaaS accounts created and keys set in Vercel (+ Railway where the
+worker needs them); `notifeyes.com` attached with `AUTH_URL` set; Resend
+domain DNS-verified. Prod verified live — `/login` renders "Continue with
+Google" (Google env-gate active), homepage 200, `main` CI green, local
+typecheck + `next build` clean. **Gap found:** Sentry, PostHog, and real
+(test-mode) Stripe have keys in Vercel but **no code wiring yet** — that is
+the remaining Phase 1 work. Twilio stays on the console stub until compliance
+clears and a number is purchased. LLC filed, awaiting approval.)
+**Cursor:** Phase 1 plumbing — final leg. RESUME HERE: the Mapbox/Google/
+Twilio adapters are merged + live; accounts + keys are in. NEXT, in order:
+1. **Wire the three deferred integrations** (keys already in Vercel, code
+   missing): **Sentry** (`@sentry/nextjs` + `next.config` wrapper +
+   instrumentation + source maps), **PostHog** (`posthog-js` + client
+   provider), and **real test-mode Stripe** (swap the `stripe` SDK into the
+   `src/lib/payments` seam — a spine file; the stub stays as the no-key
+   fallback). New deps + build-affecting, so verify live (events land? source
+   maps upload? a test PaymentIntent succeeds?).
+2. **Verify the Railway worker boots cleanly** (deploy box still open; only
+   `sms.ts`/`env.ts` changed and Twilio is dormant) — check the Railway logs.
+3. **Run the Phase-1 e2e smoke** (signup OD → watch zone → post shift → alert
+   via SSE + email; the **SMS leg is blocked on Twilio compliance**).
+4. **On Twilio approval + number:** set `TWILIO_ACCOUNT_SID` /
+   `TWILIO_AUTH_TOKEN` / `TWILIO_FROM_NUMBER` on **both** Vercel + Railway —
+   no code change (the adapter is already merged and env-gated).
 **Pooler rule stands:** SSE `LISTEN` + pg-boss on the session pooler (5432);
 query pool on the transaction pooler (6543) via `DATABASE_URL_POOLED`.
 
@@ -237,6 +236,35 @@ old one; do not edit history.
   a `next.config` wrapper + instrumentation (build-affecting for everyone), and
   observability is best verified live (do events land? source maps upload?).
   Wire + verify in one pass once the DSN/key are in hand, rather than blind.
+- **2026-05-30** Integration adapters **merged to `main` + deployed**: #10
+  Mapbox (geocode + tiles), #14 Google OAuth, #12 Twilio SMS. All env-gated
+  with fallbacks (Mapbox → Nominatim/OSM, Google button hidden when unset,
+  Twilio → console stub). Prod verified: `notifeyes.com` 200, `/login` shows
+  the Google button (env-gate live), `main` CI green, local `tsc` +
+  `next build` clean. SaaS accounts created and keys set (Resend, UploadThing,
+  Mapbox, Google Cloud, Sentry, PostHog, Stripe test); domain attached with
+  `AUTH_URL`; Resend DNS verified.
+- **2026-05-30** Merge mechanics (lesson): #11 was **auto-closed**, not
+  retargeted, when #10 merged with `--delete-branch` removed its base branch
+  `claude/wire-mapbox`. GitHub can't reopen a PR whose base is gone, so #11
+  was re-cut as **#14** from the same `claude/wire-google` branch → `main`.
+  Rule for stacked PRs: merge the lower one **without** `--delete-branch` (or
+  `gh pr edit --base main` the dependent first), then delete branches at the
+  end.
+- **2026-05-30** Sentry / PostHog / real Stripe: keys are set in Vercel but
+  **no code is wired** (confirmed: no `@sentry/nextjs` / `posthog-js` /
+  `stripe` deps; `payments/index.ts` still hard-wires the stub). Setting the
+  env vars did **not** activate these — they remain the open Phase 1 work.
+  Wire + verify live before checking their boxes.
+- **2026-05-30** Stripe **test-mode** keys + webhook secret were **rotated
+  after a brief exposure** and Vercel redeployed. Test-mode only (no live
+  funds at risk); logged for the record and as a reminder to keep the
+  pre-public secret audit (Risks tracker) on the list before live keys.
+- **2026-05-30** Lint: the repo has **no working lint step** — Next.js 16
+  removed `next lint`, there is no `eslint` dependency, and no ESLint config;
+  the `"lint": "next lint"` script is vestigial (CI never ran it). Either set
+  up an ESLint flat config (`eslint.config.mjs`) or drop the dead script —
+  deferred, tracked here.
 
 ---
 
@@ -252,14 +280,16 @@ old one; do not edit history.
   - [x] Vercel (Pro tier)
   - [x] Railway
   - [x] Supabase (Pro tier)
-  - [ ] Resend
-  - [ ] Twilio (purchase one US phone number)
-  - [ ] Stripe (test mode for now) — _account started, signup incomplete_
-  - [ ] UploadThing
-  - [ ] Mapbox
-  - [ ] Sentry
-  - [ ] PostHog
-  - [ ] Google Cloud Console (OAuth credentials)
+  - [x] Resend — domain verified (DKIM/SPF/DMARC)
+  - [ ] Twilio (purchase one US phone number) — _compliance profile under
+        review; no number yet_
+  - [x] Stripe (test mode) — keys + webhook secret set (rotated after a brief
+        exposure)
+  - [x] UploadThing
+  - [x] Mapbox
+  - [x] Sentry — _account/keys only; code not wired yet_
+  - [x] PostHog — _account/keys only; code not wired yet_
+  - [x] Google Cloud Console (OAuth credentials)
 
 ### Code + config (Claude)
 - [x] Provision Supabase project (`notifeyes-prod`, ref
@@ -271,23 +301,32 @@ old one; do not edit history.
       round-trip is config-gated on `DATABASE_URL` connection mode (see
       Cursor) and gets its final end-to-end proof in the post-deploy smoke
       test._
-- [x] Deploy Next.js to Vercel. _Done 2026-05-28: first deploy live on
-      `*.vercel.app`; login verified with seeded creds against the cloud
-      DB._ **Attach `notifeyes.com` still pending — set
-      `AUTH_URL=https://notifeyes.com` + redeploy after.**
-- [ ] Deploy worker to Railway (same repo, separate service).
-- [ ] Wire Resend into `src/lib/notifications/channels/email.ts`. Add
-      DKIM/SPF/DMARC records to `notifeyes.com` DNS.
-- [ ] Wire Twilio into `src/lib/notifications/channels/sms.ts`.
+- [x] Deploy Next.js to Vercel. _Done 2026-05-28; `notifeyes.com` attached +
+      `AUTH_URL=https://notifeyes.com` set + redeployed 2026-05-30. Homepage
+      200, login verified._
+- [ ] Deploy worker to Railway (same repo, separate service). _Railway env
+      vars set (2026-05-30); confirm a clean boot in the Railway logs to tick
+      this._
+- [x] Wire Resend into `src/lib/notifications/channels/email.ts`. _Code was
+      key-gated; key set + `notifeyes.com` DKIM/SPF/DMARC verified 2026-05-30._
+- [x] Wire Twilio into `src/lib/notifications/channels/sms.ts`. _Merged #12,
+      env-gated; **dormant on the console stub** until Twilio compliance
+      clears + a number is bought + the 3 `TWILIO_*` vars are set._
 - [ ] Replace Stripe stub (`src/lib/payments/stub.ts`) with real
-      (test-mode) PaymentIntent calls.
-- [ ] Set `UPLOADTHING_TOKEN` in Vercel + Railway env (un-stubs uploads).
-- [ ] Swap Nominatim for Mapbox in `src/lib/geocode.ts`. Swap Leaflet
-      tile URL to Mapbox.
-- [ ] Add Google OAuth provider to `src/lib/auth/config.ts`.
+      (test-mode) PaymentIntent calls. _Keys set in Vercel but **not wired** —
+      `payments/index.ts` still returns the stub. Remaining work._
+- [x] Set `UPLOADTHING_TOKEN` in Vercel env (un-stubs uploads). _Set
+      2026-05-30; the worker doesn't upload, so Railway doesn't need it._
+- [x] Swap Nominatim for Mapbox in `src/lib/geocode.ts` + Leaflet tile URL.
+      _Merged #10; `MAPBOX_TOKEN` + `NEXT_PUBLIC_MAPBOX_TOKEN` set._
+- [x] Add Google OAuth provider to `src/lib/auth/config.ts`. _Merged #14;
+      existing-accounts-only; verified live (button on `/login`)._
 - [ ] Wire Sentry + PostHog SDKs. Configure source maps on Vercel build.
+      _Keys set in Vercel but **not wired** (no deps, no `next.config`
+      wrapper, no instrumentation). Remaining work._
 - [ ] End-to-end smoke: sign up as OD → draw watch zone → post shift as
-      practice → alert lands via SSE + email + SMS within 10s.
+      practice → alert lands via SSE + email + SMS within 10s. _Email leg
+      ready; **SMS leg blocked** on Twilio activation._
 
 ---
 
@@ -364,14 +403,14 @@ env vars.
 | Vercel | Pro | rosswmont@notifeyes.com | active |
 | Railway | Hobby | rosswmont@notifeyes.com | active |
 | Supabase | Pro | rosswmont@notifeyes.com | active (project `notifeyes-prod`) |
-| Resend | Free | rosswmont@notifeyes.com | not signed up |
-| Twilio | Pay-as-you-go | rosswmont@notifeyes.com | not signed up |
-| Stripe | Standard | rosswmont@notifeyes.com | started, signup incomplete |
-| UploadThing | Free | rosswmont@notifeyes.com | not signed up |
-| Mapbox | Free | rosswmont@notifeyes.com | not signed up |
-| Sentry | Developer (free) | rosswmont@notifeyes.com | not signed up |
-| PostHog | Free | rosswmont@notifeyes.com | not signed up |
-| Google Cloud (OAuth) | Free | rosswmont@notifeyes.com | not signed up |
+| Resend | Free | rosswmont@notifeyes.com | active (domain verified) |
+| Twilio | Pay-as-you-go | rosswmont@notifeyes.com | compliance under review (no number yet) |
+| Stripe | Standard | rosswmont@notifeyes.com | active (test mode; keys not yet wired) |
+| UploadThing | Free | rosswmont@notifeyes.com | active |
+| Mapbox | Free | rosswmont@notifeyes.com | active |
+| Sentry | Developer (free) | rosswmont@notifeyes.com | active (keys set; code not wired) |
+| PostHog | Free | rosswmont@notifeyes.com | active (keys set; code not wired) |
+| Google Cloud (OAuth) | Free | rosswmont@notifeyes.com | active |
 
 ---
 
