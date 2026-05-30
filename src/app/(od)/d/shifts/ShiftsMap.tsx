@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import "leaflet/dist/leaflet.css";
 import { formatUsd } from "@/lib/format";
+import { getTileConfig } from "@/lib/map-tiles";
 
 type Pin = {
   id: string;
@@ -53,9 +54,13 @@ export function ShiftsMap({
 
       const map = L.map(containerRef.current).setView(center, 10);
       mapRef.current = map;
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "© OpenStreetMap",
-        maxZoom: 19,
+      const tiles = getTileConfig();
+      L.tileLayer(tiles.url, {
+        attribution: tiles.attribution,
+        maxZoom: tiles.maxZoom,
+        ...(tiles.tileSize
+          ? { tileSize: tiles.tileSize, zoomOffset: tiles.zoomOffset }
+          : {}),
       }).addTo(map);
 
       // Home marker — different style (a small circle, not a pin)

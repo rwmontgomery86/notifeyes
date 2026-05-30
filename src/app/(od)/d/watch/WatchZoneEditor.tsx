@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import "leaflet/dist/leaflet.css";
 import "leaflet-draw/dist/leaflet.draw.css";
 import { createWatchZone, geocodeZip } from "./actions";
+import { getTileConfig } from "@/lib/map-tiles";
 
 type DrawnShape =
   | { kind: "circle"; centerLat: number; centerLng: number; radiusMeters: number }
@@ -117,9 +118,13 @@ export function WatchZoneEditor({
       const zoom = initialCenter ? DEFAULT_ZOOM : FALLBACK_ZOOM;
       const map = L.map(containerRef.current).setView(center, zoom);
       mapInstance.current = map;
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "© OpenStreetMap",
-        maxZoom: 19,
+      const tiles = getTileConfig();
+      L.tileLayer(tiles.url, {
+        attribution: tiles.attribution,
+        maxZoom: tiles.maxZoom,
+        ...(tiles.tileSize
+          ? { tileSize: tiles.tileSize, zoomOffset: tiles.zoomOffset }
+          : {}),
       }).addTo(map);
 
       const drawnItems = new L.FeatureGroup();
