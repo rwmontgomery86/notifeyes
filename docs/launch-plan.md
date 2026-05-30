@@ -7,9 +7,11 @@
 > checkbox here and bump `Last touched`.
 
 **Last touched:** 2026-05-30 (Deferred integrations wired. **Sentry (#16)** and
-**PostHog (#17)** merged + deployed — both env-gated (dormant without keys,
-prod-only send, no Session Replay, `sendDefaultPii:false`); awaiting Ross's
-live dashboard verification. **Stripe (#18) — foundational adapter, OPEN +
+**PostHog (#17)** merged, deployed, and **VERIFIED LIVE** — both env-gated
+(dormant without keys, prod-only send, no Session Replay, `sendDefaultPii:false`);
+Ross confirmed Sentry capture (incl. source-mapped stacks) + PostHog
+pageview/autocapture on prod. The temporary `/api/debug-sentry` smoke-test route
+was removed. **Stripe (#18) — foundational adapter, OPEN +
 HELD for review** (not merged): real `PaymentProvider` + signature-verified
 `/api/payments/webhook`, selected by an explicit `PAYMENTS_PROVIDER` flag so the
 stub stays default even though `STRIPE_SECRET_KEY` is already in prod — merging
@@ -18,17 +20,15 @@ won't change behavior. No card-collection UI yet, so a real intent sits at
 Earlier today: #10 Mapbox, #14 Google OAuth, #12 Twilio merged + live. LLC
 filed, awaiting approval.)
 **Cursor:** Phase 1 plumbing — final leg. RESUME HERE: Sentry + PostHog are
-merged + live; the Stripe foundational PR (#18) is open + held. NEXT:
-1. **Live-verify Sentry + PostHog** (only Ross can — needs the dashboards):
-   trigger a prod error → Sentry issue with an un-minified stack (source maps);
-   browse prod → `$pageview`/autocapture land in PostHog.
-2. **Review Stripe #18** (foundational, flag-gated — no behavior change on
+merged, live, and verified; the Stripe foundational PR (#18) is open + held.
+NEXT:
+1. **Review Stripe #18** (foundational, flag-gated — no behavior change on
    merge). Then decide the **Payment Element checkout** follow-up (the card
    step that lets a real test PaymentIntent actually authorize + capture).
-3. **Verify the Railway worker boots cleanly** (deploy box still open) — logs.
-4. **Run the Phase-1 e2e smoke** (signup OD → watch zone → post shift → alert
+2. **Verify the Railway worker boots cleanly** (deploy box still open) — logs.
+3. **Run the Phase-1 e2e smoke** (signup OD → watch zone → post shift → alert
    via SSE + email; the **SMS leg is blocked on Twilio compliance**).
-5. **On Twilio approval + number:** set `TWILIO_ACCOUNT_SID` /
+4. **On Twilio approval + number:** set `TWILIO_ACCOUNT_SID` /
    `TWILIO_AUTH_TOKEN` / `TWILIO_FROM_NUMBER` on **both** Vercel + Railway —
    no code change (the adapter is already merged and env-gated).
 **Pooler rule stands:** SSE `LISTEN` + pg-boss on the session pooler (5432);
@@ -283,6 +283,12 @@ old one; do not edit history.
   `"stub"`, merging #18 changes nothing. Known limit: no card-collection UI, so
   a real intent stays at `requires_payment_method` until a Payment Element step
   (deliberate follow-up) authorizes it. Live mode is blocked on the LLC anyway.
+- **2026-05-30** Sentry + PostHog **verified live on prod** (Ross): Sentry
+  captured a test exception with a source-mapped (un-minified) stack via the
+  temporary `/api/debug-sentry` route, and PostHog logged pageview + autocapture
+  events. The debug route (#20) was then **removed**. Both observability seams
+  are now done; only the Stripe checkout follow-up remains of the integration
+  work.
 
 ---
 
@@ -344,7 +350,8 @@ old one; do not edit history.
 - [x] Wire Sentry + PostHog SDKs. Configure source maps on Vercel build.
       _Sentry #16 (`withSentryConfig` + instrumentation, source maps on the
       prod build) + PostHog #17 (client provider, App Router pageviews), both
-      merged + deployed, env-gated. Live dashboard verification pending Ross._
+      merged + deployed, env-gated. **Verified live 2026-05-30** (Sentry capture
+      + source-mapped stacks; PostHog pageview/autocapture)._
 - [ ] End-to-end smoke: sign up as OD → draw watch zone → post shift as
       practice → alert lands via SSE + email + SMS within 10s. _Email leg
       ready; **SMS leg blocked** on Twilio activation._
@@ -429,8 +436,8 @@ env vars.
 | Stripe | Standard | rosswmont@notifeyes.com | active (test mode; keys not yet wired) |
 | UploadThing | Free | rosswmont@notifeyes.com | active |
 | Mapbox | Free | rosswmont@notifeyes.com | active |
-| Sentry | Developer (free) | rosswmont@notifeyes.com | active (wired #16; live check pending) |
-| PostHog | Free | rosswmont@notifeyes.com | active (wired #17; live check pending) |
+| Sentry | Developer (free) | rosswmont@notifeyes.com | active (wired #16; verified live) |
+| PostHog | Free | rosswmont@notifeyes.com | active (wired #17; verified live) |
 | Google Cloud (OAuth) | Free | rosswmont@notifeyes.com | active |
 
 ---
