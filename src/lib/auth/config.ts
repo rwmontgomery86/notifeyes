@@ -1,15 +1,25 @@
 import { eq } from "drizzle-orm";
 import type { NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import Google from "next-auth/providers/google";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { db } from "@/db";
 import { users } from "@/db/schema";
+import { env } from "@/env";
 
 const credentialsSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
 });
+
+// Google OAuth is opt-in: only wired when both credentials are present.
+const googleId = env.AUTH_GOOGLE_ID;
+const googleSecret = env.AUTH_GOOGLE_SECRET;
+const googleProviders =
+  googleId && googleSecret
+    ? [Google({ clientId: googleId, clientSecret: googleSecret })]
+    : [];
 
 export const authConfig = {
   pages: {
@@ -47,21 +57,57 @@ export const authConfig = {
         };
       },
     }),
+    ...googleProviders,
   ],
   callbacks: {
-    async jwt({ token, user }) {
-      // On sign-in, `user` is the object returned from authorize()
+    async signIn({ account, profile }) {
+      // Google logs in EXISTING accounts only — matched by verified email.
+      // New users go through the OD/practice signup flow (which collects
+      // role-specific onboarding data); we never auto-provision an account.
+      if (account?.provider === "google") {
+        const email = profile?.email?.toLowerCase();
+        const verified = (profile as { email_verified?: boolean } | undefined)
+          ?.email_verified;
+        if (!email || verified !== true) return false;
+        const [row] = await db
+          .select({ id: users.id })
+          .from(users)
+          .where(eq(users.email, email))
+          .limit(1);
+        return Boolean(row);
+      }
+      return true;
+    },
+    async jwt({ token, user, account }) {
+      // On sign-in, `user` is set (from authorize() for credentials, or the
+      // provider profile for OAuth).
       if (user) {
-        // user has our extended fields when fresh from authorize
         const u = user as typeof user & {
           role?: string;
           practiceId?: string | null;
           odId?: string | null;
         };
-        token.role = u.role;
-        token.practiceId = u.practiceId ?? null;
-        token.odId = u.odId ?? null;
-        token.userId = u.id;
+        if (u.role) {
+          // Credentials path — our fields are already on the user object.
+          token.role = u.role;
+          token.practiceId = u.practiceId ?? null;
+          token.odId = u.odId ?? null;
+          token.userId = u.id;
+        } else if (account?.provider === "google" && user.email) {
+          // OAuth path — map the verified Google email to our users row so the
+          // session carries our id/role, not the Google subject id.
+          const [row] = await db
+            .select()
+            .from(users)
+            .where(eq(users.email, user.email.toLowerCase()))
+            .limit(1);
+          if (row) {
+            token.role = row.role;
+            token.practiceId = row.practiceId ?? null;
+            token.odId = row.odId ?? null;
+            token.userId = row.id;
+          }
+        }
       }
       return token;
     },

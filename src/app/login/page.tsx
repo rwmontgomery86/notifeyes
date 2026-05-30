@@ -3,6 +3,7 @@ import Image from "next/image";
 import { SiteHeader } from "@/components/marketing/SiteHeader";
 import { SiteFooter } from "@/components/marketing/SiteFooter";
 import { LoginForm } from "./LoginForm";
+import { env } from "@/env";
 
 export const metadata = { title: "Log in · NotifEyes" };
 
@@ -12,6 +13,7 @@ export default async function LoginPage({
   searchParams: Promise<{ callbackUrl?: string; error?: string }>;
 }) {
   const { callbackUrl, error } = await searchParams;
+  const googleEnabled = Boolean(env.AUTH_GOOGLE_ID && env.AUTH_GOOGLE_SECRET);
 
   return (
     <div className="flex min-h-screen flex-col bg-paper text-ink">
@@ -36,7 +38,7 @@ export default async function LoginPage({
               Invalid email or password.
             </div>
           ) : null}
-          <LoginForm callbackUrl={callbackUrl} />
+          <LoginForm callbackUrl={callbackUrl} googleEnabled={googleEnabled} />
           <p className="mt-6 text-sm text-ink-2">
             New here?{" "}
             <Link href="/signup" className="font-medium text-rust hover:text-rust-2">

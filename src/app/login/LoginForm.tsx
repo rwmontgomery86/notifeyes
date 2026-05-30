@@ -4,7 +4,13 @@ import { useState, useTransition } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
-export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
+export function LoginForm({
+  callbackUrl,
+  googleEnabled = false,
+}: {
+  callbackUrl?: string;
+  googleEnabled?: boolean;
+}) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -73,6 +79,23 @@ export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
       <button type="submit" className="ne-btn w-full" disabled={pending}>
         {pending ? "Signing in…" : "Log in"}
       </button>
+
+      {googleEnabled ? (
+        <>
+          <div className="my-2 text-center text-xs uppercase tracking-wide text-ink-2">
+            or
+          </div>
+          <button
+            type="button"
+            onClick={() =>
+              signIn("google", { callbackUrl: callbackUrl ?? "/me" })
+            }
+            className="ne-btn-secondary w-full"
+          >
+            Continue with Google
+          </button>
+        </>
+      ) : null}
     </form>
   );
 }

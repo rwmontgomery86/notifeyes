@@ -12,6 +12,11 @@ const envSchema = z.object({
   DATABASE_URL_POOLED: z.string().url().optional(),
   AUTH_SECRET: z.string().min(16),
   AUTH_URL: z.string().url().optional(),
+  // Google OAuth (optional). When both are set, a "Continue with Google"
+  // provider is added; Google logs in EXISTING accounts only (matched by
+  // verified email) — new users still go through the signup flow.
+  AUTH_GOOGLE_ID: z.string().optional(),
+  AUTH_GOOGLE_SECRET: z.string().optional(),
   EMAIL_FROM: z.string().default("NotifEyes <hello@notifeyes.local>"),
   RESEND_API_KEY: z.string().optional(),
   UPLOADTHING_TOKEN: z.string().optional(),
