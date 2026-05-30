@@ -25,6 +25,11 @@ const envSchema = z.object({
   TWILIO_AUTH_TOKEN: z.string().optional(),
   TWILIO_FROM_NUMBER: z.string().optional(),
   UPLOADTHING_TOKEN: z.string().optional(),
+  // Payments. Selects the adapter in src/lib/payments. "stub" (default)
+  // fabricates intents with no network; "stripe" uses the real API. The stub
+  // stays active even when STRIPE_SECRET_KEY is set — flipping to Stripe is a
+  // deliberate opt-in, so a key in the environment never silently goes live.
+  PAYMENTS_PROVIDER: z.enum(["stub", "stripe"]).default("stub"),
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
   // Maps + geocoding. MAPBOX_TOKEN is the server-side token for the geocoder;
