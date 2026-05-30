@@ -17,21 +17,23 @@ signature-verified `/api/payments/webhook`. Verified inert in prod — homepage
 200, webhook rejects unsigned POSTs (400), stub still active. No card-collection
 UI yet, so a real intent sits at `requires_payment_method`; a Payment Element
 step is a deliberate follow-up. **Deployed-system check:** prod routes healthy
-(public 200, auth-gated 302, no 500s); worker boot-safety confirmed by code
-review (today's changes don't touch its boot path/deps). Still pending Ross:
-confirm the Railway worker is *running* (logs) + an e2e smoke with a real email.
+(public 200, auth-gated 302, no 500s). Shipped **`/api/health` (#23)** — DB +
+pg-boss liveness probe — which **confirmed the Railway worker is RUNNING** (last
+job completed ~3 min before the probe; DB 44ms). Only the e2e smoke with a real
+email remains for Ross (worker fanout already proven to be processing).
 Earlier today: #10 Mapbox, #14 Google OAuth, #12 Twilio merged + live. LLC
 filed, awaiting approval.)
 **Cursor:** Phase 1 plumbing — final leg. RESUME HERE: all five integrations
 (Mapbox/Google/Twilio/Sentry/PostHog) + the Stripe foundational adapter (#18)
-are merged + deployed. Web surface verified healthy. NEXT:
-1. **Confirm the Railway worker is RUNNING** (only Ross can — Railway logs):
-   look for `[worker] listening on: fanout-shift-posted, …` and no
-   `[worker] fatal:`; confirm `DATABASE_URL` + `AUTH_SECRET` set on the service.
-2. **Run the Phase-1 e2e smoke with a REAL email** (signup OD → watch zone →
+are merged + deployed. Web surface healthy; **`/api/health` confirms the worker
+is running**. NEXT:
+1. **Run the Phase-1 e2e smoke with a REAL email** (signup OD → watch zone →
    post matching shift → in-app notification + email within ~10s). Do NOT use
    the seeded `@notifeyes.dev` accounts — bounces hurt Resend reputation. The
-   **SMS leg stays blocked on Twilio compliance**.
+   **SMS leg stays blocked on Twilio compliance**. (This is the last unverified
+   Phase-1 link; the worker fanout itself is already proven via `/api/health`.)
+2. **Point an uptime monitor** (UptimeRobot/BetterStack) at
+   `https://notifeyes.com/api/health` (Phase 2 item — endpoint is ready).
 3. **Payment Element checkout** follow-up (the card step that lets a real
    test-mode PaymentIntent authorize + capture), then flip `PAYMENTS_PROVIDER=
    stripe`. Live mode still blocked on the LLC.
@@ -309,6 +311,14 @@ old one; do not edit history.
   headless-checkable, left to Ross: the worker actually *running* on Railway
   (logs) and an e2e smoke with a real email (seeded `@notifeyes.dev` addresses
   deliberately avoided — bounces would hurt Resend's sender reputation).
+- **2026-05-30** Shipped **`/api/health` (#23)** — DB `SELECT 1` + pg-boss
+  liveness (queue depth + last-completed-job; "alive" if a job completed within
+  15 min, since crons fire every 5). Built to close the worker-verification gap
+  (liveness was only checkable via Railway logs). On first prod hit it returned
+  `status: ok` with the **worker confirmed RUNNING** (last job ~3 min prior, DB
+  44ms) — so the "Deploy worker to Railway" box is now ticked on hard evidence.
+  Endpoint is monitor-ready (503 on DB-down); pointing UptimeRobot/BetterStack
+  at it is the remaining half of the Phase-2 health box.
 
 ---
 
@@ -348,11 +358,10 @@ old one; do not edit history.
 - [x] Deploy Next.js to Vercel. _Done 2026-05-28; `notifeyes.com` attached +
       `AUTH_URL=https://notifeyes.com` set + redeployed 2026-05-30. Homepage
       200, login verified._
-- [ ] Deploy worker to Railway (same repo, separate service). _Railway env
-      vars set (2026-05-30); boot-safety confirmed by code review (today's
-      integration changes don't touch the worker's boot path or deps). Tick
-      once a `[worker] listening on: …` line (no `[worker] fatal:`) is seen in
-      the Railway logs._
+- [x] Deploy worker to Railway (same repo, separate service). _Confirmed
+      **running** 2026-05-30 via `/api/health`: pg-boss reported a job completed
+      ~3 min before the probe (queued 1, active 0) — the worker is deployed and
+      actively processing. (Stronger than a startup log line.)_
 - [x] Wire Resend into `src/lib/notifications/channels/email.ts`. _Code was
       key-gated; key set + `notifeyes.com` DKIM/SPF/DMARC verified 2026-05-30._
 - [x] Wire Twilio into `src/lib/notifications/channels/sms.ts`. _Merged #12,
@@ -393,7 +402,9 @@ old one; do not edit history.
       "beta, things change, no recourse for changes made before exit-of-
       beta" language.
 - [ ] Verify Supabase backup + PITR by restoring to a fresh project.
-- [ ] `/api/health` endpoint + UptimeRobot or BetterStack monitor.
+- [ ] `/api/health` endpoint + UptimeRobot or BetterStack monitor. _Endpoint
+      **shipped (#23)** — reports DB + pg-boss worker liveness; returns 503 when
+      the DB is down. Just needs an external monitor pointed at it to tick._
 - [ ] Worker health: surface pg-boss queue depth + last-job-completed
       timestamp.
 - [ ] Address every `--TODO: legal review` marker in the codebase.
