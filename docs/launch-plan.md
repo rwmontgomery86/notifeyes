@@ -6,40 +6,32 @@
 > resume. When work lands, the commit that lands it must also tick the
 > checkbox here and bump `Last touched`.
 
-**Last touched:** 2026-05-30 (Deferred integrations wired. **Sentry (#16)** and
-**PostHog (#17)** merged, deployed, and **VERIFIED LIVE** — both env-gated
-(dormant without keys, prod-only send, no Session Replay, `sendDefaultPii:false`);
-Ross confirmed Sentry capture (incl. source-mapped stacks) + PostHog
-pageview/autocapture on prod. The temporary `/api/debug-sentry` smoke-test route
-was removed. **Stripe (#18) — foundational adapter, reviewed + MERGED** (flag-
-gated behind `PAYMENTS_PROVIDER`, default `stub`): real `PaymentProvider` +
-signature-verified `/api/payments/webhook`. Verified inert in prod — homepage
-200, webhook rejects unsigned POSTs (400), stub still active. No card-collection
-UI yet, so a real intent sits at `requires_payment_method`; a Payment Element
-step is a deliberate follow-up. **Deployed-system check:** prod routes healthy
-(public 200, auth-gated 302, no 500s). Shipped **`/api/health` (#23)** — DB +
-pg-boss liveness probe — which **confirmed the Railway worker is RUNNING** (last
-job completed ~3 min before the probe; DB 44ms). Only the e2e smoke with a real
-email remains for Ross (worker fanout already proven to be processing).
-Earlier today: #10 Mapbox, #14 Google OAuth, #12 Twilio merged + live. LLC
-filed, awaiting approval.)
-**Cursor:** Phase 1 plumbing — final leg. RESUME HERE: all five integrations
-(Mapbox/Google/Twilio/Sentry/PostHog) + the Stripe foundational adapter (#18)
-are merged + deployed. Web surface healthy; **`/api/health` confirms the worker
-is running**. NEXT:
-1. **Run the Phase-1 e2e smoke with a REAL email** (signup OD → watch zone →
-   post matching shift → in-app notification + email within ~10s). Do NOT use
-   the seeded `@notifeyes.dev` accounts — bounces hurt Resend reputation. The
-   **SMS leg stays blocked on Twilio compliance**. (This is the last unverified
-   Phase-1 link; the worker fanout itself is already proven via `/api/health`.)
-2. **Point an uptime monitor** (UptimeRobot/BetterStack) at
-   `https://notifeyes.com/api/health` (Phase 2 item — endpoint is ready).
-3. **Payment Element checkout** follow-up (the card step that lets a real
-   test-mode PaymentIntent authorize + capture), then flip `PAYMENTS_PROVIDER=
-   stripe`. Live mode still blocked on the LLC.
-4. **On Twilio approval + number:** set `TWILIO_ACCOUNT_SID` /
-   `TWILIO_AUTH_TOKEN` / `TWILIO_FROM_NUMBER` on **both** Vercel + Railway —
-   no code change (the adapter is already merged and env-gated).
+**Last touched:** 2026-05-30 (Phase-1 alert pipeline **PROVEN end-to-end in
+prod.** Ross ran the watch-zone smoke: real OD → Bay Area watch zone → shift
+posted by the seeded practice → OD received the **in-app notification + a real
+email** from notifications@notifeyes.com. Railway worker confirmed online
+(listening on all 8 queues; `DATABASE_URL` on the session pooler/5432, not the
+txn pooler; `AUTH_SECRET` present). **LLC cleared + EIN received** (business bank
+account this week) — Stripe is now live-capable. One transient `EMAXCONNSESSION`
+(session `pool_size: 15`) hit on worker startup and self-recovered; root-caused
+to pg-boss's default pool (10) + the Drizzle pool (5) = 15, and **fixed** by
+capping pg-boss at 5 in `boss.ts`. Still open on Phase 1: Stripe Payment Element
+checkout (held), Twilio activation (compliance pending) + the SMS leg of the
+smoke. Earlier today: #16 Sentry + #17 PostHog verified live, #18 Stripe
+foundational adapter merged, #23 `/api/health` shipped.)
+**Cursor:** Phase 1 plumbing — final leg. RESUME HERE: all integrations merged +
+deployed; worker running; **e2e alert smoke passed (in-app + email)**; LLC + EIN
+cleared. Remaining on Phase 1:
+1. **Twilio activation** (compliance pending) → buy a US number → set the 3
+   `TWILIO_*` vars on **both** Vercel + Railway (no code) → re-run the **SMS leg**
+   of the smoke. The last unverified channel; in-app + email already proven.
+2. **Stripe Payment Element checkout** (held) — the card step so a real
+   test-mode PaymentIntent authorizes + captures, then flip
+   `PAYMENTS_PROVIDER=stripe`. Live mode is now **unblocked** (LLC + EIN cleared)
+   but gate the flip on the checkout UI existing. **Live keys go on Vercel only**
+   — the worker doesn't touch Stripe.
+3. **Point an uptime monitor** (UptimeRobot/BetterStack) at
+   `https://notifeyes.com/api/health` (Phase 2 — endpoint is ready).
 **Pooler rule stands:** SSE `LISTEN` + pg-boss on the session pooler (5432);
 query pool on the transaction pooler (6543) via `DATABASE_URL_POOLED`.
 
@@ -319,15 +311,35 @@ old one; do not edit history.
   44ms) — so the "Deploy worker to Railway" box is now ticked on hard evidence.
   Endpoint is monitor-ready (503 on DB-down); pointing UptimeRobot/BetterStack
   at it is the remaining half of the Phase-2 health box.
+- **2026-05-30** **LLC cleared + EIN received** — supersedes the 2026-05-27
+  "Stripe stays in test mode until LLC + EIN clear" decision. Stripe is now
+  live-capable. Business bank account still in progress (this week). **Still
+  gating real charges:** there's no Payment Element checkout yet, so live keys +
+  `PAYMENTS_PROVIDER=stripe` would record unpaid `requires_payment_method`
+  intents — flip to live only after the checkout UI lands. Live keys go on
+  **Vercel only** (the worker doesn't import payments).
+- **2026-05-30** **Phase-1 e2e alert smoke PASSED in prod** (Ross): real OD →
+  Bay Area watch zone → shift posted by the seeded practice → OD got the in-app
+  notification **and** a real Resend email. Railway worker confirmed online
+  (8 queues; session-pooler `DATABASE_URL`, `AUTH_SECRET` present). Only the SMS
+  leg is unproven (Twilio pending).
+- **2026-05-30** Worker session-pool hardening: a transient `EMAXCONNSESSION`
+  (Supavisor session `pool_size: 15`) hit on worker startup and self-recovered.
+  Root cause: pg-boss's default pool (pg default **10**) + the Drizzle query pool
+  (max **5**, on the session pooler in the worker since `DATABASE_URL_POOLED` is
+  unset) = 15, exactly the cap — and it's shared with Vercel's SSE `listenPool`
+  (max 4). Fixed by capping pg-boss at `max: 5` in `boss.ts` (worker footprint
+  → 5 + 5 = 10, leaving headroom). Complementary lever if it recurs: raise the
+  Supavisor session `pool_size` (room under `max_connections=60`).
 
 ---
 
 ## Phase 1 — Plumbing (target: end of week 1)
 
 ### Out-of-band tasks (Ross)
-- [ ] File LLC + obtain EIN (or accelerate via Stripe Atlas).
-      _Status 2026-05-27: LLC submitted, awaiting approval. EIN
-      application + business bank account follow._
+- [x] File LLC + obtain EIN (or accelerate via Stripe Atlas). _LLC cleared +
+      EIN received 2026-05-30; Stripe is now live-capable. Business bank account
+      in progress (this week) — doesn't block anything technical._
 - [x] Set up Google Workspace for `notifeyes.com`. Create
       `rosswmont@notifeyes.com` and `support@notifeyes.com`.
 - [ ] Sign up for SaaS accounts using `rosswmont@notifeyes.com`:
@@ -337,8 +349,8 @@ old one; do not edit history.
   - [x] Resend — domain verified (DKIM/SPF/DMARC)
   - [ ] Twilio (purchase one US phone number) — _compliance profile under
         review; no number yet_
-  - [x] Stripe (test mode) — keys + webhook secret set (rotated after a brief
-        exposure)
+  - [x] Stripe — **live-capable** (LLC + EIN cleared 2026-05-30). Test keys set;
+        live keys go on **Vercel only** when the Payment Element checkout lands.
   - [x] UploadThing
   - [x] Mapbox
   - [x] Sentry — keys set + code wired (#16)
@@ -384,8 +396,11 @@ old one; do not edit history.
       merged + deployed, env-gated. **Verified live 2026-05-30** (Sentry capture
       + source-mapped stacks; PostHog pageview/autocapture)._
 - [ ] End-to-end smoke: sign up as OD → draw watch zone → post shift as
-      practice → alert lands via SSE + email + SMS within 10s. _Email leg
-      ready; **SMS leg blocked** on Twilio activation._
+      practice → alert lands via SSE + email + SMS within 10s. _**In-app + email
+      PASSED in prod 2026-05-30** (real OD → Bay Area zone → seeded-practice
+      shift → in-app notification + real Resend email from
+      notifications@notifeyes.com). Box ticks once the **SMS leg** runs (blocked
+      on Twilio activation)._
 
 ---
 
@@ -491,3 +506,4 @@ env vars.
 | Vercel serverless caps SSE connection duration → reconnect gaps in the <10s alert | mitigated 2026-05-29 | In-app live updates no longer depend on the held-open SSE stream — `NotificationsLive` polls `/api/notifications/unread-count` every 5s (see Decisions log). SSE relay lifetime now bounded to 10 min so leaked `LISTEN` connections recycle. `EventSource` still auto-reconnects as a fast-path. |
 | **Supabase pooler drops async NOTIFY → SSE relay never wakes** | mitigated 2026-05-29 | `LISTEN/NOTIFY` doesn't propagate through Supavisor to the relay's pooled connection, so the in-app live alert silently never arrived. Switched to client-side polling (Decisions log 2026-05-29). True direct-connection SSE deferred — needs the Supabase IPv4 add-on (direct endpoint is IPv6-only). |
 | **Prod DB connection exhaustion (session pooler, max_connections=60)** | RESOLVED 2026-05-28 (verified live) | Intermittent "A server error occurred" on login. Split pools shipped (PR #7): query pool → transaction pooler (`DATABASE_URL_POOLED`:6543), dedicated session pool for SSE, pg-boss unchanged. `DATABASE_URL_POOLED` set on Vercel + redeployed; logins stable under churn. Watch `pg_stat_activity` as users grow; bump compute if needed. |
+| **Worker `EMAXCONNSESSION` (Supavisor session `pool_size: 15`)** | mitigated 2026-05-30 | Transient on worker startup, self-recovered. pg-boss default pool (10) + Drizzle pool (5) = 15 = the cap, shared with Vercel's SSE `listenPool` (4). Capped pg-boss at `max: 5` in `boss.ts` (footprint → 10). Monitor `/api/health` + Railway logs; if it recurs, raise the Supavisor session `pool_size` (headroom under `max_connections=60`). |
