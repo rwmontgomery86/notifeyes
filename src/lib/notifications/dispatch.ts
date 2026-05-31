@@ -22,6 +22,7 @@ export interface DispatchInput {
   subject: string;
   body: string;
   actionUrl?: string;
+  actionLabel?: string;
   channels: Channel[];
   payload?: Record<string, unknown>;
 }
@@ -73,6 +74,7 @@ export async function dispatchNotification(input: DispatchInput): Promise<void> 
         subject: input.subject,
         body: input.body,
         actionUrl: input.actionUrl,
+        actionLabel: input.actionLabel,
       }),
     ),
   );

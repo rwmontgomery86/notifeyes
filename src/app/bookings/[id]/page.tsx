@@ -72,6 +72,7 @@ export default async function BookingPage({
   const subtotalCents = totalCents - feeCents;
   const wasSameDayFee = feeCents === env.NOTIFEYES_SAMEDAY_FEE_CENTS;
   const matchFeeLabel = wasSameDayFee ? "Same-day match fee" : "Match fee";
+  const feeStatus = feeStatusCopy(row.booking.paymentStatus);
 
   const odSigned = !!row.contract?.signedByOdAt;
 
@@ -149,14 +150,11 @@ export default async function BookingPage({
             <>
               <Row label="OD wage — you pay directly" value={formatUsd(subtotalCents)} />
               <Row label={`${matchFeeLabel} — your card`} value={formatUsd(feeCents)} />
-              <div className="mt-2 text-xs text-muted-foreground">
-                NotifEyes charges your card:{" "}
-                <span className="font-medium text-foreground">
-                  {row.booking.paymentStatus}
-                </span>
-                {row.booking.paymentIntentId
-                  ? ` · ${row.booking.paymentIntentId.slice(0, 16)}…`
-                  : ""}
+              <div
+                className={`mt-2 rounded-md border px-3 py-2 text-xs ${FEE_TONE[feeStatus.tone]}`}
+              >
+                <span className="font-medium">{feeStatus.label}.</span>{" "}
+                {feeStatus.detail}
               </div>
             </>
           )}
@@ -307,4 +305,51 @@ function Row({ label, value }: { label: string; value: string }) {
       <dd className="font-medium">{value}</dd>
     </div>
   );
+}
+
+type FeeTone = "ok" | "pending" | "warn";
+
+const FEE_TONE: Record<FeeTone, string> = {
+  ok: "border-green-500/30 bg-green-50/40 text-green-900",
+  pending: "border-border bg-secondary/30 text-muted-foreground",
+  warn: "border-amber-500/40 bg-amber-50/40 text-amber-900",
+};
+
+// Human-friendly match-fee status for the practice. In the fee-only model the
+// $10 is captured only when the practice confirms attendance, so a not-yet-
+// authorized or failed pre-auth is NOT a broken booking — surface it calmly
+// with a clear "nothing to do now" instead of a raw machine status (the old
+// invite-accept "payment limbo"). Real card collection lands with the Payment
+// Element (A3).
+function feeStatusCopy(status: string): {
+  label: string;
+  detail: string;
+  tone: FeeTone;
+} {
+  switch (status) {
+    case "succeeded":
+    case "requires_capture":
+    case "authorized":
+      return {
+        label: "Card authorized",
+        detail:
+          "We'll capture the match fee only when you confirm the doctor showed up.",
+        tone: "ok",
+      };
+    case "failed":
+      return {
+        label: "We'll sort the fee out later",
+        detail:
+          "We couldn't pre-authorize the match fee, but your booking is locked in. We'll collect it when you confirm attendance — nothing to do right now.",
+        tone: "warn",
+      };
+    default:
+      // authorizing / requires_payment_method / pending / unknown
+      return {
+        label: "Booking confirmed",
+        detail:
+          "The match fee is collected when you confirm the doctor showed up — no payment needed now.",
+        tone: "pending",
+      };
+  }
 }

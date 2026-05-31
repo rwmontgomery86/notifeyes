@@ -77,6 +77,7 @@ export async function fanoutShiftPosted(
               ? `${body}\n\nBoosted — outside your watch zone "${m.zoneName}" but reached via a nearby-shift boost.`
               : `${body}\n\nMatched your watch zone "${m.zoneName}".`,
           actionUrl,
+          actionLabel: "View & apply",
           channels: m.channels,
           payload: {
             shiftId: row.shift.id,

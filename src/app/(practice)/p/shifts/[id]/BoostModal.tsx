@@ -46,7 +46,7 @@ export function BoostModal({
         onClick={() => setOpen(true)}
         className="ne-btn-secondary"
       >
-        {currentBump != null ? "Adjust boost" : "Boost"}
+        {currentBump != null ? "Adjust boost" : "Boost reach"}
       </button>
 
       {open ? (
@@ -61,7 +61,7 @@ export function BoostModal({
             <h3 className="text-lg font-semibold">
               {currentBump != null
                 ? "Adjust the boosted rate"
-                : "Boost this shift"}
+                : "Boost this shift's reach"}
             </h3>
             <p className="mt-1 text-sm text-muted-foreground">
               Reaches ODs within 25 miles whose watch zones don&apos;t include
