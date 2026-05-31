@@ -1,15 +1,15 @@
 import { redirect } from "next/navigation";
-import { and, eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { optometrists, watchZones } from "@/db/schema";
+import { optometrists } from "@/db/schema";
 
 /**
  * Role-routing redirect. Not a real page — clients (login form, "Dashboard"
  * links, post-signup) push to /me and we 307 them to the right surface.
  *
- *   od        → /d/welcome while setup is incomplete (unverified or no active
- *               watch zone), otherwise /d/shifts
+ *   od        → /d/welcome until verified (the setup home, usable while
+ *               verification is pending), then /d/shifts
  *   admin     → /admin/verifications
  *   practice  → /p/dashboard  (default)
  *   no role   → /login
@@ -19,17 +19,17 @@ export default async function MePage() {
   if (!session?.user) redirect("/login");
   const role = session.user.role;
   if (role === "od") {
-    const done = await odSetupComplete(session.user.odId);
-    redirect(done ? "/d/shifts" : "/d/welcome");
+    const verified = await odVerified(session.user.odId);
+    redirect(verified ? "/d/shifts" : "/d/welcome");
   }
   if (role === "admin") redirect("/admin/verifications");
   redirect("/p/dashboard");
 }
 
-// An OD's setup is "complete" once they're verified AND have at least one
-// active watch zone — until then, route them to the setup home rather than
-// the dead-end browse page.
-async function odSetupComplete(
+// Until an OD is verified they can't apply, so the browse page is a dead end —
+// route them to the setup home instead. Once verified, /d/shifts is home (it
+// already nudges watch-zone creation for those who haven't drawn one yet).
+async function odVerified(
   odId: string | null | undefined,
 ): Promise<boolean> {
   if (!odId) return false;
@@ -41,12 +41,5 @@ async function odSetupComplete(
     .from(optometrists)
     .where(eq(optometrists.id, odId))
     .limit(1);
-  if (!me || me.verificationStatus !== "verified" || !me.verifiedAt) {
-    return false;
-  }
-  const [{ count }] = await db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(watchZones)
-    .where(and(eq(watchZones.odId, odId), eq(watchZones.paused, false)));
-  return count > 0;
+  return !!me && me.verificationStatus === "verified" && !!me.verifiedAt;
 }
