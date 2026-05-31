@@ -35,21 +35,24 @@ export default async function PracticeBillingPage() {
     .orderBy(desc(bookings.createdAt))
     .limit(100);
 
-  const totalCharged = rows
+  // Fee-only: NotifEyes only charges the match fee. Wages are paid directly by
+  // the practice and never sum into anything NotifEyes bills.
+  const feesCharged = rows
     .filter((r) => r.booking.paymentStatus === "succeeded")
-    .reduce((s, r) => s + r.booking.totalCents, 0);
+    .reduce((s, r) => s + r.booking.platformFeeCents, 0);
 
   return (
     <div>
       <h1 className="text-2xl font-bold">Billing</h1>
       <p className="mt-1 text-muted-foreground">
-        Authorizations and charges per booking. V1 charges via Stripe Payment
-        Intent at booking time and captures at shift completion.
+        NotifEyes only charges its match fee per booking — held when you book and
+        captured once you confirm the OD showed up. You pay each OD&apos;s wage
+        directly; we never handle it.
       </p>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
         <Stat label="Bookings on file" value={String(rows.length)} />
-        <Stat label="Total charged" value={formatUsd(totalCharged)} />
+        <Stat label="Match fees charged" value={formatUsd(feesCharged)} />
         <Stat
           label="Payment method"
           value={"Stub (Stripe pending integration)"}
@@ -85,10 +88,12 @@ export default async function PracticeBillingPage() {
               </div>
               <div className="text-right">
                 <div className="text-sm font-bold">
-                  {formatUsd(booking.totalCents)}
+                  {formatUsd(booking.platformFeeCents)}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  fee {formatUsd(booking.platformFeeCents)}
+                  match fee · OD wage{" "}
+                  {formatUsd(booking.totalCents - booking.platformFeeCents)} paid
+                  directly
                 </div>
               </div>
             </div>

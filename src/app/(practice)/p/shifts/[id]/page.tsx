@@ -4,13 +4,12 @@ import { notFound, redirect } from "next/navigation";
 import { db } from "@/db";
 import {
   applications,
-  bookings,
   optometrists,
   practices,
   shifts,
 } from "@/db/schema";
 import { auth } from "@/lib/auth";
-import { computeCancellationFee } from "@/lib/cancellation";
+import { cancellationNotice } from "@/lib/cancellation";
 import { formatShiftWhen } from "@/lib/dates";
 import { formatUsd, computeShiftCost } from "@/lib/pricing";
 import { buildContractBody, CONTRACT_TEMPLATE_VERSION } from "@/lib/contract";
@@ -65,21 +64,10 @@ export default async function ShiftAdminPage({
     ? `${formatUsd(cost.feeCents)} (same-day)`
     : formatUsd(cost.feeCents);
 
-  let feePreview: { feeCents: number; copy: string } | null = null;
-  if (shift.status === "booked") {
-    const [booking] = await db
-      .select({ totalCents: bookings.totalCents })
-      .from(bookings)
-      .where(eq(bookings.shiftId, shift.id))
-      .limit(1);
-    if (booking) {
-      const fee = computeCancellationFee({
-        shiftStartsAt: shift.startsAt,
-        totalCents: booking.totalCents,
-      });
-      feePreview = { feeCents: fee.feeCents, copy: fee.copy };
-    }
-  }
+  const cancelNotice =
+    shift.status === "booked"
+      ? cancellationNotice({ shiftStartsAt: shift.startsAt }).copy
+      : null;
 
   const buckets: Record<string, typeof rows> = {
     applied: [],
@@ -109,7 +97,7 @@ export default async function ShiftAdminPage({
           <CancelShift
             shiftId={shift.id}
             status={shift.status}
-            feePreview={feePreview}
+            notice={cancelNotice}
           />
         </div>
       </div>
@@ -140,7 +128,8 @@ export default async function ShiftAdminPage({
               </div>
             )}
             <div className="text-xs text-muted-foreground">
-              Est. {formatUsd(cost.totalCents)} total ({matchFeeDisplay} match fee)
+              Est. {formatUsd(cost.wageCents)} wage (you pay directly) +{" "}
+              {matchFeeDisplay} match fee
             </div>
           </div>
         </div>

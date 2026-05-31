@@ -10,7 +10,7 @@ import {
   users,
 } from "@/db/schema";
 import { requireSession } from "@/lib/auth/guards";
-import { computeCancellationFee } from "@/lib/cancellation";
+import { cancellationNotice } from "@/lib/cancellation";
 import { dispatchNotification } from "@/lib/notifications";
 import { formatShiftWhen } from "@/lib/dates";
 import { payments } from "@/lib/payments";
@@ -50,10 +50,7 @@ export async function cancelBooking(bookingId: string, reason: string) {
     return { ok: false as const, error: `Cannot cancel a ${row.booking.status} booking.` };
   }
 
-  const fee = computeCancellationFee({
-    shiftStartsAt: row.shift.startsAt,
-    totalCents: row.booking.totalCents,
-  });
+  const notice = cancellationNotice({ shiftStartsAt: row.shift.startsAt });
 
   await db.transaction(async (tx) => {
     await tx
@@ -62,7 +59,9 @@ export async function cancelBooking(bookingId: string, reason: string) {
         status: "cancelled",
         cancelledByUserId: session.user.id,
         cancellationReason: reason,
-        cancellationFeeCents: fee.feeCents,
+        // Fee-only model: no platform cancellation charge. Who cancelled (and
+        // when) is the reliability record.
+        cancellationFeeCents: null,
         cancelledAt: sql`now()`,
       })
       .where(eq(bookings.id, bookingId));
@@ -72,19 +71,13 @@ export async function cancelBooking(bookingId: string, reason: string) {
       .where(eq(shifts.id, row.shift.id));
   });
 
-  // Payment cleanup — outside the tx
+  // Release the $10 match-fee hold — it was only authorized, never captured
+  // (capture happens on attendance confirmation, which can't have run yet).
   if (row.booking.paymentIntentId) {
     try {
-      if (fee.feeCents === 0) {
-        await payments.cancel(row.booking.paymentIntentId);
-      } else {
-        await payments.refund(
-          row.booking.paymentIntentId,
-          row.booking.totalCents - fee.feeCents,
-        );
-      }
+      await payments.cancel(row.booking.paymentIntentId);
     } catch (err) {
-      console.error("[cancel] payment cleanup failed:", err);
+      console.error("[cancel] releasing fee hold failed:", err);
     }
   }
 
@@ -113,7 +106,7 @@ export async function cancelBooking(bookingId: string, reason: string) {
         body: `${formatShiftWhen(row.shift.startsAt, row.shift.endsAt)} — reason: ${reason}`,
         actionUrl: `/bookings/${bookingId}`,
         channels: ["push", "email", "sms"],
-        payload: { bookingId, feeBracket: fee.bracket },
+        payload: { bookingId, severity: notice.severity },
       });
     }
   } catch (err) {

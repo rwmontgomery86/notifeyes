@@ -1,53 +1,43 @@
 /**
- * Cancellation fee schedule (§6D of the brief).
+ * Cancellation policy — REPUTATION-ONLY (fee-only money model).
  *
- *   > 7 days  : 0%
- *   2–7 days  : 25%
- *   < 48 hrs  : 50%
- *   < 4 hrs   : 100%
+ * NotifEyes never holds the OD's wage, so it can't charge a "% of wage"
+ * cancellation fee. Cancelling costs nothing through the platform: we notify the
+ * other side, reopen the shift, and record the cancellation on the canceller's
+ * reliability record. How close to the shift it is drives the *severity* of that
+ * record (and the warning we show), not a charge.
  *
- * --TODO: legal review --- percentages above are placeholders per §6D. Final
- * schedule needs attorney + market review before any real launch.
+ * --TODO: legal review --- severity thresholds + reliability-record policy.
  */
 
-export interface CancellationFee {
-  bracket: "free" | "25pct" | "50pct" | "100pct";
-  feeCents: number;
+export type CancellationSeverity = "routine" | "late" | "last_minute";
+
+export interface CancellationNotice {
+  severity: CancellationSeverity;
   copy: string;
 }
 
-export function computeCancellationFee(opts: {
+export function cancellationNotice(opts: {
   shiftStartsAt: Date;
-  totalCents: number;
   now?: Date;
-}): CancellationFee {
+}): CancellationNotice {
   const now = opts.now ?? new Date();
   const hours = (opts.shiftStartsAt.getTime() - now.getTime()) / 3_600_000;
 
-  if (hours >= 168) {
-    return {
-      bracket: "free",
-      feeCents: 0,
-      copy: "No fee — more than 7 days out.",
-    };
-  }
   if (hours >= 48) {
     return {
-      bracket: "25pct",
-      feeCents: Math.round(opts.totalCents * 0.25),
-      copy: "25% fee — 2–7 days before the shift.",
+      severity: "routine",
+      copy: "No charge. We notify the other side and reopen the shift.",
     };
   }
   if (hours >= 4) {
     return {
-      bracket: "50pct",
-      feeCents: Math.round(opts.totalCents * 0.5),
-      copy: "50% fee — less than 48 hours before the shift.",
+      severity: "late",
+      copy: "No charge — but cancelling less than 48 hours out is recorded on your reliability record.",
     };
   }
   return {
-    bracket: "100pct",
-    feeCents: opts.totalCents,
-    copy: "100% fee — less than 4 hours before the shift.",
+    severity: "last_minute",
+    copy: "No charge — but a last-minute cancellation (under 4 hours) is recorded on your reliability record and hurts your standing.",
   };
 }

@@ -194,10 +194,13 @@ export async function confirmBooking(
   // === Phase 3: payment authorization (outside tx) =========================
   try {
     const intent = await payments.createIntent({
-      amountCents: cost.totalCents,
+      // Fee-only: authorize ONLY the match fee. The OD's wage is paid by the
+      // practice directly and never touches NotifEyes. Captured when the
+      // practice confirms the OD showed up.
+      amountCents: cost.practiceChargeCents,
       bookingId,
       practiceId,
-      description: `NotifEyes shift booking #${bookingId.slice(0, 8)}`,
+      description: `NotifEyes match fee — booking #${bookingId.slice(0, 8)}`,
       captureMethod: "manual",
     });
     await db

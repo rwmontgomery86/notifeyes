@@ -35,10 +35,20 @@ export async function reportNoShow(bookingId: string, reason: string | null) {
   ) {
     return { ok: false as const, error: "Forbidden" };
   }
-  if (row.booking.status !== "confirmed" && row.booking.status !== "in_progress") {
+  if (
+    row.booking.status !== "confirmed" &&
+    row.booking.status !== "in_progress" &&
+    row.booking.status !== "completed"
+  ) {
     return {
       ok: false as const,
       error: `Cannot report no-show on a ${row.booking.status} booking.`,
+    };
+  }
+  if (row.booking.attendanceConfirmedAt) {
+    return {
+      ok: false as const,
+      error: "You already confirmed this OD showed up.",
     };
   }
   if (row.shift.startsAt.getTime() > Date.now() - 15 * 60_000) {
@@ -68,12 +78,13 @@ export async function reportNoShow(bookingId: string, reason: string | null) {
       .where(eq(optometrists.id, row.od.id));
   });
 
-  // Full refund — auto per §6E
+  // Fee-only: no wage was ever held by NotifEyes, so there's nothing to refund.
+  // Release the $10 match-fee hold — a no-show is never charged.
   if (row.booking.paymentIntentId) {
     try {
-      await payments.refund(row.booking.paymentIntentId);
+      await payments.cancel(row.booking.paymentIntentId);
     } catch (err) {
-      console.error("[no-show] refund failed:", err);
+      console.error("[no-show] releasing fee hold failed:", err);
     }
   }
 

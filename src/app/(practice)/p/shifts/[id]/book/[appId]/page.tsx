@@ -70,8 +70,11 @@ export default async function ConfirmBookingPage({
     <div className="max-w-3xl">
       <h1 className="text-2xl font-bold">Confirm booking</h1>
       <p className="mt-1 text-muted-foreground">
-        Once you confirm, we charge a card authorization, generate the contract,
-        and notify {row.od.displayName ?? row.od.name}. The shift is locked in.
+        Once you confirm, we place a {formatUsd(cost.practiceChargeCents)} hold on
+        your card (our match fee — captured only when you confirm the OD showed
+        up), generate the contract, and notify{" "}
+        {row.od.displayName ?? row.od.name}. You pay the OD&apos;s wage directly.
+        The shift is locked in.
       </p>
 
       <section className="mt-6 ne-card">
@@ -91,15 +94,19 @@ export default async function ConfirmBookingPage({
           Cost breakdown
         </h2>
         <dl className="mt-3 space-y-1 text-sm">
-          <Row label="Subtotal" value={formatUsd(cost.subtotalCents)} />
-          <Row label={matchFeeLabel} value={formatUsd(cost.feeCents)} />
+          <Row label="OD wage — you pay directly" value={formatUsd(cost.wageCents)} />
+          <Row
+            label={`${matchFeeLabel} — charged to your card`}
+            value={formatUsd(cost.practiceChargeCents)}
+          />
           <div className="border-t pt-2 mt-2 font-semibold text-base">
-            <Row label="Total charged to practice" value={formatUsd(cost.totalCents)} />
+            <Row label="NotifEyes charges your card" value={formatUsd(cost.practiceChargeCents)} />
           </div>
           <p className="pt-1 text-xs text-muted-foreground">
-            {/* --TODO: legal review --- payout schedule + auth-vs-capture wording */}
-            We authorize the charge now and capture at shift completion. The OD&apos;s
-            payout of {formatUsd(cost.odPayoutCents)} is scheduled 3 days after completion.
+            We place a {formatUsd(cost.practiceChargeCents)} hold now and capture it
+            only when you confirm the OD showed up — no charge for a no-show. The
+            OD&apos;s wage of {formatUsd(cost.wageCents)} is paid by you directly;
+            NotifEyes never handles it.
           </p>
         </dl>
       </section>

@@ -95,4 +95,19 @@ export async function bookingCompletedFollowups(
       payload: { bookingId: row.booking.id },
     });
   }
+
+  // Fee-only: nudge the practice to confirm the OD showed up — that's what
+  // captures the $10 match fee. Skip if they already confirmed on the booking page.
+  if (practiceUser && !row.booking.attendanceConfirmedAt) {
+    await dispatchNotification({
+      kind: "attendance_check",
+      userId: practiceUser.id,
+      recipientEmail: practiceUser.email,
+      subject: `Did ${row.od.name} show up?`,
+      body: `${when} · confirm attendance to release your $10 match fee. If they didn't show, report a no-show and you won't be charged.`,
+      actionUrl: `/bookings/${row.booking.id}`,
+      channels: ["push", "email"],
+      payload: { bookingId: row.booking.id },
+    });
+  }
 }

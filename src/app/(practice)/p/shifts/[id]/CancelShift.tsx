@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { formatUsd } from "@/lib/format";
 import { cancelShift } from "./cancel-actions";
 
 type Status = "draft" | "posted" | "booked" | "completed" | "cancelled";
@@ -10,11 +9,11 @@ type Status = "draft" | "posted" | "booked" | "completed" | "cancelled";
 export function CancelShift({
   shiftId,
   status,
-  feePreview,
+  notice,
 }: {
   shiftId: string;
   status: Status;
-  feePreview?: { feeCents: number; copy: string } | null;
+  notice?: string | null;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -68,21 +67,13 @@ export function CancelShift({
         {isDraft
           ? "Drafts are removed entirely. This can't be undone."
           : isBooked
-            ? "Cancelling notifies the OD on the booking and may incur a fee per the schedule below."
+            ? "Cancelling notifies the OD on the booking and reopens the shift."
             : "Cancelling notifies everyone who applied and marks their applications declined."}
       </p>
 
-      {isBooked && feePreview ? (
+      {isBooked && notice ? (
         <div className="mt-3 rounded border bg-background p-3 text-xs">
-          <div className="font-medium">{feePreview.copy}</div>
-          {feePreview.feeCents > 0 ? (
-            <div className="mt-1">
-              Estimated fee: {formatUsd(feePreview.feeCents)}
-            </div>
-          ) : null}
-          <div className="mt-1 text-muted-foreground">
-            See full cancellation policy in the engagement agreement.
-          </div>
+          <div className="font-medium">{notice}</div>
         </div>
       ) : null}
 

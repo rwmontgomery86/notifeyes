@@ -331,6 +331,19 @@ old one; do not edit history.
   (max 4). Fixed by capping pg-boss at `max: 5` in `boss.ts` (worker footprint
   → 5 + 5 = 10, leaving headroom). Complementary lever if it recurs: raise the
   Supavisor session `pool_size` (room under `max_connections=60`).
+- **2026-05-31** **Money model pivot — FEE-ONLY (matchmaker).** Supersedes the
+  current money-through model (and the brief's OD-payout-via-subtotal +
+  cancellation-%-of-wage assumptions) for beta. NotifEyes charges only its **$10
+  match fee**; the practice pays the OD's wage **directly** (check / direct
+  deposit / Venmo / Zelle). Platform never holds wages → no Stripe Connect for
+  beta (Connect = the production "guaranteed pay" upgrade). The fee is authorized
+  at booking and **captured only when the practice confirms the OD showed up** (a
+  new "Did the doctor show?" prompt replaces OD check-in/out); no-show ⇒ no fee.
+  Cancellation = **reputation-only, no platform charge** (the prior %-of-wage fee
+  can't work once the platform never holds the wage). Practice card collected
+  **just-in-time at first booking** for the $10. Full UX roadmap lives in
+  `~/.claude/plans/concurrent-doodling-koala.md`. This work is **off the
+  launch-plan cursor — a side quest**; no Phase boxes get ticked for it.
 
 ---
 

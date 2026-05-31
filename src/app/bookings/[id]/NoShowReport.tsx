@@ -50,8 +50,8 @@ export function NoShowReport({
     <div className="rounded-md border-2 border-destructive/40 bg-destructive/5 p-4 max-w-md">
       <h3 className="font-semibold">Report no-show</h3>
       <p className="mt-1 text-sm">
-        Confirm the OD didn&apos;t show. The booking will be refunded and the
-        OD&apos;s record updated.
+        Confirm the OD didn&apos;t show. You won&apos;t be charged the match fee,
+        and it&apos;s recorded on the OD&apos;s reliability record.
       </p>
       <label className="block mt-3">
         <span className="ne-label">Notes (optional)</span>

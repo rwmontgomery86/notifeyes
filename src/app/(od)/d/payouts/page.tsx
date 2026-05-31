@@ -39,14 +39,16 @@ export default async function OdPayoutsPage() {
     <div>
       <h1 className="text-2xl font-bold">Payouts</h1>
       <p className="mt-1 text-muted-foreground">
-        V1 payouts settle manually via ACH 3 days after each completed shift.
-        Stripe Connect-based payouts arrive in V2.
+        Your wage is paid to you <strong>directly by each practice</strong> —
+        NotifEyes doesn&apos;t process your pay during beta (Stripe Connect payouts
+        arrive in V2). This is your record of what you&apos;ve earned and when each
+        practice marked it paid.
       </p>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
-        <Stat label="Scheduled" value={formatUsd(totalScheduled)} />
-        <Stat label="Sent" value={formatUsd(totalSent)} />
-        <Stat label="Payouts on file" value={String(rows.length)} />
+        <Stat label="Owed to you" value={formatUsd(totalScheduled)} />
+        <Stat label="Marked paid" value={formatUsd(totalSent)} />
+        <Stat label="Shifts on file" value={String(rows.length)} />
       </div>
 
       <h2 className="mt-10 text-lg font-semibold">Per-shift</h2>
@@ -69,9 +71,9 @@ export default async function OdPayoutsPage() {
                   {formatShiftWhen(shift.startsAt, shift.endsAt)}
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">
-                  Scheduled for {payout.scheduledFor.toLocaleDateString()}
+                  Expected by {payout.scheduledFor.toLocaleDateString()}
                   {payout.sentAt
-                    ? ` · sent ${payout.sentAt.toLocaleDateString()}`
+                    ? ` · paid ${payout.sentAt.toLocaleDateString()}`
                     : ""}
                 </div>
               </div>
@@ -88,7 +90,11 @@ export default async function OdPayoutsPage() {
                         : "ne-pill border-destructive/40 bg-destructive/10 text-destructive"
                   }
                 >
-                  {payout.status}
+                  {payout.status === "sent"
+                    ? "paid"
+                    : payout.status === "scheduled"
+                      ? "owed"
+                      : payout.status}
                 </span>
               </div>
             </div>
