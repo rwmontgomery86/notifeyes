@@ -242,10 +242,12 @@ export async function respondToInvite(
   // Authorize payment (outside tx)
   try {
     const intent = await payments.createIntent({
-      amountCents: cost.totalCents,
+      // Fee-only: authorize ONLY the match fee (wage is paid directly by the
+      // practice). Captured when the practice confirms the OD showed up.
+      amountCents: cost.practiceChargeCents,
       bookingId,
       practiceId: row.shift.practiceId,
-      description: `NotifEyes invite booking #${bookingId.slice(0, 8)}`,
+      description: `NotifEyes match fee — invite booking #${bookingId.slice(0, 8)}`,
       captureMethod: "manual",
     });
     await db

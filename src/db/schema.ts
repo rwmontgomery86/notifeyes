@@ -386,6 +386,10 @@ export const bookings = pgTable(
     cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
     checkInAt: timestamp("check_in_at", { withTimezone: true }),
     checkOutAt: timestamp("check_out_at", { withTimezone: true }),
+    // Fee-only model: the practice confirms the OD showed up, which captures the
+    // match fee. Replaces OD check-in/out as the attendance signal.
+    attendanceConfirmedAt: timestamp("attendance_confirmed_at", { withTimezone: true }),
+    attendanceConfirmedByUserId: uuid("attendance_confirmed_by_user_id"),
     paymentIntentId: text("payment_intent_id"),
     paymentStatus: varchar("payment_status", { length: 40 }).default("pending").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

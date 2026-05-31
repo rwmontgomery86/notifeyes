@@ -4,6 +4,7 @@ export type NotificationKind =
   | "new_applicant"
   | "booking_confirmed"
   | "shift_reminder"
+  | "attendance_check"
   | "cancellation"
   | "no_show_check"
   | "payout_sent"

@@ -16,6 +16,7 @@ const KIND_LABELS: Record<string, string> = {
   new_applicant: "New applicant",
   booking_confirmed: "Booking confirmed",
   shift_reminder: "Shift reminder",
+  attendance_check: "Shift attendance",
   cancellation: "Shift cancelled",
   no_show_check: "No-show check",
   payout_sent: "Payout sent",

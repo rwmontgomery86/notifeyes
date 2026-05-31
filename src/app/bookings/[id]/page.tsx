@@ -13,12 +13,12 @@ import {
 import { auth } from "@/lib/auth";
 import { formatUsd } from "@/lib/pricing";
 import { env } from "@/env";
-import { computeCancellationFee } from "@/lib/cancellation";
+import { cancellationNotice } from "@/lib/cancellation";
 import { formatShiftWhen } from "@/lib/dates";
 import { OdContractSign } from "./OdContractSign";
 import { CancelBooking } from "./CancelBooking";
 import { NoShowReport } from "./NoShowReport";
-import { CheckInOut } from "./CheckInOut";
+import { ConfirmAttendance } from "./ConfirmAttendance";
 
 export const dynamic = "force-dynamic";
 
@@ -135,20 +135,31 @@ export default async function BookingPage({
           Payment
         </h2>
         <dl className="mt-3 grid gap-1 text-sm">
-          <Row label="Subtotal" value={formatUsd(subtotalCents)} />
-          <Row label={matchFeeLabel} value={formatUsd(feeCents)} />
-          <div className="border-t pt-2 mt-1 font-semibold">
-            <Row label="Total" value={formatUsd(totalCents)} />
-          </div>
-          <div className="mt-2 text-xs text-muted-foreground">
-            Payment status:{" "}
-            <span className="font-medium text-foreground">
-              {row.booking.paymentStatus}
-            </span>
-            {row.booking.paymentIntentId
-              ? ` · intent ${row.booking.paymentIntentId.slice(0, 16)}…`
-              : ""}
-          </div>
+          {isMyOd ? (
+            <>
+              <div className="font-semibold text-base">
+                <Row label="You earn" value={formatUsd(subtotalCents)} />
+              </div>
+              <p className="pt-1 text-xs text-muted-foreground">
+                Paid to you directly by the practice. NotifEyes doesn&apos;t take a
+                cut of your pay.
+              </p>
+            </>
+          ) : (
+            <>
+              <Row label="OD wage — you pay directly" value={formatUsd(subtotalCents)} />
+              <Row label={`${matchFeeLabel} — your card`} value={formatUsd(feeCents)} />
+              <div className="mt-2 text-xs text-muted-foreground">
+                NotifEyes charges your card:{" "}
+                <span className="font-medium text-foreground">
+                  {row.booking.paymentStatus}
+                </span>
+                {row.booking.paymentIntentId
+                  ? ` · ${row.booking.paymentIntentId.slice(0, 16)}…`
+                  : ""}
+              </div>
+            </>
+          )}
         </dl>
       </section>
 
@@ -190,19 +201,40 @@ export default async function BookingPage({
         ) : null}
       </section>
 
-      {isMyOd ? (
+      {isMyPractice &&
+      !row.booking.attendanceConfirmedAt &&
+      (row.booking.status === "in_progress" ||
+        row.booking.status === "completed") ? (
         <section className="mt-6 ne-card">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            Check in / out
+            Did the doctor show up?
           </h2>
-          <CheckInOut
-            bookingId={row.booking.id}
-            bookingStatus={row.booking.status}
-            shiftStartsAt={row.shift.startsAt.toISOString()}
-            shiftEndsAt={row.shift.endsAt.toISOString()}
-            checkedInAt={row.booking.checkInAt?.toISOString() ?? null}
-            checkedOutAt={row.booking.checkOutAt?.toISOString() ?? null}
-          />
+          <div className="mt-3 space-y-3">
+            <ConfirmAttendance
+              bookingId={row.booking.id}
+              odName={row.od.displayName ?? row.od.name}
+            />
+            <div className="border-t pt-3">
+              <NoShowReport
+                bookingId={row.booking.id}
+                shiftStartsAt={row.shift.startsAt.toISOString()}
+              />
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      {isMyPractice && row.booking.attendanceConfirmedAt ? (
+        <section className="mt-6 ne-card border-green-500/40">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-green-900">
+            Attendance confirmed
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            You confirmed {row.od.name} showed up on{" "}
+            {row.booking.attendanceConfirmedAt.toLocaleString()}. Your{" "}
+            {formatUsd(feeCents)} match fee was captured. The OD&apos;s wage is paid
+            by you directly.
+          </p>
         </section>
       ) : null}
 
@@ -212,23 +244,11 @@ export default async function BookingPage({
             Manage booking
           </h2>
           <div className="mt-3 flex flex-wrap gap-3">
-            {(() => {
-              const fee = computeCancellationFee({
-                shiftStartsAt: row.shift.startsAt,
-                totalCents: row.booking.totalCents,
-              });
-              return (
-                <CancelBooking
-                  bookingId={row.booking.id}
-                  feeCents={fee.feeCents}
-                  feeCopy={fee.copy}
-                  side={isMyPractice ? "practice" : "od"}
-                />
-              );
-            })()}
-            {isMyPractice ? (
-              <NoShowReport bookingId={row.booking.id} shiftStartsAt={row.shift.startsAt.toISOString()} />
-            ) : null}
+            <CancelBooking
+              bookingId={row.booking.id}
+              notice={cancellationNotice({ shiftStartsAt: row.shift.startsAt }).copy}
+              side={isMyPractice ? "practice" : "od"}
+            />
           </div>
         </section>
       ) : null}

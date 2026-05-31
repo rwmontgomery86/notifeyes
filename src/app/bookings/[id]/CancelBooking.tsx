@@ -3,17 +3,14 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { cancelBooking } from "./cancel-actions";
-import { formatUsd } from "@/lib/format";
 
 export function CancelBooking({
   bookingId,
-  feeCents,
-  feeCopy,
+  notice,
   side,
 }: {
   bookingId: string;
-  feeCents: number;
-  feeCopy: string;
+  notice: string;
   side: "practice" | "od";
 }) {
   const router = useRouter();
@@ -51,18 +48,11 @@ export function CancelBooking({
       <h3 className="font-semibold">Cancel this booking?</h3>
       <p className="mt-1 text-sm">
         {side === "practice"
-          ? "Cancelling will notify the OD and may incur a fee per the schedule below."
-          : "Cancelling will notify the practice. OD-initiated cancellations may incur a fee depending on timing."}
+          ? "Cancelling notifies the OD and reopens the shift."
+          : "Cancelling notifies the practice and reopens the shift."}
       </p>
       <div className="mt-3 rounded border bg-background p-3 text-xs">
-        <div className="font-medium">{feeCopy}</div>
-        {feeCents > 0 ? (
-          <div className="mt-1">Estimated fee: {formatUsd(feeCents)}</div>
-        ) : null}
-        <div className="mt-1 text-muted-foreground">
-          {/* --TODO: legal review --- show full schedule + ToS link */}
-          See full cancellation policy in the engagement agreement.
-        </div>
+        <div className="font-medium">{notice}</div>
       </div>
       <label className="block mt-3">
         <span className="ne-label">Reason</span>

@@ -28,11 +28,17 @@ export function isSameDayBooking(
 /**
  * Cost breakdown for a shift booking.
  *
- *   subtotal   = rate_per_hr × billable_hours
- *   fee        = NOTIFEYES_MATCH_FEE_CENTS (or _SAMEDAY_ if same-day or urgent)
- *   total      = subtotal + fee                        (practice pays this)
- *   od_payout  = subtotal                              (V1: OD receives subtotal)
+ * FEE-ONLY (matchmaker) model: NotifEyes only ever charges the practice the
+ * match fee. The OD's wage is paid by the practice DIRECTLY (off-platform) and
+ * is never processed by NotifEyes for beta — it's recorded here only for display.
  *
+ *   subtotal/wage   = rate_per_hr × billable_hours   (practice pays the OD directly)
+ *   fee             = NOTIFEYES_MATCH_FEE_CENTS (or _SAMEDAY_ if same-day/urgent)
+ *   practiceCharge  = fee                             (the ONLY thing on the practice's card)
+ *   total           = subtotal + fee                  (full economic value, for records)
+ *
+ * Pass `practiceChargeCents` to payments.createIntent. `wageCents` is the figure
+ * shown to the OD as "you earn".
  * V1 placeholder — pricing is set by env: $9.99/match, $19.99 same-day.
  * --TODO: legal review --- final fee amounts and same-day definition.
  */
@@ -66,5 +72,9 @@ export function computeShiftCost(input: {
     sameDay,
     totalCents,
     odPayoutCents: subtotalCents,
+    // Fee-only model: the wage is paid directly by the practice; the only thing
+    // NotifEyes charges (and the amount to authorize on the card) is the fee.
+    wageCents: subtotalCents,
+    practiceChargeCents: feeCents,
   };
 }
