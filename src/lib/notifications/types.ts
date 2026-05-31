@@ -23,6 +23,8 @@ export interface ChannelMessage {
   subject: string;
   body: string;
   actionUrl?: string;
+  /** CTA button label for rich channels (email). Defaults to "View details". */
+  actionLabel?: string;
 }
 
 export interface ChannelResult {

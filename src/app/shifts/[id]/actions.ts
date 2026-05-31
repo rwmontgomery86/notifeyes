@@ -1,6 +1,6 @@
 "use server";
 
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import { applications, optometrists, practices, shifts, users } from "@/db/schema";
@@ -8,6 +8,7 @@ import { requireVerifiedOd } from "@/lib/auth/guards";
 import { dispatchNotification } from "@/lib/notifications";
 import { formatShiftWhen } from "@/lib/dates";
 import { formatUsd } from "@/lib/pricing";
+import { canTransitionApplication } from "@/lib/state/application";
 
 const schema = z.object({
   message: z.string().max(1000).optional(),
@@ -83,6 +84,38 @@ export async function applyToShift(shiftId: string, message: string) {
   } catch (err) {
     console.error("[apply] notification dispatch failed:", err);
   }
+
+  return { ok: true as const };
+}
+
+/**
+ * OD withdraws their own application. The state machine allows
+ * applied/shortlisted/offered → withdrawn; terminal states (accepted/declined/
+ * already-withdrawn) are rejected.
+ */
+export async function withdrawApplication(shiftId: string) {
+  const session = await requireVerifiedOd();
+  const odId = session.user.odId!;
+
+  const [appRow] = await db
+    .select({ id: applications.id, status: applications.status })
+    .from(applications)
+    .where(and(eq(applications.shiftId, shiftId), eq(applications.odId, odId)))
+    .limit(1);
+  if (!appRow) {
+    return { ok: false as const, error: "No application to withdraw." };
+  }
+  if (!canTransitionApplication(appRow.status, "withdrawn")) {
+    return {
+      ok: false as const,
+      error: "This application can no longer be withdrawn.",
+    };
+  }
+
+  await db
+    .update(applications)
+    .set({ status: "withdrawn", statusChangedAt: sql`now()` })
+    .where(eq(applications.id, appRow.id));
 
   return { ok: true as const };
 }

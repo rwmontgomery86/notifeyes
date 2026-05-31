@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import {
   getUnreadNotificationCount,
   getUnreadMessagesCount,
+  getLatestUnreadNotification,
 } from "@/lib/notifications/unread";
 
 export const runtime = "nodejs";
@@ -22,13 +23,14 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const [notifications, messages] = await Promise.all([
+  const [notifications, messages, latest] = await Promise.all([
     getUnreadNotificationCount(session.user.id),
     getUnreadMessagesCount(session.user.id),
+    getLatestUnreadNotification(session.user.id),
   ]);
 
   return NextResponse.json(
-    { notifications, messages, total: notifications + messages },
+    { notifications, messages, total: notifications + messages, latest },
     { headers: { "Cache-Control": "no-store" } },
   );
 }

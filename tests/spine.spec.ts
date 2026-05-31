@@ -49,7 +49,7 @@ test("practice posts a shift, OD applies, practice books — both land on the bo
     .getByPlaceholder(/available/i)
     .fill("Available — locking it in.");
   await odPage.getByRole("button", { name: /submit application/i }).click();
-  await expect(odPage.getByText(/you've applied/i)).toBeVisible();
+  await expect(odPage.getByText(/application sent/i)).toBeVisible();
 
   // === Practice books the applicant =======================================
   await practicePage.goto(shiftAdminUrl);

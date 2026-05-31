@@ -7,6 +7,7 @@ import { auth } from "@/lib/auth";
 import { computeShiftCost, formatUsd } from "@/lib/pricing";
 import { formatShiftWhen, relativeTime } from "@/lib/dates";
 import { ApplyButton } from "./ApplyButton";
+import { ApplicationStatusCard } from "./ApplicationStatusCard";
 import { InviteResponse } from "./InviteResponse";
 
 export const dynamic = "force-dynamic";
@@ -183,11 +184,11 @@ export default async function ShiftDetailPage({
               practiceName={row.practice.name}
             />
           ) : existingApplication ? (
-            <span className="ne-pill border-primary/40 bg-accent text-accent-foreground">
-              {existingApplication.source === "invite"
-                ? `Invitation · ${existingApplication.status}`
-                : `You've applied · ${existingApplication.status}`}
-            </span>
+            <ApplicationStatusCard
+              shiftId={id}
+              status={existingApplication.status}
+              source={existingApplication.source}
+            />
           ) : (
             <ApplyButton shiftId={id} verified={odVerified} />
           )
