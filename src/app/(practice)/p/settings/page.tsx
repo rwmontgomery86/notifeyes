@@ -57,6 +57,7 @@ export default async function PracticeSettingsPage() {
           emailOptedIn: u?.emailOptedIn ?? false,
           smsOptedIn: u?.smsOptedIn ?? false,
           marketingOptedIn: u?.marketingOptedIn ?? false,
+          hasLocation: p.location != null,
         }}
       />
     </div>

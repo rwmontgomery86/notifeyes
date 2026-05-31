@@ -132,6 +132,23 @@ export async function createWatchZone(input: z.infer<typeof createSchema>) {
   return { ok: true as const };
 }
 
+// One-tap activation: a preset circle covering the SF Bay launch metro (SF, the
+// Peninsula, the East Bay, and San Jose). Delegates to createWatchZone so the
+// opt-in gate + insert logic stay in one place. Bay Area is hardcoded because
+// the beta launch metro is pinned to SF Bay (env.NOTIFEYES_LAUNCH_METRO).
+export async function createBayAreaWatchZone() {
+  return createWatchZone({
+    name: "Bay Area",
+    minRateCents: 0,
+    geometryMeta: {
+      kind: "circle",
+      centerLat: 37.66,
+      centerLng: -122.15,
+      radiusMeters: 60_000,
+    },
+  });
+}
+
 export async function deleteWatchZone(zoneId: string) {
   const session = await requireOd();
   await db
