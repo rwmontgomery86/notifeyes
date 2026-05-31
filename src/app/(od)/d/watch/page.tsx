@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { optometrists, users, watchZones } from "@/db/schema";
 import { capitalForState } from "@/lib/geo/state-capitals";
 import { hasAnyNotificationChannel } from "@/lib/notifications/optIn";
+import { BayAreaQuickStart } from "./BayAreaQuickStart";
 import { WatchZoneEditor } from "./WatchZoneEditor";
 import { WatchZoneList } from "./WatchZoneList";
 
@@ -83,6 +84,12 @@ export default async function WatchPage() {
           </Link>
         </div>
       )}
+
+      {zones.length === 0 ? (
+        <div className="mt-6">
+          <BayAreaQuickStart disabled={!optInOk} />
+        </div>
+      ) : null}
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[3fr_2fr]">
         <div className="ne-card p-0 overflow-hidden">

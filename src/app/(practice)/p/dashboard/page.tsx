@@ -58,6 +58,10 @@ export default async function PracticeDashboard({
     .where(eq(shifts.practiceId, practiceId))
     .groupBy(shifts.status);
   const byStatus = Object.fromEntries(counts.map((c) => [c.status, c.count]));
+  const totalShifts = counts.reduce((acc, c) => acc + c.count, 0);
+  // Geography column comes back null until the address geocodes — without it,
+  // matching can't reach any OD, so the reach number would be a misleading 0.
+  const hasLocation = practice?.location != null;
 
   // Reach estimate: how many ODs would match a typical fill-in shift here.
   // Use the median rate of recent posts (or a sane default if there are none),
@@ -128,8 +132,41 @@ export default async function PracticeDashboard({
         Welcome back. Here&apos;s a snapshot of your shift activity.
       </p>
 
+      {!hasLocation || totalShifts === 0 ? (
+        <div className="mt-6 ne-card border-primary/30 bg-primary/5">
+          <h2 className="font-semibold">Finish setting up your practice</h2>
+          <ul className="mt-2 grid gap-1.5 text-sm text-muted-foreground">
+            {!hasLocation ? (
+              <li>
+                ⚠{" "}
+                <Link
+                  href="/p/settings"
+                  className="font-medium text-primary underline"
+                >
+                  Add your practice address
+                </Link>{" "}
+                — until it&apos;s on the map, your shifts won&apos;t reach nearby
+                ODs.
+              </li>
+            ) : null}
+            {totalShifts === 0 ? (
+              <li>
+                📋{" "}
+                <Link
+                  href="/p/shifts/new"
+                  className="font-medium text-primary underline"
+                >
+                  Post your first shift
+                </Link>{" "}
+                — watching ODs get pinged within seconds.
+              </li>
+            ) : null}
+          </ul>
+        </div>
+      ) : null}
+
       <div className="mt-6 grid gap-4 md:grid-cols-5">
-        <ReachStat count={reach?.count ?? null} />
+        <ReachStat count={reach?.count ?? null} hasLocation={hasLocation} />
         <Stat label="Draft" value={byStatus.draft ?? 0} status="draft" />
         <Stat label="Posted" value={byStatus.posted ?? 0} status="posted" />
         <Stat label="Booked" value={byStatus.booked ?? 0} status="booked" />
@@ -200,7 +237,31 @@ function Stat({
   );
 }
 
-function ReachStat({ count }: { count: number | null }) {
+function ReachStat({
+  count,
+  hasLocation,
+}: {
+  count: number | null;
+  hasLocation: boolean;
+}) {
+  // No location → matching can't reach anyone; point them at the fix instead of
+  // showing a misleading 0.
+  if (!hasLocation) {
+    return (
+      <Link
+        href="/p/settings"
+        className="ne-card hover:border-primary transition-colors border-amber-500/40 bg-amber-50/40"
+      >
+        <div className="text-xs uppercase tracking-wide text-amber-800">
+          ODs watching
+        </div>
+        <div className="mt-2 text-lg font-semibold">Add your address</div>
+        <div className="mt-1 text-xs text-muted-foreground">
+          Needed before shifts reach ODs
+        </div>
+      </Link>
+    );
+  }
   return (
     <Link
       href="/p/shifts/new"
@@ -213,7 +274,7 @@ function ReachStat({ count }: { count: number | null }) {
         {count == null ? "—" : count}
       </div>
       <div className="mt-1 text-xs text-muted-foreground">
-        Typical weekday fill-in
+        Estimate · typical weekday fill-in
       </div>
     </Link>
   );

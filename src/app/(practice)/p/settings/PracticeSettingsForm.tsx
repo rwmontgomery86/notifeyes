@@ -24,6 +24,7 @@ type PracticeForm = {
   emailOptedIn: boolean;
   smsOptedIn: boolean;
   marketingOptedIn: boolean;
+  hasLocation: boolean;
 };
 
 const SERVICE_OPTIONS = [
@@ -41,6 +42,8 @@ export function PracticeSettingsForm({ initial }: { initial: PracticeForm }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  // null = address unchanged on the last save; true/false = geocode hit/missed.
+  const [geocoded, setGeocoded] = useState<boolean | null>(null);
 
   function toggle(key: "services", value: string) {
     const cur = form[key];
@@ -89,12 +92,16 @@ export function PracticeSettingsForm({ initial }: { initial: PracticeForm }) {
         return;
       }
       setSaved(true);
+      setGeocoded(res.geocoded);
       router.refresh();
     });
   }
 
   const phoneTrimmed = (form.phone ?? "").trim();
   const smsDisabled = phoneTrimmed.length === 0;
+  // Reflect the live geocode state: the just-saved result if the address
+  // changed, otherwise whatever was stored when the page loaded.
+  const located = geocoded == null ? initial.hasLocation : geocoded;
 
   return (
     <div className="mt-6 grid gap-6">
@@ -285,10 +292,24 @@ export function PracticeSettingsForm({ initial }: { initial: PracticeForm }) {
             />
           </label>
         </div>
-        <p className="text-xs text-muted-foreground">
-          Geocoding the address to a precise map point requires admin action
-          for V1. {/* --TODO: replace with real geocoder in V2 */}
-        </p>
+        {located ? (
+          <p className="flex items-start gap-2 text-xs text-green-700">
+            <span aria-hidden>✓</span>
+            <span>
+              Your practice is on the map — shifts you post reach nearby ODs. We
+              re-check this automatically whenever you change the address.
+            </span>
+          </p>
+        ) : (
+          <p className="flex items-start gap-2 text-xs text-amber-700">
+            <span aria-hidden>⚠</span>
+            <span>
+              We couldn&apos;t pin this address to the map, so your shifts
+              won&apos;t reach ODs by location yet. Double-check it and save — we
+              geocode automatically, no admin step needed.
+            </span>
+          </p>
+        )}
       </section>
 
       <section className="ne-card">

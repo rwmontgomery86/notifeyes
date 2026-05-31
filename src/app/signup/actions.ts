@@ -91,6 +91,10 @@ export async function signupPractice(formData: FormData): Promise<SignupResult> 
       role: "practice_owner",
       practiceId: practice.id,
       emailVerifiedAt: sql`now()`, // V1 — skip email verification flow
+      // Alerts are the core promise — default email on so a fresh practice
+      // actually gets applicant/booking notifications (and can post without
+      // first detouring to Settings to enable a channel). Tunable in Settings.
+      emailOptedIn: true,
     });
   });
 
@@ -158,6 +162,10 @@ export async function signupOd(formData: FormData): Promise<SignupResult> {
       role: "od",
       odId: od.id,
       emailVerifiedAt: sql`now()`,
+      // Alerts are the core promise — default email on so a fresh OD actually
+      // gets watch-zone pings (and can create a zone without first detouring to
+      // the profile to enable a channel). Tunable in their profile.
+      emailOptedIn: true,
     });
   });
 
@@ -166,5 +174,7 @@ export async function signupOd(formData: FormData): Promise<SignupResult> {
     password: data.password,
     redirect: false,
   });
-  redirect("/d/shifts");
+  // Land new ODs on the setup home (usable while verification is pending),
+  // not the browse page where the apply button is still locked.
+  redirect("/d/welcome");
 }
