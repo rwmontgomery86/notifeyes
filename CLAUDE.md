@@ -12,6 +12,8 @@ NotifEyes — a two-sided optometry staffing marketplace. Practices post fill-in
 
 Active workstream: **closed beta launch**. Plan, cursor, decisions log, and open questions live in [`docs/launch-plan.md`](docs/launch-plan.md).
 
+Running in parallel: a **fee-only money-model pivot + beta UX overhaul**. Its roadmap, status table (what's merged + PR refs), and "how to resume on another machine" notes live in [`docs/money-model-overhaul.md`](docs/money-model-overhaul.md). Phases A–C are merged to `main`; **A3 (Stripe card capture) is deferred and Phases D/E are next.** This is a side quest off the launch-plan cursor — it ticks **no** launch-plan boxes; track its status in that doc instead. Read it (alongside the launch plan) when resuming.
+
 Before doing any work in a fresh session:
 1. Read `docs/launch-plan.md` end-to-end — especially the **Cursor** line at the top.
 2. Report back the cursor + last-touched line + last relevant commit. Confirm with the user which checkbox to start on.
