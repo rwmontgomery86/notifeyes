@@ -344,6 +344,12 @@ old one; do not edit history.
   **just-in-time at first booking** for the $10. Full UX roadmap lives in
   `~/.claude/plans/concurrent-doodling-koala.md`. This work is **off the
   launch-plan cursor — a side quest**; no Phase boxes get ticked for it.
+- **2026-06-03** Money-model overhaul **roadmap moved in-repo** →
+  [`docs/money-model-overhaul.md`](money-model-overhaul.md) — supersedes the
+  machine-local `~/.claude/plans/` reference above so the plan travels via git.
+  Status: **Phases A–C merged** to `main` (PRs #26 / #27 / #28: fee-only pivot,
+  activation, match→book loop). **A3 (Stripe card capture) is deferred; Phases
+  D/E are next.** Still a side quest — no Phase boxes ticked.
 
 ---
 
