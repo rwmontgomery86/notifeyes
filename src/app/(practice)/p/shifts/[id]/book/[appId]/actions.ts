@@ -21,6 +21,9 @@ import { assertShiftTransition } from "@/lib/state/shift";
 import { payments } from "@/lib/payments";
 import { dispatchNotification } from "@/lib/notifications";
 import { formatShiftWhen } from "@/lib/dates";
+import { formatAddress } from "@/lib/address";
+import { shiftIcsAttachment } from "@/lib/calendar";
+import { env } from "@/env";
 
 /**
  * Atomic flow:
@@ -220,8 +223,21 @@ export async function confirmBooking(
     // /bookings/:id. The booking is still valid for messaging / cancellation.
   }
 
-  // Dispatch booking_confirmed to both parties (in-app + email + push)
+  // Dispatch booking_confirmed to both parties (in-app + email + push).
+  // Concierge extra: attach a calendar invite (.ics) for either side that
+  // opted in. Build it once and reuse — it's the same shift for both.
   try {
+    const appBase = env.AUTH_URL?.replace(/\/$/, "") ?? "";
+    const ics = () =>
+      shiftIcsAttachment({
+        bookingId,
+        practiceName: row.practice.name,
+        start: row.shift.startsAt,
+        end: row.shift.endsAt,
+        location: formatAddress(row.practice) || undefined,
+        url: appBase ? `${appBase}/bookings/${bookingId}` : undefined,
+      });
+
     if (odUser) {
       const odUserRow = await db.query.users.findFirst({
         where: (u, { eq }) => eq(u.id, odUser.id),
@@ -236,8 +252,13 @@ export async function confirmBooking(
         actionUrl: `/bookings/${bookingId}`,
         channels: ["push", "email"],
         payload: { bookingId, shiftId: row.shift.id, role: "od" },
+        attachments: odUserRow?.conciergeOptedIn ? [ics()] : undefined,
       });
     }
+
+    const practiceUserRow = await db.query.users.findFirst({
+      where: (u, { eq }) => eq(u.id, session.user.id),
+    });
     await dispatchNotification({
       kind: "booking_confirmed",
       userId: session.user.id,
@@ -247,6 +268,7 @@ export async function confirmBooking(
       actionUrl: `/bookings/${bookingId}`,
       channels: ["push", "email"],
       payload: { bookingId, shiftId: row.shift.id, role: "practice" },
+      attachments: practiceUserRow?.conciergeOptedIn ? [ics()] : undefined,
     });
   } catch (err) {
     console.error("[book] notification dispatch failed:", err);

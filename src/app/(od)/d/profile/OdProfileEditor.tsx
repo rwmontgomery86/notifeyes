@@ -28,6 +28,7 @@ type OdProfile = {
   phone: string | null;
   emailOptedIn: boolean;
   smsOptedIn: boolean;
+  conciergeOptedIn: boolean;
 };
 
 type BlockedPractice = { practiceId: string; practiceName: string };
@@ -90,6 +91,7 @@ export function OdProfileEditor({
         phone: form.phone,
         smsOptedIn: form.smsOptedIn,
         emailOptedIn: form.emailOptedIn,
+        conciergeOptedIn: form.conciergeOptedIn,
       });
       if (!res.ok) {
         setError(res.error ?? "Could not save");
@@ -180,6 +182,22 @@ export function OdProfileEditor({
               messages. We do not sell or share your contact information with
               marketing agencies.
             </p>
+            <label className="flex items-start gap-2 border-t border-border pt-3 text-sm">
+              <input
+                type="checkbox"
+                checked={form.conciergeOptedIn}
+                onChange={(e) =>
+                  setForm({ ...form, conciergeOptedIn: e.target.checked })
+                }
+                className="mt-1"
+              />
+              <span>
+                <span className="font-medium">Concierge updates.</span> Get a
+                same-day reminder with the practice address and a calendar
+                invite (.ics) for each booking — optional extras on top of your
+                standard shift alerts.
+              </span>
+            </label>
           </div>
         </section>
 

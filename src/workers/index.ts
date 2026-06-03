@@ -28,6 +28,7 @@ import { publishPendingReviews } from "./jobs/publish-pending-reviews";
 import { advanceBookings } from "./jobs/booking-progression";
 import { noShowCheckScan } from "./jobs/no-show-check";
 import { shiftRemindersScan } from "./jobs/shift-reminders";
+import { conciergeRemindersScan } from "./jobs/concierge-reminders";
 import { credentialExpiringScan } from "./jobs/credential-expiring";
 
 const QUEUE_FANOUT = "fanout-shift-posted";
@@ -37,6 +38,7 @@ const QUEUE_REVIEW_CRON = "publish-pending-reviews";
 const QUEUE_BOOKING_PROGRESSION = "booking-progression";
 const QUEUE_NO_SHOW_CHECK = "no-show-check";
 const QUEUE_SHIFT_REMINDERS = "shift-reminders";
+const QUEUE_CONCIERGE_REMINDERS = "concierge-reminders";
 const QUEUE_CREDENTIAL_EXPIRING = "credential-expiring";
 
 async function main() {
@@ -48,6 +50,7 @@ async function main() {
   await boss.createQueue(QUEUE_BOOKING_PROGRESSION);
   await boss.createQueue(QUEUE_NO_SHOW_CHECK);
   await boss.createQueue(QUEUE_SHIFT_REMINDERS);
+  await boss.createQueue(QUEUE_CONCIERGE_REMINDERS);
   await boss.createQueue(QUEUE_CREDENTIAL_EXPIRING);
 
   await boss.work<FanoutShiftPostedData>(
@@ -113,6 +116,9 @@ async function main() {
   await boss.work(QUEUE_SHIFT_REMINDERS, async () => {
     await shiftRemindersScan();
   });
+  await boss.work(QUEUE_CONCIERGE_REMINDERS, async () => {
+    await conciergeRemindersScan();
+  });
   await boss.work(QUEUE_CREDENTIAL_EXPIRING, async () => {
     await credentialExpiringScan();
   });
@@ -125,6 +131,9 @@ async function main() {
   // cheap scans with idempotency via the notifications table).
   await boss.schedule(QUEUE_NO_SHOW_CHECK, "*/5 * * * *", {});
   await boss.schedule(QUEUE_SHIFT_REMINDERS, "*/5 * * * *", {});
+  // Concierge morning-of reminders: every 15 min (cheap scan, dedup'd via the
+  // notifications table).
+  await boss.schedule(QUEUE_CONCIERGE_REMINDERS, "*/15 * * * *", {});
   // Credential expiration check daily at 9am.
   await boss.schedule(QUEUE_CREDENTIAL_EXPIRING, "0 9 * * *", {});
 
@@ -133,11 +142,12 @@ async function main() {
     boss.send(QUEUE_BOOKING_PROGRESSION, {}),
     boss.send(QUEUE_NO_SHOW_CHECK, {}),
     boss.send(QUEUE_SHIFT_REMINDERS, {}),
+    boss.send(QUEUE_CONCIERGE_REMINDERS, {}),
     boss.send(QUEUE_CREDENTIAL_EXPIRING, {}),
   ]);
 
   console.log(
-    `[worker] listening on: ${QUEUE_FANOUT}, ${QUEUE_FANOUT_BUMPED}, ${QUEUE_BOOKING_COMPLETED}, ${QUEUE_REVIEW_CRON} (cron), ${QUEUE_BOOKING_PROGRESSION} (cron), ${QUEUE_NO_SHOW_CHECK} (cron), ${QUEUE_SHIFT_REMINDERS} (cron), ${QUEUE_CREDENTIAL_EXPIRING} (cron)`,
+    `[worker] listening on: ${QUEUE_FANOUT}, ${QUEUE_FANOUT_BUMPED}, ${QUEUE_BOOKING_COMPLETED}, ${QUEUE_REVIEW_CRON} (cron), ${QUEUE_BOOKING_PROGRESSION} (cron), ${QUEUE_NO_SHOW_CHECK} (cron), ${QUEUE_SHIFT_REMINDERS} (cron), ${QUEUE_CONCIERGE_REMINDERS} (cron), ${QUEUE_CREDENTIAL_EXPIRING} (cron)`,
   );
 
   // Graceful shutdown

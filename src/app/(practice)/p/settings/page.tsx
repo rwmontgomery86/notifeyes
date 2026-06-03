@@ -25,6 +25,7 @@ export default async function PracticeSettingsPage() {
       emailOptedIn: users.emailOptedIn,
       smsOptedIn: users.smsOptedIn,
       marketingOptedIn: users.marketingOptedIn,
+      conciergeOptedIn: users.conciergeOptedIn,
     })
     .from(users)
     .where(eq(users.id, session.user.id))
@@ -57,6 +58,7 @@ export default async function PracticeSettingsPage() {
           emailOptedIn: u?.emailOptedIn ?? false,
           smsOptedIn: u?.smsOptedIn ?? false,
           marketingOptedIn: u?.marketingOptedIn ?? false,
+          conciergeOptedIn: u?.conciergeOptedIn ?? false,
           hasLocation: p.location != null,
         }}
       />

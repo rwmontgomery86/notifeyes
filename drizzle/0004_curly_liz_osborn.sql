@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "concierge_opted_in" boolean DEFAULT false NOT NULL;

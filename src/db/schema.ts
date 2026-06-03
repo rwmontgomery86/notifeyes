@@ -119,6 +119,9 @@ export const users = pgTable(
     smsOptedIn: boolean("sms_opted_in").default(false).notNull(),
     emailOptedIn: boolean("email_opted_in").default(false).notNull(),
     marketingOptedIn: boolean("marketing_opted_in").default(false).notNull(),
+    // Opt-in for "concierge" extras (morning-of reminders w/ address, .ics
+    // calendar invites) on top of the default key-moment alerts. Off by default.
+    conciergeOptedIn: boolean("concierge_opted_in").default(false).notNull(),
     passwordHash: text("password_hash"),
     role: userRoleEnum("role").notNull(),
     practiceId: uuid("practice_id"),

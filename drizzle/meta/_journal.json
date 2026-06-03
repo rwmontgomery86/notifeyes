@@ -29,6 +29,13 @@
       "when": 1780246373215,
       "tag": "0003_attendance_confirm",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1780511066846,
+      "tag": "0004_curly_liz_osborn",
+      "breakpoints": true
     }
   ]
 }

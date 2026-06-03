@@ -24,6 +24,7 @@ export default async function OdProfilePage() {
       phone: users.phone,
       emailOptedIn: users.emailOptedIn,
       smsOptedIn: users.smsOptedIn,
+      conciergeOptedIn: users.conciergeOptedIn,
     })
     .from(users)
     .where(eq(users.id, session.user.id))
@@ -70,6 +71,7 @@ export default async function OdProfilePage() {
           phone: u?.phone ?? null,
           emailOptedIn: u?.emailOptedIn ?? false,
           smsOptedIn: u?.smsOptedIn ?? false,
+          conciergeOptedIn: u?.conciergeOptedIn ?? false,
         }}
         blocked={blocked.map((b) => ({
           practiceId: b.practiceId,

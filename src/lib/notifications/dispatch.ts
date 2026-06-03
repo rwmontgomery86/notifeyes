@@ -6,7 +6,7 @@ import { emailChannel } from "./channels/email";
 import { pushChannel } from "./channels/push";
 import { smsChannel } from "./channels/sms";
 import { filterChannelsByOptIn, getOptInState } from "./optIn";
-import type { Channel, NotificationKind } from "./types";
+import type { Channel, EmailAttachment, NotificationKind } from "./types";
 
 const channels = {
   push: pushChannel,
@@ -25,6 +25,8 @@ export interface DispatchInput {
   actionLabel?: string;
   channels: Channel[];
   payload?: Record<string, unknown>;
+  /** Attachments for rich channels (email). Ignored by push/sms. */
+  attachments?: EmailAttachment[];
 }
 
 /**
@@ -75,6 +77,7 @@ export async function dispatchNotification(input: DispatchInput): Promise<void> 
         body: input.body,
         actionUrl: input.actionUrl,
         actionLabel: input.actionLabel,
+        attachments: input.attachments,
       }),
     ),
   );
