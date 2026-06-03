@@ -11,7 +11,10 @@ export type NotificationKind =
   | "review_request"
   | "credential_expiring"
   | "verification_decided"
-  | "message_received";
+  | "message_received"
+  // Concierge "status pings" (opt-in, see money-model-overhaul Phase D4):
+  | "application_update" // OD: shortlisted / passed / shift filled elsewhere
+  | "shift_unfilled"; //    Practice: posted shift still has no applicants
 
 export type Channel = "push" | "email" | "sms";
 

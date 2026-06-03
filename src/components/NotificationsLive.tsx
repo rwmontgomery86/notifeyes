@@ -33,6 +33,8 @@ const KIND_LABELS: Record<string, string> = {
   review_request: "Leave a review",
   credential_expiring: "Credential expiring soon",
   verification_decided: "Verification update",
+  application_update: "Application update",
+  shift_unfilled: "Your shift needs an OD",
 };
 
 function labelFor(kind: string): string {

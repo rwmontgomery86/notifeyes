@@ -160,6 +160,7 @@ export async function respondToInvite(
     .where(eq(users.odId, odId))
     .limit(1);
 
+  let declinedOdIds: string[] = [];
   const bookingId = await db.transaction(async (tx) => {
     // Application → accepted
     assertApplicationTransition(row.application.status, "accepted");
@@ -179,13 +180,17 @@ export async function respondToInvite(
       .set({ status: "booked", bookedApplicationId: applicationId })
       .where(eq(shifts.id, row.shift.id));
 
-    // Decline any other pending applications on this shift
-    await tx
-      .update(applications)
-      .set({ status: "declined", statusChangedAt: sql`now()` })
-      .where(
-        sql`${applications.shiftId} = ${row.shift.id} AND ${applications.id} <> ${applicationId} AND ${applications.status} IN ('applied','shortlisted','offered')`,
-      );
+    // Decline any other pending applications on this shift. Capture whose, for
+    // concierge "this shift filled" pings after the tx commits.
+    declinedOdIds = (
+      await tx
+        .update(applications)
+        .set({ status: "declined", statusChangedAt: sql`now()` })
+        .where(
+          sql`${applications.shiftId} = ${row.shift.id} AND ${applications.id} <> ${applicationId} AND ${applications.status} IN ('applied','shortlisted','offered')`,
+        )
+        .returning({ odId: applications.odId })
+    ).map((d) => d.odId);
 
     // Booking + contract
     const [bookingRow] = await tx
@@ -341,6 +346,41 @@ export async function respondToInvite(
     }
   } catch (err) {
     console.error("[invite:accept] OD concierge notify failed:", err);
+  }
+
+  // Concierge status ping: any other applicants on this shift were just
+  // declined because the invited OD accepted — let them know it filled. Opt-in.
+  if (declinedOdIds.length) {
+    try {
+      const when = formatShiftWhen(row.shift.startsAt, row.shift.endsAt);
+      for (const declinedOdId of declinedOdIds) {
+        const [u] = await db
+          .select({
+            id: users.id,
+            email: users.email,
+            phone: users.phone,
+            conciergeOptedIn: users.conciergeOptedIn,
+          })
+          .from(users)
+          .where(eq(users.odId, declinedOdId))
+          .limit(1);
+        if (!u?.conciergeOptedIn) continue;
+        await dispatchNotification({
+          kind: "application_update",
+          userId: u.id,
+          recipientEmail: u.email,
+          recipientPhone: u.phone ?? undefined,
+          subject: "A shift you applied to was filled",
+          body: `${when} at ${row.practice.name} was just booked by another optometrist. We'll keep watching your zones for the next match.`,
+          actionUrl: `/d/shifts`,
+          actionLabel: "Find more shifts",
+          channels: ["push", "email"],
+          payload: { shiftId: row.shift.id, change: "filled_elsewhere" },
+        });
+      }
+    } catch (err) {
+      console.error("[invite:accept] filled-elsewhere ping failed:", err);
+    }
   }
 
   return { ok: true as const, bookingId };
