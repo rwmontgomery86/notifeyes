@@ -24,6 +24,8 @@ const KIND_LABELS: Record<string, string> = {
   credential_expiring: "Credential expiring soon",
   verification_decided: "Verification update",
   message_received: "New message",
+  application_update: "Application update",
+  shift_unfilled: "Shift needs applicants",
 };
 
 export default async function NotificationsInbox() {

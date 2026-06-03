@@ -3,7 +3,7 @@
 import { and, eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
-import { applications, shifts } from "@/db/schema";
+import { applications, practices, shifts, users } from "@/db/schema";
 import { requirePractice } from "@/lib/auth/guards";
 import {
   assertApplicationTransition,
@@ -11,6 +11,8 @@ import {
 } from "@/lib/state/application";
 import { enqueueFanoutShiftBumped } from "@/lib/queue";
 import { BUMP_RADIUS_METERS } from "@/lib/bump";
+import { dispatchNotification } from "@/lib/notifications";
+import { formatShiftWhen } from "@/lib/dates";
 
 export async function setApplicationStatus(
   applicationId: string,
@@ -33,11 +35,16 @@ export async function setApplicationStatus(
     .select({
       id: applications.id,
       shiftId: applications.shiftId,
+      odId: applications.odId,
       status: applications.status,
       practiceId: shifts.practiceId,
+      practiceName: practices.name,
+      startsAt: shifts.startsAt,
+      endsAt: shifts.endsAt,
     })
     .from(applications)
     .innerJoin(shifts, eq(applications.shiftId, shifts.id))
+    .innerJoin(practices, eq(practices.id, shifts.practiceId))
     .where(eq(applications.id, applicationId))
     .limit(1);
   if (!app) throw new Error("Application not found");
@@ -54,6 +61,47 @@ export async function setApplicationStatus(
     .update(applications)
     .set({ status: next as ApplicationStatus, statusChangedAt: sql`now()` })
     .where(eq(applications.id, applicationId));
+
+  // Concierge status ping: keep the OD in the loop when they're shortlisted or
+  // explicitly passed over. Opt-in only — silent for ODs without concierge.
+  // (Auto-decline because the shift was booked by someone else is a separate
+  // ping fired from the booking actions, not this path.)
+  if (next === "shortlisted" || next === "declined") {
+    try {
+      const [odUser] = await db
+        .select({
+          id: users.id,
+          email: users.email,
+          phone: users.phone,
+          conciergeOptedIn: users.conciergeOptedIn,
+        })
+        .from(users)
+        .where(eq(users.odId, app.odId))
+        .limit(1);
+      if (odUser?.conciergeOptedIn) {
+        const when = formatShiftWhen(app.startsAt, app.endsAt);
+        const shortlisted = next === "shortlisted";
+        await dispatchNotification({
+          kind: "application_update",
+          userId: odUser.id,
+          recipientEmail: odUser.email,
+          recipientPhone: odUser.phone ?? undefined,
+          subject: shortlisted
+            ? `You're a top candidate at ${app.practiceName}`
+            : `Update on your application to ${app.practiceName}`,
+          body: shortlisted
+            ? `${app.practiceName} shortlisted your application for ${when}. They may book you next — keep an eye out.`
+            : `${app.practiceName} won't be moving forward on ${when}. Plenty more shifts match your watch zones.`,
+          actionUrl: `/shifts/${app.shiftId}`,
+          actionLabel: "View shift",
+          channels: ["push", "email"],
+          payload: { shiftId: app.shiftId, applicationId, change: next },
+        });
+      }
+    } catch (err) {
+      console.error("[application-status] concierge ping failed:", err);
+    }
+  }
 }
 
 export async function boostShift(

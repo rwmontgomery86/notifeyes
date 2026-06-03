@@ -7,16 +7,22 @@
 > deliberate "side quest", so **no launch-plan checkboxes are ticked for it**
 > (the pivot decision is logged in the launch plan's Decisions log, 2026-05-31).
 
-**Status:** Phases A–C merged to `main`; **Phase D built on branch
-`claude/phase-d-concierge` (focused scope) — PR pending, not yet merged.**
-**Last touched:** 2026-06-03 — Phase D implemented: concierge preference model +
-opt-in toggle (OD + practice), morning-of reminder w/ address (new worker job),
-and .ics calendar invite on booking-confirmed (both sides). `tsc --noEmit`,
-`next build`, and a real worker boot (all 9 queues register, incl.
-`concierge-reminders (cron)`) all green. "Status pings" deferred.
+**Status:** Phases A–C merged to `main`. **Phase D (D1–D3) in PR #30**
+(`claude/phase-d-concierge`). **Phase D4 (status pings) built on
+`claude/phase-d4-status-pings`, stacked on #30 — PR pending.** Neither merged yet.
+**Last touched:** 2026-06-03 — Phase D4 implemented: four opt-in "status pings"
+(OD shortlisted / passed / shift-filled-elsewhere via `application_update`;
+practice no-applicants nudge via `shift_unfilled` + new worker). `tsc --noEmit`,
+`next build`, and a real worker boot (all 10 queues register, incl.
+`shift-unfilled-nudge (cron)`) all green.
 **Cursor (pick one to resume):** **A3** — Stripe Payment Element card capture
-(deferred) · **or** **Phase D status pings** (deferred from this PR) · **or**
-**Phase E** — money clarity & trust polish.
+(deferred) · **or** **Phase E** — money clarity & trust polish. (Phase D fully
+built; merge #30 then the D4 PR.)
+
+> **Stacked PRs:** D4 (`claude/phase-d4-status-pings`) branches off
+> `claude/phase-d-concierge` (it needs the `conciergeOptedIn` flag). Merge **#30
+> first**, then retarget the D4 PR base to `main` (`gh pr edit --base main`) — per
+> the 2026-05-30 stacked-PR lesson in the launch-plan Decisions log.
 
 ## How to resume (e.g. on the other Mac)
 
@@ -47,10 +53,10 @@ and .ics calendar invite on booking-confirmed (both sides). `tsc --noEmit`,
 | C | C3 — OD withdraw + apply receipt | ✅ merged | #28 |
 | C | C4 — invite-accept payment-limbo messaging | ✅ merged | #28 |
 | C | C5 — practice polish (decline confirm, dedupe Book, "Boost reach") | ✅ merged | #28 |
-| D | D1 — concierge preference model + opt-in toggle (OD + practice) | 🔨 built | `claude/phase-d-concierge` |
-| D | D2 — morning-of reminder w/ practice address (new worker job, OD) | 🔨 built | `claude/phase-d-concierge` |
-| D | D3 — .ics calendar invite on booking-confirmed (OD + practice) | 🔨 built | `claude/phase-d-concierge` |
-| D | **D4 — concierge "status pings"** | ⬜ **deferred / not started** | — |
+| D | D1 — concierge preference model + opt-in toggle (OD + practice) | 🔨 built | #30 |
+| D | D2 — morning-of reminder w/ practice address (new worker job, OD) | 🔨 built | #30 |
+| D | D3 — .ics calendar invite on booking-confirmed (OD + practice) | 🔨 built | #30 |
+| D | D4 — status pings: OD shortlisted / passed / filled-elsewhere + practice no-applicants nudge | 🔨 built | `claude/phase-d4-status-pings` (stacked on #30) |
 | E | Money clarity & trust polish | ⬜ not started | — |
 
 **Carry-over notes for the next session:**
@@ -58,8 +64,16 @@ and .ics calendar invite on booking-confirmed (both sides). `tsc --noEmit`,
   the morning-of reminder, and the .ics invite. The roadmap's three "new key
   moments" (shift-tomorrow, "did the doctor show?", payout/wage sent) **already
   existed** as notifications (shift-reminders / booking-completed-followups /
-  admin payouts) — no new work was needed there. **"Status pings" (D4) were
-  deferred** to keep the PR focused (own follow-up or fold into Phase E).
+  admin payouts) — no new work was needed there. **"Status pings" (D4) now built
+  separately** on `claude/phase-d4-status-pings` (stacked on #30).
+- **D4 status pings (4, all concierge-gated, all reuse instant/worker paths):**
+  OD *shortlisted* + OD *passed* fire from the practice `setApplicationStatus`
+  action; OD *shift-filled-elsewhere* fires from both booking paths (capturing
+  the auto-declined applicants via `.returning()` on the bulk decline); the
+  practice *no-applicants nudge* is a new hourly worker (`shift-unfilled-nudge`,
+  shifts 2–24h out with zero applications). Two new kinds — `application_update`
+  (the 3 OD pings) + `shift_unfilled` — added to the union and both KIND_LABELS
+  display maps (which have safe `?? kind` fallbacks).
 - **Concierge gating is producer-side:** new `conciergeOptedIn` flag on `users`
   (default off; migration `0004`). `dispatchNotification`'s default key-moment
   gating is unchanged — call sites check the flag before sending extras. The
@@ -153,7 +167,7 @@ SPINE / money files. The foundation everything else sits on.
 - Practice: decline confirm; deduped the Book button; "Boost" → "Boost reach".
   (Scope-toggle label was already clear — skipped.) ✅
 
-### Phase D — Proactive comms (key-moments default + concierge toggle)  🔨 built (focused scope, PR pending) · ⛔ D4 deferred
+### Phase D — Proactive comms (key-moments default + concierge toggle)  🔨 built (D1–D3 in #30 · D4 in `claude/phase-d4-status-pings`)
 - Notification-preference model: key moments on by default (email) + a
   **concierge toggle** in the OD/practice profile (`src/lib/notifications/**`,
   opt-in state). ✅ `conciergeOptedIn` flag (migration `0004`), `wantsConcierge`
@@ -167,7 +181,9 @@ SPINE / money files. The foundation everything else sits on.
     (every 15 min; reuses `shift_reminder` kind, `window=morning_of`; OD-only).
   - `.ics` calendar invite ✅ — `src/lib/calendar.ts` + Resend attachment support;
     attached to booking-confirmed for both sides when opted in.
-  - status pings ⛔ **deferred (D4).**
+  - status pings ✅ (D4) — 4 opt-in pings: OD shortlisted / passed / filled-
+    elsewhere (`application_update`) + practice no-applicants nudge
+    (`shift_unfilled`, new `shift-unfilled-nudge` worker).
   - SPINE — worker boot verified: all 9 queues register incl. `concierge-reminders (cron)`.
 
 ### Phase E — Money clarity & trust polish  ⬜ not started
