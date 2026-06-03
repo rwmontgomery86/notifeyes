@@ -26,6 +26,7 @@ const schema = z.object({
   phone: z.string().max(32).nullable().optional(),
   smsOptedIn: z.boolean().optional(),
   emailOptedIn: z.boolean().optional(),
+  conciergeOptedIn: z.boolean().optional(),
 });
 
 export async function updateOdProfile(input: z.infer<typeof schema>) {
@@ -67,6 +68,7 @@ export async function updateOdProfile(input: z.infer<typeof schema>) {
       phone,
       smsOptedIn: v.smsOptedIn ?? false,
       emailOptedIn: v.emailOptedIn ?? false,
+      conciergeOptedIn: v.conciergeOptedIn ?? false,
     })
     .where(eq(users.id, session.user.id));
 

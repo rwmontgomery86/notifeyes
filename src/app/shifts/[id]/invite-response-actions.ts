@@ -21,6 +21,9 @@ import { assertShiftTransition } from "@/lib/state/shift";
 import { payments } from "@/lib/payments";
 import { dispatchNotification } from "@/lib/notifications";
 import { formatShiftWhen } from "@/lib/dates";
+import { formatAddress } from "@/lib/address";
+import { shiftIcsAttachment } from "@/lib/calendar";
+import { env } from "@/env";
 
 /**
  * OD response to an invite (source='invite', status='offered').
@@ -145,9 +148,14 @@ export async function respondToInvite(
     matchFee: matchFeeDisplay,
   });
 
-  // Look up OD's user (for thread)
+  // Look up OD's user (for thread + their own confirmation/calendar invite)
   const [odUser] = await db
-    .select({ id: users.id, email: users.email })
+    .select({
+      id: users.id,
+      email: users.email,
+      phone: users.phone,
+      conciergeOptedIn: users.conciergeOptedIn,
+    })
     .from(users)
     .where(eq(users.odId, odId))
     .limit(1);
@@ -265,11 +273,16 @@ export async function respondToInvite(
   // Notify the practice that the invite was accepted
   try {
     const [practiceUser] = await db
-      .select({ id: users.id, email: users.email })
+      .select({
+        id: users.id,
+        email: users.email,
+        conciergeOptedIn: users.conciergeOptedIn,
+      })
       .from(users)
       .where(eq(users.id, row.shift.postedByUserId))
       .limit(1);
     if (practiceUser) {
+      const appBase = env.AUTH_URL?.replace(/\/$/, "") ?? "";
       await dispatchNotification({
         kind: "booking_confirmed",
         userId: practiceUser.id,
@@ -279,10 +292,55 @@ export async function respondToInvite(
         actionUrl: `/bookings/${bookingId}`,
         channels: ["push", "email"],
         payload: { bookingId, shiftId: row.shift.id, viaInvite: true },
+        attachments: practiceUser.conciergeOptedIn
+          ? [
+              shiftIcsAttachment({
+                bookingId,
+                practiceName: row.practice.name,
+                start: row.shift.startsAt,
+                end: row.shift.endsAt,
+                location: formatAddress(row.practice) || undefined,
+                url: appBase ? `${appBase}/bookings/${bookingId}` : undefined,
+              }),
+            ]
+          : undefined,
       });
     }
   } catch (err) {
     console.error("[invite:accept] notify failed:", err);
+  }
+
+  // Concierge extra: the OD just self-accepted, so a plain "you're booked" email
+  // would be noise — but if they opted into concierge, send them a confirmation
+  // carrying the .ics calendar invite. Gated entirely on concierge so default
+  // behavior (no OD email on self-accept) is unchanged.
+  try {
+    if (odUser?.conciergeOptedIn) {
+      const appBase = env.AUTH_URL?.replace(/\/$/, "") ?? "";
+      await dispatchNotification({
+        kind: "booking_confirmed",
+        userId: odUser.id,
+        recipientEmail: odUser.email,
+        recipientPhone: odUser.phone ?? undefined,
+        subject: `Booking confirmed · ${row.practice.name}`,
+        body: `${formatShiftWhen(row.shift.startsAt, row.shift.endsAt)} · ${formatUsd(effectiveRate)}/hr. Sign the engagement on the booking page.`,
+        actionUrl: `/bookings/${bookingId}`,
+        channels: ["push", "email"],
+        payload: { bookingId, shiftId: row.shift.id, role: "od", viaInvite: true },
+        attachments: [
+          shiftIcsAttachment({
+            bookingId,
+            practiceName: row.practice.name,
+            start: row.shift.startsAt,
+            end: row.shift.endsAt,
+            location: formatAddress(row.practice) || undefined,
+            url: appBase ? `${appBase}/bookings/${bookingId}` : undefined,
+          }),
+        ],
+      });
+    }
+  } catch (err) {
+    console.error("[invite:accept] OD concierge notify failed:", err);
   }
 
   return { ok: true as const, bookingId };

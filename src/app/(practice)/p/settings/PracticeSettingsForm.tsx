@@ -24,6 +24,7 @@ type PracticeForm = {
   emailOptedIn: boolean;
   smsOptedIn: boolean;
   marketingOptedIn: boolean;
+  conciergeOptedIn: boolean;
   hasLocation: boolean;
 };
 
@@ -86,6 +87,7 @@ export function PracticeSettingsForm({ initial }: { initial: PracticeForm }) {
         emailOptedIn: form.emailOptedIn,
         smsOptedIn: form.smsOptedIn,
         marketingOptedIn: form.marketingOptedIn,
+        conciergeOptedIn: form.conciergeOptedIn,
       });
       if (!res.ok) {
         setError(res.error ?? "Could not save");
@@ -176,6 +178,21 @@ export function PracticeSettingsForm({ initial }: { initial: PracticeForm }) {
           <span>
             Send me occasional product updates and tips (optional, separate
             from transactional alerts).
+          </span>
+        </label>
+        <label className="flex items-start gap-2 border-t border-border pt-3 text-sm">
+          <input
+            type="checkbox"
+            checked={form.conciergeOptedIn}
+            onChange={(e) =>
+              setForm({ ...form, conciergeOptedIn: e.target.checked })
+            }
+            className="mt-1"
+          />
+          <span>
+            <span className="font-medium">Concierge updates.</span> Get a
+            calendar invite (.ics) for each shift you book — an optional extra
+            on top of your standard booking alerts.
           </span>
         </label>
         <p className="text-xs text-muted-foreground">

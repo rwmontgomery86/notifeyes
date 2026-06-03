@@ -53,10 +53,17 @@ export const emailChannel: NotificationChannel = {
       return { channel: "email", ok: false, detail: "no recipient email" };
     }
     const url = absoluteUrl(msg.actionUrl);
+    const attachments = msg.attachments ?? [];
     if (!env.RESEND_API_KEY) {
       console.log(
         `[email:console] → ${msg.recipientEmail} | ${msg.subject}\n${msg.body}${
           url ? `\n${msg.actionLabel ?? "Open"}: ${url}` : ""
+        }${
+          attachments.length
+            ? `\n[+ ${attachments.length} attachment(s): ${attachments
+                .map((a) => a.filename)
+                .join(", ")}]`
+            : ""
         }\n`,
       );
       return { channel: "email", ok: true, detail: "console-only" };
@@ -74,6 +81,16 @@ export const emailChannel: NotificationChannel = {
           subject: msg.subject,
           text: msg.body + (url ? `\n\n${msg.actionLabel ?? "Open"}: ${url}` : ""),
           html: renderHtml(msg, url),
+          // Resend wants base64-encoded content over the HTTP API.
+          ...(attachments.length
+            ? {
+                attachments: attachments.map((a) => ({
+                  filename: a.filename,
+                  content: Buffer.from(a.content, "utf8").toString("base64"),
+                  ...(a.contentType ? { content_type: a.contentType } : {}),
+                })),
+              }
+            : {}),
         }),
       });
       if (!res.ok) {

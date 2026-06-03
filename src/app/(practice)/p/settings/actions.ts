@@ -24,6 +24,7 @@ const schema = z.object({
   emailOptedIn: z.boolean().optional(),
   smsOptedIn: z.boolean().optional(),
   marketingOptedIn: z.boolean().optional(),
+  conciergeOptedIn: z.boolean().optional(),
 });
 
 export async function updatePracticeSettings(input: z.infer<typeof schema>) {
@@ -104,6 +105,7 @@ export async function updatePracticeSettings(input: z.infer<typeof schema>) {
       emailOptedIn: v.emailOptedIn ?? false,
       smsOptedIn: phoneClean == null ? false : v.smsOptedIn ?? false,
       marketingOptedIn: v.marketingOptedIn ?? false,
+      conciergeOptedIn: v.conciergeOptedIn ?? false,
     })
     .where(eq(users.id, session.user.id));
 
