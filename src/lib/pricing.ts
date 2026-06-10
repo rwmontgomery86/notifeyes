@@ -39,7 +39,7 @@ export function isSameDayBooking(
  *
  * Pass `practiceChargeCents` to payments.createIntent. `wageCents` is the figure
  * shown to the OD as "you earn".
- * V1 placeholder — pricing is set by env: $9.99/match, $19.99 same-day.
+ * V1 placeholder — pricing is set by env: $10 flat per match.
  * --TODO: legal review --- final fee amounts and same-day definition.
  */
 export function computeShiftCost(input: {

@@ -15,11 +15,12 @@ import type {
  * because a key is present. The client is created lazily so importing this
  * module is side-effect-free when the stub is active.
  *
- * NOTE: this seam has no client card-collection step yet, so `createIntent`
- * returns an intent in `requires_payment_method` — the booking flow records
- * that status but no money moves until a Payment Element / Checkout step
- * authorizes the intent. The webhook (/api/payments/webhook) reconciles
- * `booking.paymentStatus` once an intent is confirmed/captured out-of-band.
+ * Card collection lives in ./setup.ts (A3): the practice saves a card once via a
+ * SetupIntent, and `createIntent` then confirms the match-fee hold off_session
+ * against that saved customer + payment method (see the offSession branch below).
+ * Without a saved card the intent stays at `requires_payment_method`. The webhook
+ * (/api/payments/webhook) reconciles `booking.paymentStatus` and persists the
+ * saved card on setup_intent.succeeded.
  */
 
 let client: Stripe | null = null;
@@ -33,6 +34,14 @@ function stripe(): Stripe {
     client = new Stripe(env.STRIPE_SECRET_KEY);
   }
   return client;
+}
+
+/**
+ * Shared Stripe client for sibling server-only modules (setup.ts, the webhook)
+ * so the SDK is instantiated once. Throws if STRIPE_SECRET_KEY is unset.
+ */
+export function getStripeClient(): Stripe {
+  return stripe();
 }
 
 /** Map Stripe's status vocabulary onto our narrower PaymentIntentStatus. */
@@ -72,14 +81,29 @@ function toIntent(pi: Stripe.PaymentIntent): PaymentIntent {
 
 export const stripePaymentProvider: PaymentProvider = {
   async createIntent(input: CreatePaymentIntentInput): Promise<PaymentIntent> {
+    // A3: when the practice has a saved card (customer + payment method), confirm
+    // the intent immediately off_session — this places the $10 hold at booking
+    // time with no client interaction. Without a saved card we fall back to an
+    // un-confirmed intent (requires_payment_method) so importing/merging this is
+    // inert until cards are on file.
+    const offSession = Boolean(input.stripeCustomerId && input.paymentMethodId);
     const pi = await stripe().paymentIntents.create({
       amount: input.amountCents,
       currency: "usd",
       capture_method: input.captureMethod,
       description: input.description,
       metadata: { bookingId: input.bookingId, practiceId: input.practiceId },
-      // No redirect-based methods — this seam has no client redirect handling.
-      automatic_payment_methods: { enabled: true, allow_redirects: "never" },
+      ...(offSession
+        ? {
+            customer: input.stripeCustomerId,
+            payment_method: input.paymentMethodId,
+            off_session: true,
+            confirm: true,
+          }
+        : {
+            // No redirect-based methods — this seam has no client redirect handling.
+            automatic_payment_methods: { enabled: true, allow_redirects: "never" },
+          }),
     });
     return toIntent(pi);
   },

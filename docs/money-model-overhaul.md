@@ -7,22 +7,26 @@
 > deliberate "side quest", so **no launch-plan checkboxes are ticked for it**
 > (the pivot decision is logged in the launch plan's Decisions log, 2026-05-31).
 
-**Status:** Phases A–C merged to `main`. **Phase D (D1–D3) in PR #30**
-(`claude/phase-d-concierge`). **Phase D4 (status pings) built on
-`claude/phase-d4-status-pings`, stacked on #30 — PR pending.** Neither merged yet.
-**Last touched:** 2026-06-03 — Phase D4 implemented: four opt-in "status pings"
-(OD shortlisted / passed / shift-filled-elsewhere via `application_update`;
-practice no-applicants nudge via `shift_unfilled` + new worker). `tsc --noEmit`,
-`next build`, and a real worker boot (all 10 queues register, incl.
-`shift-unfilled-nudge (cron)`) all green.
-**Cursor (pick one to resume):** **A3** — Stripe Payment Element card capture
-(deferred) · **or** **Phase E** — money clarity & trust polish. (Phase D fully
-built; merge #30 then the D4 PR.)
+**Status:** Phases A–D merged to `main`. **A3 (Stripe card capture) now BUILT**
+on `claude/phase-a3-card-capture` (test-mode; `PAYMENTS_PROVIDER` flag held at
+`stub` — prod behavior unchanged until keys are set + the flag is flipped). Only
+**Phase E** remains unstarted.
+**Last touched:** 2026-06-10 — built A3 (see the dedicated section below): saved-
+card model (SetupIntent → off_session holds), card UI on `/p/billing` + just-in-
+time booking gate, off-session authorize in both booking actions, webhook
+`setup_intent.succeeded`. Migration `0005` (practices `stripe_customer_id` +
+`default_payment_method_id`). `tsc` + `next build` clean; worker untouched (imports
+no payments). Earlier today: reconciled Phase D status (PRs #30 + #31 merged
+2026-06-03).
+**Cursor (pick one to resume):** **A3 go-live** — set the Stripe keys (incl.
+`NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`), run the manual card smoke, flip
+`PAYMENTS_PROVIDER=stripe` (test first, live after the bank account) · **or**
+**Phase E** — money clarity & trust polish.
 
-> **Stacked PRs:** D4 (`claude/phase-d4-status-pings`) branches off
-> `claude/phase-d-concierge` (it needs the `conciergeOptedIn` flag). Merge **#30
-> first**, then retarget the D4 PR base to `main` (`gh pr edit --base main`) — per
-> the 2026-05-30 stacked-PR lesson in the launch-plan Decisions log.
+> **Stacked PRs (done):** D4 (`claude/phase-d4-status-pings`) branched off
+> `claude/phase-d-concierge` for the `conciergeOptedIn` flag. Merged in order —
+> **#30 first, then #31** — per the 2026-05-30 stacked-PR lesson in the launch-plan
+> Decisions log.
 
 ## How to resume (e.g. on the other Mac)
 
@@ -42,7 +46,7 @@ built; merge #30 then the D4 PR.)
 |---|---|---|---|
 | A | A1 — fee-only charge ($10) + fee-only money display | ✅ merged | #26 |
 | A | A2 — "Did the doctor show?" attendance confirm → fee capture | ✅ merged | #26 |
-| A | **A3 — Stripe Payment Element card capture (+ flip `PAYMENTS_PROVIDER=stripe`)** | ⛔ **deferred / not started** | — |
+| A | **A3 — Stripe Payment Element card capture (+ flip `PAYMENTS_PROVIDER=stripe`)** | 🔨 **built** (test-mode; flag held) | `claude/phase-a3-card-capture` |
 | A | A4 — reputation-only cancellation + no-show fee release | ✅ merged | #26 |
 | B | B1 — email alerts ON by default at signup (OD + practice) | ✅ merged | #27 |
 | B | B2 — OD setup home usable while pending + earlier guidance | ✅ merged | #27 |
@@ -53,10 +57,10 @@ built; merge #30 then the D4 PR.)
 | C | C3 — OD withdraw + apply receipt | ✅ merged | #28 |
 | C | C4 — invite-accept payment-limbo messaging | ✅ merged | #28 |
 | C | C5 — practice polish (decline confirm, dedupe Book, "Boost reach") | ✅ merged | #28 |
-| D | D1 — concierge preference model + opt-in toggle (OD + practice) | 🔨 built | #30 |
-| D | D2 — morning-of reminder w/ practice address (new worker job, OD) | 🔨 built | #30 |
-| D | D3 — .ics calendar invite on booking-confirmed (OD + practice) | 🔨 built | #30 |
-| D | D4 — status pings: OD shortlisted / passed / filled-elsewhere + practice no-applicants nudge | 🔨 built | `claude/phase-d4-status-pings` (stacked on #30) |
+| D | D1 — concierge preference model + opt-in toggle (OD + practice) | ✅ merged | #30 |
+| D | D2 — morning-of reminder w/ practice address (new worker job, OD) | ✅ merged | #30 |
+| D | D3 — .ics calendar invite on booking-confirmed (OD + practice) | ✅ merged | #30 |
+| D | D4 — status pings: OD shortlisted / passed / filled-elsewhere + practice no-applicants nudge | ✅ merged | #31 |
 | E | Money clarity & trust polish | ⬜ not started | — |
 
 **Carry-over notes for the next session:**
@@ -86,7 +90,20 @@ built; merge #30 then the D4 PR.)
   self-accept). The practice gets the .ics on its booking_confirmed email when
   opted in. Email-attachment plumbing was added to the Resend channel
   (base64); push/sms ignore attachments.
-- **A3 is the only payments/card piece left.** It was deliberately deferred — everything else runs on the payments **stub**. A3 adds a Stripe Payment Element at first booking to collect + save the practice card for the $10 fee, then flips `PAYMENTS_PROVIDER=stripe`. It also unblocks C4's *real* charge and the launch plan's "real Stripe checkout."
+- **A3 is now BUILT (test-mode; flag held).** Architecture: the practice saves a
+  card **once** via a Stripe **SetupIntent** (`usage: off_session`); every booking
+  then authorizes the $10 hold **off_session** against the saved customer + payment
+  method (no client step). Card UI lives on **`/p/billing`** (`AddCardForm`, real
+  `<PaymentElement>` when keys are set, else a "connect Stripe" placeholder) with a
+  **just-in-time gate** that blocks a first booking until a card is on file (gate is
+  dormant under the stub). New `practices` columns `stripe_customer_id` +
+  `default_payment_method_id` (migration `0005`); webhook handles
+  `setup_intent.succeeded`. **Two switches keep prod inert:** the
+  `PAYMENTS_PROVIDER` flag stays `stub`, and card collection only activates when
+  **both** Stripe keys (secret + `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`) are set.
+  Unblocks C4's *real* charge and the launch plan's "real Stripe checkout."
+  **Remaining (Ross-owned):** drop the test keys in, run the manual card smoke,
+  flip `PAYMENTS_PROVIDER=stripe` (live keys after the bank account).
 - **C4 shipped the display half only** — the booking page now surfaces the fee state calmly ("booking confirmed; $10 captured at attendance"); actually collecting/authorizing the card waits on A3.
 - **C5** intentionally **skipped** the roadmap's "label the scope toggle" item — the OD `/d/shifts` toggle was already clearly labeled ("My state" / "My watch zones").
 - **Decline is terminal** in the application state machine, so C5 added a *confirm* step (no undo is possible).
@@ -114,8 +131,10 @@ fast-tracking OD verification.
    prompt captures the fee on "Yes"; silence/"No" → no-show path.
 4. **Cancellation = reputation-only, NO platform charge.** Notify the other side,
    reopen the shift, record it on the canceller's reliability record.
-5. **Card capture = just-in-time at first booking** (saved for reuse). *(A3 — not
-   yet built.)*
+5. **Card capture = just-in-time at first booking** (saved for reuse). *(A3 —
+   BUILT. SetupIntent saves the card once; bookings authorize off_session against
+   it. Card UI on `/p/billing` + a just-in-time booking gate. Test-mode; flag held
+   at `stub`.)*
 6. **Email alerts ON by default** at signup (OD + practice).
 7. **First OD watch zone = one-tap "Watch the Bay Area"**; map/ZIP optional refine.
 8. **Proactive comms = key moments on by default (email)** + a profile
@@ -134,14 +153,16 @@ fast-tracking OD verification.
 
 ## Roadmap (each phase ≈ its own PR)
 
-### Phase A — Fee-only money pivot  ✅ (A1/A2/A4 merged, PR #26) · ⛔ A3 deferred
+### Phase A — Fee-only money pivot  ✅ (A1/A2/A4 merged, PR #26) · 🔨 A3 built (test-mode; flag held)
 SPINE / money files. The foundation everything else sits on.
 - `src/lib/pricing.ts` — platform processes the **fee only**; wage recorded, not charged. ✅
 - Booking creation (`…/book/[appId]/actions.ts`, `…/invite-response-actions.ts`):
   `payments.createIntent` authorizes the **$10 fee** (manual capture). ✅
-- **A3 — card capture (just-in-time):** Stripe Payment Element at first booking to
-  collect + save the practice card for the $10; then flip
-  `PAYMENTS_PROVIDER=stripe`. ⛔ **not started.**
+- **A3 — card capture (just-in-time):** 🔨 **built.** `src/lib/payments/setup.ts`
+  (Customer + SetupIntent + saved-card persistence), `/p/billing` `AddCardForm`
+  (`<PaymentElement>`), just-in-time booking gate, off_session authorize in both
+  booking actions, webhook `setup_intent.succeeded`, migration `0005`. Flip
+  `PAYMENTS_PROVIDER=stripe` after the keys are set + the manual smoke passes.
 - **Attendance → fee capture:** practice "Did the doctor show?" prompt; "Yes"
   captures via `payments.capture` + `src/app/api/payments/webhook/route.ts`. ✅
 - **No-show:** release the $10 hold; record reliability hit. ✅
@@ -167,7 +188,7 @@ SPINE / money files. The foundation everything else sits on.
 - Practice: decline confirm; deduped the Book button; "Boost" → "Boost reach".
   (Scope-toggle label was already clear — skipped.) ✅
 
-### Phase D — Proactive comms (key-moments default + concierge toggle)  🔨 built (D1–D3 in #30 · D4 in `claude/phase-d4-status-pings`)
+### Phase D — Proactive comms (key-moments default + concierge toggle)  ✅ merged (D1–D3 in #30 · D4 in #31)
 - Notification-preference model: key moments on by default (email) + a
   **concierge toggle** in the OD/practice profile (`src/lib/notifications/**`,
   opt-in state). ✅ `conciergeOptedIn` flag (migration `0004`), `wantsConcierge`
@@ -184,7 +205,8 @@ SPINE / money files. The foundation everything else sits on.
   - status pings ✅ (D4) — 4 opt-in pings: OD shortlisted / passed / filled-
     elsewhere (`application_update`) + practice no-applicants nudge
     (`shift_unfilled`, new `shift-unfilled-nudge` worker).
-  - SPINE — worker boot verified: all 9 queues register incl. `concierge-reminders (cron)`.
+  - SPINE — worker boot verified: all 10 queues register incl. `concierge-reminders (cron)`
+    and `shift-unfilled-nudge (cron)`.
 
 ### Phase E — Money clarity & trust polish  ⬜ not started
 - Role-aware money panel on `src/app/bookings/[id]/page.tsx`: OD "You earn $X";

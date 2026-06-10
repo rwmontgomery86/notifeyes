@@ -32,6 +32,14 @@ export interface CreatePaymentIntentInput {
   description?: string;
   /** Authorize-only; capture separately at shift completion. */
   captureMethod: "automatic" | "manual";
+  /**
+   * Saved card for off-session authorization (A3). When BOTH are present the
+   * Stripe adapter confirms the intent immediately off_session, placing the hold
+   * without any client step. Absent → the intent stays at
+   * requires_payment_method. The stub ignores these.
+   */
+  stripeCustomerId?: string;
+  paymentMethodId?: string;
 }
 
 export interface PaymentProvider {

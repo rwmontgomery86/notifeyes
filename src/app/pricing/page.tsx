@@ -9,31 +9,30 @@ import { RoleBadge } from "@/components/marketing/RoleBadge";
 import { CompareTable } from "@/components/marketing/CompareTable";
 import {
   MARKETING_MATCH_FEE_DISPLAY,
-  MARKETING_SAMEDAY_DISPLAY,
 } from "@/lib/format";
 
 export const metadata: Metadata = {
   title: "Pricing — NotifEyes",
   description:
-    "Free for ODs, free to post. Practices pay a flat $9.99 per booked match — no agency percentage, no subscription, no surprise.",
+    "Free for ODs, free to post. Practices pay a flat $10 per booked match — no agency percentage, no subscription, no surprise.",
 };
 
 const FAQS: { q: string; a: string }[] = [
   {
-    q: "How does the $9.99 get charged?",
+    q: "How does the $10 get charged?",
     a: "Authorized at booking on your stored card or ACH. Captured at shift completion. Refunded automatically if the shift is cancelled more than 7 days out.",
   },
   {
     q: "What if we book and then cancel?",
-    a: "See the tiered cancellation schedule in Trust & safety. The $9.99 match fee is non-refundable past 48 hours before the shift. OD cancellation fees are separate.",
+    a: "See the tiered cancellation schedule in Trust & safety. The $10 match fee is non-refundable past 48 hours before the shift. OD cancellation fees are separate.",
   },
   {
     q: "Why not a percentage-of-shift model?",
     a: "Because a percentage rewards big shifts, not fast matches. A flat fee aligns us with what we actually ship — a working booking — regardless of dollar size.",
   },
   {
-    q: "Will it always be $9.99?",
-    a: "It is the V1 launch price, locked in for our V1 cohort. We may move new signups to $14.99 in V2. Existing accounts keep $9.99.",
+    q: "Will it always be $10?",
+    a: "It is the V1 launch price, locked in for our V1 cohort. We may move new signups to $14.99 in V2. Existing accounts keep $10.",
   },
   {
     q: "Do you charge sales tax?",
@@ -113,7 +112,7 @@ export default function PricingPage() {
               accent
               label="Per booked shift"
               price={MARKETING_MATCH_FEE_DISPLAY}
-              priceFootnote={`flat · ${MARKETING_SAMEDAY_DISPLAY} same-day / urgent`}
+              priceFootnote="flat · same-day & urgent included"
               bullets={[
                 "Everything in free, plus:",
                 "Booking + e-signed contract",
@@ -166,11 +165,11 @@ export default function PricingPage() {
               },
               {
                 t: "What the OD gets",
-                d: "100% of the shift rate the practice agreed to. We don't shave the OD payout. The practice pays the agreed rate plus our $9.99 match fee — the OD gets exactly what was promised.",
+                d: "100% of the shift rate the practice agreed to. We don't shave the OD payout. The practice pays the agreed rate plus our $10 match fee — the OD gets exactly what was promised.",
               },
               {
                 t: "Future pricing",
-                d: "We're locking in $9.99 / $19.99 for the V1 cohort. Premium tiers (unlimited urgent, API access, multi-location billing) may appear in V2 — opt-in only. ODs stay free.",
+                d: "We're locking in $10 for the V1 cohort. Premium tiers (unlimited urgent, API access, multi-location billing) may appear in V2 — opt-in only. ODs stay free.",
               },
             ].map((card) => (
               <article
@@ -201,7 +200,7 @@ export default function PricingPage() {
             <h2
               className="font-display mt-3.5 text-[56px] font-medium leading-[1.05] text-ink"
             >
-              How $9.99 stacks up.
+              How $10 stacks up.
             </h2>
           </div>
           <CompareTable

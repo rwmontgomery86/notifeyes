@@ -12,9 +12,8 @@ export function formatUsd(cents: number): string {
   }).format(cents / 100);
 }
 
-// Public marketing prices. Keep in sync with NOTIFEYES_MATCH_FEE_CENTS /
-// NOTIFEYES_SAMEDAY_FEE_CENTS in env.ts — these are the strings shown to
-// unauthenticated visitors on /pricing, /for-practices, and /.
-// --TODO: legal review --- final amounts.
-export const MARKETING_MATCH_FEE_DISPLAY = "$9.99";
-export const MARKETING_SAMEDAY_DISPLAY = "$19.99";
+// Public marketing price. Keep in sync with NOTIFEYES_MATCH_FEE_CENTS in
+// env.ts — this is the string shown to unauthenticated visitors on /pricing,
+// /for-practices, and /. Flat $10, same-day and urgent included.
+// --TODO: legal review --- final amount.
+export const MARKETING_MATCH_FEE_DISPLAY = "$10";

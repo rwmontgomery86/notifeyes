@@ -2,16 +2,20 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { confirmBooking } from "./actions";
 
 export function ConfirmBookingForm({
   applicationId,
   shiftId,
   contractBody,
+  needsCard = false,
 }: {
   applicationId: string;
   shiftId: string;
   contractBody: string;
+  /** A3: practice has no saved card and the real Stripe provider is active. */
+  needsCard?: boolean;
 }) {
   const router = useRouter();
   const [agreed, setAgreed] = useState(false);
@@ -36,6 +40,17 @@ export function ConfirmBookingForm({
 
   return (
     <div className="mt-6 ne-card">
+      {needsCard ? (
+        <div className="mb-4 rounded-md border border-amber-500/40 bg-amber-50/40 px-3 py-2 text-sm text-amber-900">
+          Add a payment method before booking — we place the match-fee hold on
+          your card at confirmation.{" "}
+          <Link href="/p/billing" className="font-medium underline">
+            Add a card
+          </Link>
+          .
+        </div>
+      ) : null}
+
       <label className="flex items-start gap-3 text-sm">
         <input
           type="checkbox"
@@ -62,7 +77,7 @@ export function ConfirmBookingForm({
         <button
           type="button"
           onClick={submit}
-          disabled={pending || !agreed}
+          disabled={pending || !agreed || needsCard}
           className="ne-btn"
         >
           {pending ? "Booking…" : "Confirm and book"}

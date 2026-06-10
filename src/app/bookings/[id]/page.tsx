@@ -12,7 +12,6 @@ import {
 } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { formatUsd } from "@/lib/pricing";
-import { env } from "@/env";
 import { cancellationNotice } from "@/lib/cancellation";
 import { formatShiftWhen } from "@/lib/dates";
 import { OdContractSign } from "./OdContractSign";
@@ -70,8 +69,7 @@ export default async function BookingPage({
   const feeCents = row.booking.platformFeeCents;
   const totalCents = row.booking.totalCents;
   const subtotalCents = totalCents - feeCents;
-  const wasSameDayFee = feeCents === env.NOTIFEYES_SAMEDAY_FEE_CENTS;
-  const matchFeeLabel = wasSameDayFee ? "Same-day match fee" : "Match fee";
+  const matchFeeLabel = "Match fee";
   const feeStatus = feeStatusCopy(row.booking.paymentStatus);
 
   const odSigned = !!row.contract?.signedByOdAt;
@@ -230,7 +228,7 @@ export default async function BookingPage({
           <p className="mt-2 text-sm text-muted-foreground">
             You confirmed {row.od.name} showed up on{" "}
             {row.booking.attendanceConfirmedAt.toLocaleString()}. Your{" "}
-            {formatUsd(feeCents)} match fee was captured. The OD&apos;s wage is paid
+            {formatUsd(feeCents)}{" "}match fee was captured. The OD&apos;s wage is paid
             by you directly.
           </p>
         </section>
@@ -319,8 +317,8 @@ const FEE_TONE: Record<FeeTone, string> = {
 // $10 is captured only when the practice confirms attendance, so a not-yet-
 // authorized or failed pre-auth is NOT a broken booking — surface it calmly
 // with a clear "nothing to do now" instead of a raw machine status (the old
-// invite-accept "payment limbo"). Real card collection lands with the Payment
-// Element (A3).
+// invite-accept "payment limbo"). Card collection now exists (A3, /p/billing);
+// when the real provider is active the hold authorizes off_session at booking.
 function feeStatusCopy(status: string): {
   label: string;
   detail: string;

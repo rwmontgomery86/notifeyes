@@ -32,6 +32,11 @@ const envSchema = z.object({
   PAYMENTS_PROVIDER: z.enum(["stub", "stripe"]).default("stub"),
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  // The client card form (A3 Payment Element) reads NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+  // directly in the browser (inlined at build, like NEXT_PUBLIC_MAPBOX_TOKEN) — it
+  // isn't validated here. Card collection lights up only when BOTH the secret key
+  // (server) and the publishable key (client) are set; absent either, the billing
+  // page shows a "connect Stripe" placeholder. See src/lib/payments/setup.ts.
   // Maps + geocoding. MAPBOX_TOKEN is the server-side token for the geocoder;
   // when unset the geocoder falls back to Nominatim. The client tile token is
   // NEXT_PUBLIC_MAPBOX_TOKEN (read directly in map-tiles.ts; NEXT_PUBLIC vars
@@ -48,8 +53,8 @@ const envSchema = z.object({
   WORKER_URL: z.string().url().optional(),
   NOTIFEYES_LAUNCH_METRO: z.string().default("sf_bay"),
   // --TODO: legal review --- flat-fee pricing per brief §8 (V1 placeholder)
-  NOTIFEYES_MATCH_FEE_CENTS: z.coerce.number().int().min(0).default(999),
-  NOTIFEYES_SAMEDAY_FEE_CENTS: z.coerce.number().int().min(0).default(1999),
+  NOTIFEYES_MATCH_FEE_CENTS: z.coerce.number().int().min(0).default(1000),
+  NOTIFEYES_SAMEDAY_FEE_CENTS: z.coerce.number().int().min(0).default(1000),
   NOTIFEYES_SAMEDAY_THRESHOLD_HOURS: z.coerce.number().int().min(1).default(24),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
 });

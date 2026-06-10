@@ -30,7 +30,7 @@ const MILESTONES: [string, string, string][] = [
   ["2026 · Q1", "Discovery.", "First interviews — 40 ODs, 22 practices. Hypothesis confirmed."],
   ["2026 · Q2", "Design.", "Wireframes, hi-fi, handoff brief. This design pass."],
   ["2026 · Q3", "Closed beta.", "SF Bay metro. 30 practices, 80 ODs."],
-  ["2026 · Q4", "Public V1 launch.", "Open signup. $9.99 day-one."],
+  ["2026 · Q4", "Public V1 launch.", "Open signup. $10 day-one."],
   ["2027 · H1", "V2.", "Stripe Connect, recurring shifts, second metro."],
 ];
 
