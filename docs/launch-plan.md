@@ -350,6 +350,31 @@ old one; do not edit history.
   Status: **Phases A–C merged** to `main` (PRs #26 / #27 / #28: fee-only pivot,
   activation, match→book loop). **A3 (Stripe card capture) is deferred; Phases
   D/E are next.** Still a side quest — no Phase boxes ticked.
+- **2026-06-10** **A3 (Stripe card capture) merged — PR #32**, completing the
+  money-model overhaul's payments work (only Phase E remains). Save-once /
+  off-session model: the practice saves a card via a SetupIntent (`off_session`);
+  each booking authorizes the **$10 hold off_session**; captured at attendance
+  confirm. Verified end-to-end on the Vercel preview (test mode). **Inert in
+  prod:** `PAYMENTS_PROVIDER` stays `stub` and the Production-scope Stripe keys
+  aren't set, so prod is unchanged. Migration `0005` (practices
+  `stripe_customer_id` + `default_payment_method_id`) confirmed applied to
+  `notifeyes-prod`. Still a side quest — **no launch-plan boxes ticked**: the
+  "Replace Stripe stub" + Stripe-smoke boxes tick only on the live flag flip.
+  Go-live is now ops-only (set Production keys + flip the flag; live keys gated
+  on the business bank account).
+- **2026-06-10** **Match fee = flat $10 (decision, settled in conversation).**
+  One flat **$10** everywhere, replacing the prior `$9.99` regular / `$19.99`
+  same-day defaults; the **same-day/urgent premium is removed** (one price
+  regardless of timing). Shipped in PR #32: `env.ts` defaults
+  (`NOTIFEYES_MATCH_FEE_CENTS` + `NOTIFEYES_SAMEDAY_FEE_CENTS` → `1000`),
+  `.env.example`, the `MARKETING_MATCH_FEE_DISPLAY` constant (dropped the now-
+  redundant `MARKETING_SAMEDAY_DISPLAY`), and all marketing/legal copy (home,
+  /pricing, /for-practices, /for-optometrists, /help, /about, legal Terms).
+  Existing bookings keep their snapshotted fee (historical accuracy). This
+  clarifies the 2026-05-31 pivot's "$10 match fee" — the code had drifted to
+  $9.99. The `NOTIFEYES_*_FEE_CENTS` env vars aren't set in prod, so the new
+  default applies on deploy. `--TODO: legal review` markers on the final amount
+  remain.
 
 ---
 
