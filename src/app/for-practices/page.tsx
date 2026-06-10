@@ -8,13 +8,12 @@ import { Chip } from "@/components/marketing/Chip";
 import { DashboardPreview } from "@/components/marketing/DashboardPreview";
 import {
   MARKETING_MATCH_FEE_DISPLAY,
-  MARKETING_SAMEDAY_DISPLAY,
 } from "@/lib/format";
 
 export const metadata: Metadata = {
   title: "For Practices — NotifEyes",
   description:
-    "Post a fill-in shift in 90 seconds. License-verified ODs watching your area get pinged. You pick. We handle the contract and the payout. Flat $9.99 per booked match.",
+    "Post a fill-in shift in 90 seconds. License-verified ODs watching your area get pinged. You pick. We handle the contract and the payout. Flat $10 per booked match.",
 };
 
 const STEPS: { t: string; d: string; note?: string }[] = [
@@ -36,7 +35,7 @@ const FEATURES: { t: string; d: string; comingSoon?: boolean }[] = [
 const FAQS: { q: string; a: string }[] = [
   {
     q: "How much do you take?",
-    a: `Flat ${MARKETING_MATCH_FEE_DISPLAY} per booked shift. ${MARKETING_SAMEDAY_DISPLAY} for same-day or urgent. No percentage of the shift total. ODs get 100% of the agreed rate.`,
+    a: `Flat ${MARKETING_MATCH_FEE_DISPLAY} per booked shift — same-day and urgent included, no surcharge. No percentage of the shift total. ODs get 100% of the agreed rate.`,
   },
   {
     q: "Are the ODs really vetted?",
@@ -318,11 +317,11 @@ export default function ForPracticesPage() {
               <div
                 className="font-display mt-2 text-[96px] font-medium leading-[1] text-ink"
               >
-                $9.<span className="text-[56px]">99</span>
+                $10
               </div>
               <p className="mt-2.5 text-sm text-ink leading-[1.6]">
-                Flat. No %. No subscription. {MARKETING_SAMEDAY_DISPLAY} for
-                same-day / urgent. OD gets 100% of the agreed rate.
+                Flat. No %. No subscription. Same-day and urgent included. OD
+                gets 100% of the agreed rate.
               </p>
             </div>
           </div>

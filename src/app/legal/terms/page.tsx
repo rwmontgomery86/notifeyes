@@ -15,7 +15,7 @@ const SECTIONS: [string, string][] = [
   ["2. The marketplace", "NotifEyes is a venue connecting practices with optometrists. We are not a party to the engagement between them."],
   ["3. Eligibility", "Practices must be lawfully operating in the US. ODs must hold a current state license."],
   ["4. Verification", "We verify license, ID, and (optionally) DEA. We do not guarantee performance — but we vet that ODs are who they say they are."],
-  ["5. Fees", "$9.99 per booked shift on the practice side; $19.99 same-day. ODs are free. Subject to V2 changes — V1 cohort price is locked."],
+  ["5. Fees", "$10 per booked shift on the practice side (same-day and urgent included). ODs are free. Subject to V2 changes — V1 cohort price is locked."],
   ["6. Cancellation", "Tiered fee schedule, see Trust & safety. Charges enforced via stored payment method."],
   ["7. Payouts", "Captured at completion. ACH 3 business days. OD responsible for tax reporting; 1099-NEC issued by Jan 31."],
   ["8. Conduct", "No harassment, no off-platform circumvention, no PHI uploaded. Suspension for violations."],

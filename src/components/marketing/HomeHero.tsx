@@ -53,7 +53,7 @@ export function HomeHero({ initialRole = "practice" }: { initialRole?: Audience 
           </h1>
           <p className="max-w-[620px] mb-7 text-[19px] leading-[1.5] text-ink-2">
             {isPractice
-              ? "License-verified ODs in your zip apply within minutes of you posting. You pick. We handle the contract and the payout. $9.99 per booked match."
+              ? "License-verified ODs in your zip apply within minutes of you posting. You pick. We handle the contract and the payout. $10 per booked match."
               : "Draw the zones you'd work in. Set the rate you'd take. NotifEyes pings you when matching shifts go up. Free, forever."}
           </p>
 

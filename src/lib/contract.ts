@@ -19,7 +19,7 @@ export function buildContractBody(params: {
   shiftEndsAt: Date;
   ratePerHour: string; // formatted, e.g. "$110.00"
   totalAmount: string;
-  matchFee: string; // formatted, e.g. "$9.99" or "$19.99 (same-day)"
+  matchFee: string; // formatted, e.g. "$10"
 }): string {
   // --TODO: legal review --- all language below is placeholder. Replace with
   // attorney-drafted independent contractor agreement before any real launch.

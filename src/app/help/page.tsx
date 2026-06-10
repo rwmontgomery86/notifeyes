@@ -38,7 +38,7 @@ const CATEGORIES: HelpCategory[] = [
     h: "Payments",
     qs: [
       { q: "How does the practice pay?", a: "Card or ACH on file. Authorized at booking, captured at shift completion." },
-      { q: "Does NotifEyes take a cut of the OD's rate?", a: "No. ODs get 100% of the agreed rate. The $9.99 match fee is on the practice side." },
+      { q: "Does NotifEyes take a cut of the OD's rate?", a: "No. ODs get 100% of the agreed rate. The $10 match fee is on the practice side." },
       { q: "Tax docs?", a: "1099-NEC issued to ODs by Jan 31 for prior year earnings. W-9 collected at payout setup." },
     ],
   },

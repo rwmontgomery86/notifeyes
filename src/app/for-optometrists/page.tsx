@@ -47,7 +47,7 @@ const TIMELINE: { day: string; t: string; a: string; d: string }[] = [
 const FAQS: { q: string; a: string }[] = [
   {
     q: "What's it cost an OD?",
-    a: "Zero. Forever. Practices pay $9.99 per match. ODs are always free, with no subscription and no payout cut.",
+    a: "Zero. Forever. Practices pay $10 per match. ODs are always free, with no subscription and no payout cut.",
   },
   {
     q: "How fast do payouts hit my bank?",

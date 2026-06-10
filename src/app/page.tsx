@@ -16,7 +16,6 @@ import {
 } from "@/components/marketing/diagrams";
 import {
   MARKETING_MATCH_FEE_DISPLAY,
-  MARKETING_SAMEDAY_DISPLAY,
 } from "@/lib/format";
 import {
   detectStateFromRequest,
@@ -474,7 +473,7 @@ function PricingTeaser() {
             role="practice"
             label="Practice · per booked shift"
             price={MARKETING_MATCH_FEE_DISPLAY}
-            footnote={`flat · ${MARKETING_SAMEDAY_DISPLAY} same-day / urgent`}
+            footnote="flat · same-day & urgent included"
             bullets={[
               "Booking + e-signed contract",
               "Payment auth + capture",

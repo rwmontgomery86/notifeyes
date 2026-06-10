@@ -12,7 +12,6 @@ import {
 } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { formatUsd } from "@/lib/pricing";
-import { env } from "@/env";
 import { cancellationNotice } from "@/lib/cancellation";
 import { formatShiftWhen } from "@/lib/dates";
 import { OdContractSign } from "./OdContractSign";
@@ -70,8 +69,7 @@ export default async function BookingPage({
   const feeCents = row.booking.platformFeeCents;
   const totalCents = row.booking.totalCents;
   const subtotalCents = totalCents - feeCents;
-  const wasSameDayFee = feeCents === env.NOTIFEYES_SAMEDAY_FEE_CENTS;
-  const matchFeeLabel = wasSameDayFee ? "Same-day match fee" : "Match fee";
+  const matchFeeLabel = "Match fee";
   const feeStatus = feeStatusCopy(row.booking.paymentStatus);
 
   const odSigned = !!row.contract?.signedByOdAt;
@@ -230,7 +228,7 @@ export default async function BookingPage({
           <p className="mt-2 text-sm text-muted-foreground">
             You confirmed {row.od.name} showed up on{" "}
             {row.booking.attendanceConfirmedAt.toLocaleString()}. Your{" "}
-            {formatUsd(feeCents)} match fee was captured. The OD&apos;s wage is paid
+            {formatUsd(feeCents)}{" "}match fee was captured. The OD&apos;s wage is paid
             by you directly.
           </p>
         </section>
