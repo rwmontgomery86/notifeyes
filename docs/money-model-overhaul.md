@@ -7,21 +7,23 @@
 > deliberate "side quest", so **no launch-plan checkboxes are ticked for it**
 > (the pivot decision is logged in the launch plan's Decisions log, 2026-05-31).
 
-**Status:** Phases A–D merged to `main`. **A3 (Stripe card capture) now BUILT**
-on `claude/phase-a3-card-capture` (test-mode; `PAYMENTS_PROVIDER` flag held at
-`stub` — prod behavior unchanged until keys are set + the flag is flipped). Only
-**Phase E** remains unstarted.
-**Last touched:** 2026-06-10 — built A3 (see the dedicated section below): saved-
-card model (SetupIntent → off_session holds), card UI on `/p/billing` + just-in-
-time booking gate, off-session authorize in both booking actions, webhook
-`setup_intent.succeeded`. Migration `0005` (practices `stripe_customer_id` +
-`default_payment_method_id`). `tsc` + `next build` clean; worker untouched (imports
-no payments). Earlier today: reconciled Phase D status (PRs #30 + #31 merged
-2026-06-03).
-**Cursor (pick one to resume):** **A3 go-live** — set the Stripe keys (incl.
-`NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`), run the manual card smoke, flip
-`PAYMENTS_PROVIDER=stripe` (test first, live after the bank account) · **or**
-**Phase E** — money clarity & trust polish.
+**Status:** Phases A–D **and A3 merged to `main`** (A3 = PR #32). A3 is live in
+the codebase but **inert in prod** — `PAYMENTS_PROVIDER` stays `stub` and the
+Production-scope Stripe keys aren't set, so prod behavior is unchanged until the
+flag is flipped (go-live). Only **Phase E** remains unstarted.
+**Last touched:** 2026-06-10 — **A3 merged (PR #32)** and verified end-to-end on
+the Vercel preview (card saved via SetupIntent → $10 off_session hold → captured
+at attendance confirm). Same PR also: a fix so the Add-card form closes on
+success (it was stuck on "Saving…"), the **fee flattened to a flat $10** (was
+$9.99 regular / $19.99 same-day; the same-day premium is removed — env + all
+marketing/legal copy), and a spacing fix on the attendance-confirmed line.
+Migration `0005` confirmed applied to `notifeyes-prod`; `main` CI green; prod
+healthy and still on the stub.
+**Cursor (pick one to resume):** **A3 go-live** — code is merged; the remaining
+work is ops-only: set the Stripe keys in the **Production** scope (incl.
+`NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`) and flip `PAYMENTS_PROVIDER=stripe` (test
+first; **live keys gated on the business bank account**) · **or** **Phase E** —
+money clarity & trust polish (the last unstarted phase).
 
 > **Stacked PRs (done):** D4 (`claude/phase-d4-status-pings`) branched off
 > `claude/phase-d-concierge` for the `conciergeOptedIn` flag. Merged in order —
@@ -46,7 +48,7 @@ no payments). Earlier today: reconciled Phase D status (PRs #30 + #31 merged
 |---|---|---|---|
 | A | A1 — fee-only charge ($10) + fee-only money display | ✅ merged | #26 |
 | A | A2 — "Did the doctor show?" attendance confirm → fee capture | ✅ merged | #26 |
-| A | **A3 — Stripe Payment Element card capture (+ flip `PAYMENTS_PROVIDER=stripe`)** | 🔨 **built** (test-mode; flag held) | `claude/phase-a3-card-capture` |
+| A | **A3 — Stripe Payment Element card capture (+ flip `PAYMENTS_PROVIDER=stripe`)** | ✅ **merged** (inert; flag held at `stub`) | #32 |
 | A | A4 — reputation-only cancellation + no-show fee release | ✅ merged | #26 |
 | B | B1 — email alerts ON by default at signup (OD + practice) | ✅ merged | #27 |
 | B | B2 — OD setup home usable while pending + earlier guidance | ✅ merged | #27 |
