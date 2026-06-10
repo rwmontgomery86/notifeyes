@@ -4,6 +4,7 @@ import { env } from "@/env";
 import { db } from "@/db";
 import { bookings } from "@/db/schema";
 import { mapStatus } from "@/lib/payments/stripe";
+import { setDefaultPaymentMethod } from "@/lib/payments/setup";
 
 // Stripe SDK + the pg pool need the Node runtime.
 export const runtime = "nodejs";
@@ -50,6 +51,22 @@ export async function POST(req: Request): Promise<Response> {
         .update(bookings)
         .set({ paymentStatus: mapStatus(pi.status) })
         .where(eq(bookings.id, bookingId));
+    }
+  }
+
+  // A3: a card was saved off_session — persist it as the practice's default so
+  // future bookings can authorize the hold. The client also persists this on
+  // confirm; setDefaultPaymentMethod is idempotent, so a double-write is fine.
+  if (event.type === "setup_intent.succeeded") {
+    const si = event.data.object as Stripe.SetupIntent;
+    const practiceId =
+      typeof si.metadata?.practiceId === "string" ? si.metadata.practiceId : null;
+    const paymentMethodId =
+      typeof si.payment_method === "string"
+        ? si.payment_method
+        : (si.payment_method?.id ?? null);
+    if (practiceId && paymentMethodId) {
+      await setDefaultPaymentMethod(practiceId, paymentMethodId);
     }
   }
 

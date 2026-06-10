@@ -319,8 +319,8 @@ const FEE_TONE: Record<FeeTone, string> = {
 // $10 is captured only when the practice confirms attendance, so a not-yet-
 // authorized or failed pre-auth is NOT a broken booking — surface it calmly
 // with a clear "nothing to do now" instead of a raw machine status (the old
-// invite-accept "payment limbo"). Real card collection lands with the Payment
-// Element (A3).
+// invite-accept "payment limbo"). Card collection now exists (A3, /p/billing);
+// when the real provider is active the hold authorizes off_session at booking.
 function feeStatusCopy(status: string): {
   label: string;
   detail: string;

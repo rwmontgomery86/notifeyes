@@ -198,6 +198,12 @@ export const practices = pgTable("practices", {
   // Verification flags (single-bit for now; expand to status enums in V2)
   businessLicenseVerified: boolean("business_license_verified").default(false).notNull(),
   paymentMethodVerified: boolean("payment_method_verified").default(false).notNull(),
+  // Stripe card-on-file (A3, fee-only model). The practice saves a card once
+  // (SetupIntent, off_session); every booking then authorizes the $10 match-fee
+  // hold off-session against this customer + payment method. Both null until the
+  // first card is saved; `paymentMethodVerified` flips true alongside.
+  stripeCustomerId: text("stripe_customer_id"),
+  defaultPaymentMethodId: text("default_payment_method_id"),
   ratingAvg: real("rating_avg"),
   ratingCount: integer("rating_count").default(0).notNull(),
   // Stats — mutable counters (denormalized for the practice profile)

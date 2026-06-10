@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { computeShiftCost, formatUsd } from "@/lib/pricing";
 import { formatShiftWhen } from "@/lib/dates";
 import { buildContractBody, CONTRACT_TEMPLATE_VERSION } from "@/lib/contract";
+import { env } from "@/env";
 import { ConfirmBookingForm } from "./ConfirmBookingForm";
 
 export const dynamic = "force-dynamic";
@@ -124,6 +125,10 @@ export default async function ConfirmBookingPage({
         applicationId={appId}
         shiftId={id}
         contractBody={contractBody}
+        needsCard={
+          env.PAYMENTS_PROVIDER === "stripe" &&
+          !row.practice.defaultPaymentMethodId
+        }
       />
     </div>
   );

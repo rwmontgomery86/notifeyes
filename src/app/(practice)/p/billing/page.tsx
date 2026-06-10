@@ -5,6 +5,8 @@ import { db } from "@/db";
 import { bookings, optometrists, shifts } from "@/db/schema";
 import { formatShiftWhen } from "@/lib/dates";
 import { formatUsd } from "@/lib/pricing";
+import { getSavedCard, isStripeConfigured } from "@/lib/payments/setup";
+import { AddCardForm } from "./AddCardForm";
 
 export const metadata = { title: "Billing · NotifEyes" };
 export const dynamic = "force-dynamic";
@@ -41,6 +43,16 @@ export default async function PracticeBillingPage() {
     .filter((r) => r.booking.paymentStatus === "succeeded")
     .reduce((s, r) => s + r.booking.platformFeeCents, 0);
 
+  // A3 card-on-file. When Stripe isn't configured the card UI shows a calm
+  // "connect Stripe" placeholder and nothing is charged.
+  const stripeReady = isStripeConfigured();
+  const savedCard = stripeReady ? await getSavedCard(practiceId) : null;
+  const paymentMethodLabel = !stripeReady
+    ? "Connect Stripe"
+    : savedCard
+      ? `${savedCard.brand} ···· ${savedCard.last4}`
+      : "None on file";
+
   return (
     <div>
       <h1 className="text-2xl font-bold">Billing</h1>
@@ -53,12 +65,40 @@ export default async function PracticeBillingPage() {
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
         <Stat label="Bookings on file" value={String(rows.length)} />
         <Stat label="Match fees charged" value={formatUsd(feesCharged)} />
-        <Stat
-          label="Payment method"
-          value={"Stub (Stripe pending integration)"}
-          sub
-        />
+        <Stat label="Payment method" value={paymentMethodLabel} sub />
       </div>
+
+      <section className="mt-8 ne-card">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          Payment method
+        </h2>
+        {stripeReady ? (
+          <>
+            {savedCard ? (
+              <p className="mt-2 text-sm">
+                <span className="font-medium capitalize">{savedCard.brand}</span>{" "}
+                ending {savedCard.last4} · expires{" "}
+                {String(savedCard.expMonth).padStart(2, "0")}/{savedCard.expYear}
+              </p>
+            ) : (
+              <p className="mt-2 text-sm text-muted-foreground">
+                No card on file yet. Add one so each booking can place the $10
+                match-fee hold automatically — you&apos;re only charged once you
+                confirm the OD showed up.
+              </p>
+            )}
+            <div className="mt-3">
+              <AddCardForm hasCard={!!savedCard} />
+            </div>
+          </>
+        ) : (
+          <p className="mt-2 text-sm text-muted-foreground">
+            Card payments aren&apos;t connected yet. Once Stripe keys are set
+            you&apos;ll add a card here; until then no card is required and
+            bookings place no real charge.
+          </p>
+        )}
+      </section>
 
       <h2 className="mt-10 text-lg font-semibold">Invoices</h2>
       <div className="mt-4 grid gap-2">

@@ -85,6 +85,20 @@ export async function confirmBooking(
     };
   }
 
+  // Just-in-time card gate (A3): under the real Stripe provider a booking can't
+  // place the $10 hold without a saved card. Block + prompt rather than creating
+  // a booking whose fee silently fails. Dormant while PAYMENTS_PROVIDER=stub.
+  if (
+    env.PAYMENTS_PROVIDER === "stripe" &&
+    !row.practice.defaultPaymentMethodId
+  ) {
+    return {
+      ok: false as const,
+      error: "Add a payment method before confirming this booking.",
+      needsCard: true as const,
+    };
+  }
+
   // Look up the OD's user account (for the message thread)
   const [odUser] = await db
     .select({ id: users.id })
@@ -210,6 +224,9 @@ export async function confirmBooking(
       practiceId,
       description: `NotifEyes match fee — booking #${bookingId.slice(0, 8)}`,
       captureMethod: "manual",
+      // A3: authorize off-session against the practice's saved card when present.
+      stripeCustomerId: row.practice.stripeCustomerId ?? undefined,
+      paymentMethodId: row.practice.defaultPaymentMethodId ?? undefined,
     });
     await db
       .update(bookings)

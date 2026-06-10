@@ -262,6 +262,9 @@ export async function respondToInvite(
       practiceId: row.shift.practiceId,
       description: `NotifEyes match fee — invite booking #${bookingId.slice(0, 8)}`,
       captureMethod: "manual",
+      // A3: authorize off-session against the practice's saved card when present.
+      stripeCustomerId: row.practice.stripeCustomerId ?? undefined,
+      paymentMethodId: row.practice.defaultPaymentMethodId ?? undefined,
     });
     await db
       .update(bookings)
