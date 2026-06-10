@@ -52,7 +52,10 @@ export function AddCardForm({ hasCard }: { hasCard: boolean }) {
         stripe={stripe}
         options={{ clientSecret, appearance: { theme: "stripe" } }}
       >
-        <CardFields onCancel={() => setClientSecret(null)} />
+        <CardFields
+          onCancel={() => setClientSecret(null)}
+          onSaved={() => setClientSecret(null)}
+        />
       </Elements>
     );
   }
@@ -72,7 +75,13 @@ export function AddCardForm({ hasCard }: { hasCard: boolean }) {
   );
 }
 
-function CardFields({ onCancel }: { onCancel: () => void }) {
+function CardFields({
+  onCancel,
+  onSaved,
+}: {
+  onCancel: () => void;
+  onSaved: () => void;
+}) {
   const stripe = useStripe();
   const elements = useElements();
   const router = useRouter();
@@ -102,7 +111,12 @@ function CardFields({ onCancel }: { onCancel: () => void }) {
         setSubmitting(false);
         return;
       }
+      // Re-fetch the server view (saved card + hasCard) and close the form. The
+      // form's visibility is driven by the parent's clientSecret state, not the
+      // refreshed prop, so onSaved() is what actually unmounts these fields —
+      // without it the button would sit on "Saving…" forever after a success.
       router.refresh();
+      onSaved();
       return;
     }
     setError("Card setup didn't complete. Please try again.");
