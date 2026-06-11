@@ -375,6 +375,37 @@ old one; do not edit history.
   $9.99. The `NOTIFEYES_*_FEE_CENTS` env vars aren't set in prod, so the new
   default applies on deploy. `--TODO: legal review` markers on the final amount
   remain.
+- **2026-06-11** OD-side beta-test fixes (side quest; **no Phase boxes
+  ticked**), settled while Ross tested the live beta: (1) **Watch zones lose
+  the time-window filter** — `time_start`/`time_end` dropped from schema, the
+  zone form, and the matching engine; days-of-week stays. Reach estimates can
+  only grow. (2) **Watch zones are now editable** — Edit on a zone card loads
+  its circle/polygon + filters back into the editor (`?edit=` param, new
+  `updateWatchZone` action). (3) **OD home ZIP** added to the profile, geocoded
+  into `optometrists.homeLocation` (previously seed-only, so the browse-shifts
+  "Home" dot and "miles away" sorting never worked for real accounts); the
+  browse-shifts map now opens on home → license-state capital → SF Bay.
+  (4) **License upload positioned as optional** in all copy (it already was
+  functionally — state + number are what's verified; the "(required)" label
+  was wrong). Also: practice photos now render on the public practice profile,
+  and a lone shift card no longer stretches full-height on browse shifts.
+  Migrations: `0006` (add `home_zip`) then `0007` (drop time columns) — prod
+  order: apply 0006 → deploy → apply 0007.
+- **2026-06-11** **Dashboard shell redesign — "Floating panel" direction**
+  (side quest; no Phase boxes ticked). Ross compared three interview-driven
+  shell variants at `/dev/shells` (a dev/preview-only gallery, 404s in prod)
+  and picked the floating panel: deep-navy sidebar as a rounded inset panel,
+  solid cyan active pill (the old shell had **no** active-state highlight),
+  faded watch-zone contour artwork + cyan glow at the panel base, CSS-only
+  motion. Applied to the real `AppShell` for all three roles. IA change:
+  **Notifications + Messages moved from the sidebar to a top-bar** bell/mail
+  with live unread badges (avatar links to profile/settings); no search field
+  until search exists. **Mobile fixed in the same pass**: the old fixed-220px
+  sidebar (broken on phones) is replaced by a hamburger + slide-in drawer
+  below `lg`. Supporting: brand/design context now lives in repo-root
+  `PRODUCT.md` + `DESIGN.md`; a global `.leaflet-container` isolation rule
+  stops Leaflet panes painting over shell overlays. Spine e2e green on the
+  new shell.
 
 ---
 
