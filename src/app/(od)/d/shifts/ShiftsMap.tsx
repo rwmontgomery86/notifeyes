@@ -19,9 +19,12 @@ type Pin = {
 export function ShiftsMap({
   pins,
   home,
+  fallbackCenter,
 }: {
   pins: Pin[];
   home: { lat: number; lng: number } | null;
+  /** Where to open when the OD has no home location — their license-state area. */
+  fallbackCenter?: { lat: number; lng: number } | null;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<unknown>(null);
@@ -44,15 +47,17 @@ export function ShiftsMap({
 
       if (cancelled || !containerRef.current) return;
 
-      // Center on first pin, or on home, or fall back to SF Bay
-      const center: [number, number] =
-        pins[0]
-          ? [pins[0].lat, pins[0].lng]
-          : home
-            ? [home.lat, home.lng]
-            : [37.7749, -122.4194];
+      // Open over the OD's own area — home if set, else their license-state
+      // center, else SF Bay. (fitBounds below still frames the pins when any
+      // exist; this controls the no-pin view and the pre-fit flash.)
+      const center: [number, number] = home
+        ? [home.lat, home.lng]
+        : fallbackCenter
+          ? [fallbackCenter.lat, fallbackCenter.lng]
+          : [37.7749, -122.4194];
+      const zoom = home ? 10 : 9;
 
-      const map = L.map(containerRef.current).setView(center, 10);
+      const map = L.map(containerRef.current).setView(center, zoom);
       mapRef.current = map;
       const tiles = getTileConfig();
       L.tileLayer(tiles.url, {

@@ -1,10 +1,11 @@
 "use client";
 
 import { useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { deleteWatchZone, toggleWatchZonePaused } from "./actions";
 
-type ZoneItem = {
+export type ZoneItem = {
   id: string;
   name: string;
   shape: "circle" | "polygon";
@@ -12,15 +13,19 @@ type ZoneItem = {
     | { kind: "circle"; centerLat: number; centerLng: number; radiusMeters: number }
     | { kind: "polygon"; points: { lat: number; lng: number }[] };
   daysOfWeek: number[];
-  timeStart: string | null;
-  timeEnd: string | null;
   minRateCents: number;
   shiftTypes: string[];
   notifyChannels: ("push" | "email" | "sms")[];
   paused: boolean;
 };
 
-export function WatchZoneList({ zones }: { zones: ZoneItem[] }) {
+export function WatchZoneList({
+  zones,
+  editingId,
+}: {
+  zones: ZoneItem[];
+  editingId?: string;
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
@@ -50,7 +55,10 @@ export function WatchZoneList({ zones }: { zones: ZoneItem[] }) {
   return (
     <ul className="space-y-3">
       {zones.map((z) => (
-        <li key={z.id} className="ne-card">
+        <li
+          key={z.id}
+          className={`ne-card ${z.id === editingId ? "border-primary" : ""}`}
+        >
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
@@ -77,6 +85,12 @@ export function WatchZoneList({ zones }: { zones: ZoneItem[] }) {
               </div>
             </div>
             <div className="flex flex-col gap-1">
+              <Link
+                href={`/d/watch?edit=${z.id}`}
+                className="ne-btn-ghost h-7 px-2 text-xs inline-flex items-center justify-center"
+              >
+                Edit
+              </Link>
               <button
                 onClick={() => toggle(z.id, z.paused)}
                 disabled={pending}

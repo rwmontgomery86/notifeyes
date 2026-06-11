@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import "leaflet/dist/leaflet.css";
 import "leaflet-draw/dist/leaflet.draw.css";
-import { createWatchZone, geocodeZip } from "./actions";
+import { createWatchZone, geocodeZip, updateWatchZone } from "./actions";
 import { getTileConfig } from "@/lib/map-tiles";
+import type { ZoneItem } from "./WatchZoneList";
 
 type DrawnShape =
   | { kind: "circle"; centerLat: number; centerLng: number; radiusMeters: number }
@@ -42,10 +44,17 @@ export function WatchZoneEditor({
   initialCenter,
   disabled = false,
   smsOptInEnabled = false,
+  editZone,
 }: {
   initialCenter?: [number, number];
   disabled?: boolean;
   smsOptInEnabled?: boolean;
+  /**
+   * When set, the editor opens pre-filled with this zone and saves via
+   * updateWatchZone. The parent MUST remount the editor per edit target
+   * (key={zone.id}) — all state below seeds from initializers only.
+   */
+  editZone?: ZoneItem;
 } = {}) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapInstance = useRef<unknown>(null);
@@ -54,21 +63,36 @@ export function WatchZoneEditor({
   const zipCircleRef = useRef<unknown>(null);
   const leafletRef = useRef<typeof import("leaflet") | null>(null);
 
-  const [mode, setMode] = useState<Mode>("zip");
-  const modeRef = useRef<Mode>("zip");
+  const editMeta = editZone?.geometryMeta;
+  const circleMeta = editMeta?.kind === "circle" ? editMeta : null;
+  const polygonMeta = editMeta?.kind === "polygon" ? editMeta : null;
+  // Circles edit through the zip-mode circle machinery; polygons through draw.
+  const initialMode: Mode = polygonMeta ? "draw" : "zip";
+
+  const [mode, setMode] = useState<Mode>(initialMode);
+  const modeRef = useRef<Mode>(initialMode);
   const [drawn, setDrawn] = useState<DrawnShape | null>(null);
-  const [name, setName] = useState("My zone");
-  const [minRate, setMinRate] = useState(100);
-  const [daysOfWeek, setDaysOfWeek] = useState<number[]>([1, 2, 3, 4, 5, 6, 0]);
-  const [timeStart, setTimeStart] = useState<string>("");
-  const [timeEnd, setTimeEnd] = useState<string>("");
-  const [shiftTypes, setShiftTypes] = useState<("fill_in" | "half_day" | "weekend")[]>([
-    "fill_in",
-    "half_day",
-    "weekend",
-  ]);
-  const [notifyChannels, setNotifyChannels] = useState<Channel[]>(["push", "email"]);
-  const [pending, startTransition] = useTransition();
+  const [name, setName] = useState(editZone?.name ?? "My zone");
+  const [minRate, setMinRate] = useState(
+    editZone ? editZone.minRateCents / 100 : 100,
+  );
+  const [daysOfWeek, setDaysOfWeek] = useState<number[]>(
+    editZone?.daysOfWeek ?? [1, 2, 3, 4, 5, 6, 0],
+  );
+  const [shiftTypes, setShiftTypes] = useState<("fill_in" | "half_day" | "weekend")[]>(
+    editZone
+      ? SHIFT_TYPE_OPTIONS.map((o) => o.value).filter((t) =>
+          editZone.shiftTypes.includes(t),
+        )
+      : ["fill_in", "half_day", "weekend"],
+  );
+  const [notifyChannels, setNotifyChannels] = useState<Channel[]>(
+    editZone?.notifyChannels ?? ["push", "email"],
+  );
+  // Plain state, NOT useTransition — the post-save router.push must not run
+  // inside a transition or a concurrent re-render can silently discard the
+  // navigation (same cold-only race as the post-shift bug in ShiftForm.tsx).
+  const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   function toggleDay(day: number) {
@@ -87,12 +111,25 @@ export function WatchZoneEditor({
     );
   }
 
-  // ZIP-mode state
+  // ZIP-mode state. A circle being edited seeds the center + radius so the
+  // existing circle/slider machinery just works (no ZIP string needed).
   const [zip, setZip] = useState("");
   const [zipPending, startZipTransition] = useTransition();
   const [zipError, setZipError] = useState<string | null>(null);
-  const [zipCenter, setZipCenter] = useState<{ lat: number; lng: number } | null>(null);
-  const [radiusMiles, setRadiusMiles] = useState(DEFAULT_RADIUS_MILES);
+  const [zipCenter, setZipCenter] = useState<{ lat: number; lng: number } | null>(
+    circleMeta ? { lat: circleMeta.centerLat, lng: circleMeta.centerLng } : null,
+  );
+  const [radiusMiles, setRadiusMiles] = useState(
+    circleMeta
+      ? Math.min(
+          MAX_RADIUS_MILES,
+          Math.max(
+            MIN_RADIUS_MILES,
+            Math.round(circleMeta.radiusMeters / METERS_PER_MILE),
+          ),
+        )
+      : DEFAULT_RADIUS_MILES,
+  );
 
   const router = useRouter();
 
@@ -114,8 +151,14 @@ export function WatchZoneEditor({
 
       if (cancelled || !containerRef.current) return;
 
-      const center = initialCenter ?? SF_BAY_CENTER;
-      const zoom = initialCenter ? DEFAULT_ZOOM : FALLBACK_ZOOM;
+      // When editing, start over the zone itself (fitBounds refines below).
+      const editCenter: [number, number] | undefined = circleMeta
+        ? [circleMeta.centerLat, circleMeta.centerLng]
+        : polygonMeta?.points[0]
+          ? [polygonMeta.points[0].lat, polygonMeta.points[0].lng]
+          : undefined;
+      const center = editCenter ?? initialCenter ?? SF_BAY_CENTER;
+      const zoom = editCenter ? 10 : initialCenter ? DEFAULT_ZOOM : FALLBACK_ZOOM;
       const map = L.map(containerRef.current).setView(center, zoom);
       mapInstance.current = map;
       const tiles = getTileConfig();
@@ -176,12 +219,59 @@ export function WatchZoneEditor({
         }
       });
 
+      // Vertex/radius edits made with the leaflet-draw edit toolbar — without
+      // this, toolbar edits would save the pre-edit geometry.
+      map.on("draw:edited", (e: unknown) => {
+        if (modeRef.current !== "draw") return;
+        const event = e as {
+          layers: { eachLayer: (fn: (layer: unknown) => void) => void };
+        };
+        event.layers.eachLayer((layer) => {
+          const l = layer as {
+            getLatLng?: () => { lat: number; lng: number };
+            getRadius?: () => number;
+            getLatLngs?: () => { lat: number; lng: number }[][];
+          };
+          if (l.getLatLng && l.getRadius) {
+            const c = l.getLatLng();
+            setDrawn({
+              kind: "circle",
+              centerLat: c.lat,
+              centerLng: c.lng,
+              radiusMeters: l.getRadius(),
+            });
+          } else if (l.getLatLngs) {
+            const latlngs = l.getLatLngs()[0] ?? [];
+            setDrawn({
+              kind: "polygon",
+              points: latlngs.map((p) => ({ lat: p.lat, lng: p.lng })),
+            });
+          }
+        });
+      });
+
       map.on("draw:deleted", () => {
         if (modeRef.current === "draw") setDrawn(null);
       });
 
-      // Apply initial mode (zip) now that the map is ready
-      applyMode("zip");
+      // Apply the initial mode now that the map is ready. For a circle edit
+      // this also draws the seeded circle (applyMode → drawZipCircle).
+      applyMode(initialMode);
+
+      // Seed the shape being edited. Must run AFTER applyMode — it clears
+      // layers and resets `drawn`.
+      if (polygonMeta) {
+        const poly = L.polygon(
+          polygonMeta.points.map((p) => [p.lat, p.lng] as [number, number]),
+          { color: "#3b82f6" },
+        );
+        drawnItems.addLayer(poly);
+        setDrawn(polygonMeta);
+        map.fitBounds(poly.getBounds(), { padding: [24, 24] });
+      } else if (circleMeta) {
+        const circle = zipCircleRef.current as ReturnType<typeof L.circle> | null;
+        if (circle) map.fitBounds(circle.getBounds(), { padding: [24, 24] });
+      }
     })();
     return () => {
       cancelled = true;
@@ -297,19 +387,28 @@ export function WatchZoneEditor({
       setError("Pick at least one notification channel.");
       return;
     }
-    startTransition(async () => {
-      const res = await createWatchZone({
+    void (async () => {
+      setPending(true);
+      const payload = {
         name,
         minRateCents: Math.round(minRate * 100),
         geometryMeta: drawn,
         daysOfWeek,
-        timeStart: timeStart || null,
-        timeEnd: timeEnd || null,
         shiftTypes,
         notifyChannels,
-      });
+      };
+      const res = editZone
+        ? await updateWatchZone(editZone.id, payload)
+        : await createWatchZone(payload);
       if (!res.ok) {
         setError(res.error ?? "Could not save zone");
+        setPending(false);
+        return;
+      }
+      if (editZone) {
+        // Leave edit mode. Stay `pending` — the changed `key` remounts a
+        // clean editor once the navigation lands.
+        router.push("/d/watch");
         return;
       }
       router.refresh();
@@ -321,11 +420,24 @@ export function WatchZoneEditor({
         map.removeLayer?.(zipCircleRef.current);
         zipCircleRef.current = null;
       }
-    });
+      setPending(false);
+    })();
   }
 
   return (
     <div className="flex flex-col">
+      {/* Edit banner */}
+      {editZone ? (
+        <div className="flex items-center justify-between gap-3 border-b bg-primary/5 px-3 py-2 text-sm">
+          <span>
+            Editing <span className="font-medium">{editZone.name}</span>
+          </span>
+          <Link href="/d/watch" className="font-medium text-primary">
+            Cancel
+          </Link>
+        </div>
+      ) : null}
+
       {/* Mode toggle */}
       <div className="flex gap-1 border-b p-2 bg-card">
         <button
@@ -460,7 +572,13 @@ export function WatchZoneEditor({
           title={disabled ? "Enable a notification channel in your profile first." : undefined}
           className="ne-btn"
         >
-          {pending ? "Saving…" : "Save zone"}
+          {editZone
+            ? pending
+              ? "Updating…"
+              : "Update zone"
+            : pending
+              ? "Saving…"
+              : "Save zone"}
         </button>
       </div>
 
@@ -483,26 +601,6 @@ export function WatchZoneEditor({
               );
             })}
           </div>
-        </div>
-        <div className="grid grid-cols-2 gap-3 max-w-sm">
-          <label className="block">
-            <span className="ne-label">Earliest start (optional)</span>
-            <input
-              type="time"
-              value={timeStart}
-              onChange={(e) => setTimeStart(e.target.value)}
-              className="ne-input"
-            />
-          </label>
-          <label className="block">
-            <span className="ne-label">Latest end (optional)</span>
-            <input
-              type="time"
-              value={timeEnd}
-              onChange={(e) => setTimeEnd(e.target.value)}
-              className="ne-input"
-            />
-          </label>
         </div>
         <div>
           <span className="ne-label">Shift types</span>

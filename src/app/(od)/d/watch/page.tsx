@@ -12,9 +12,14 @@ import { WatchZoneList } from "./WatchZoneList";
 export const metadata = { title: "Watch zones · NotifEyes" };
 export const dynamic = "force-dynamic";
 
-export default async function WatchPage() {
+export default async function WatchPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ edit?: string }>;
+}) {
   const session = await auth();
   const odId = session!.user.odId!;
+  const sp = await searchParams;
 
   const [me] = await db
     .select({ licenseState: optometrists.licenseState })
@@ -53,13 +58,18 @@ export default async function WatchPage() {
     shape: z.shape,
     geometryMeta: z.geometryMeta,
     daysOfWeek: z.daysOfWeek,
-    timeStart: z.timeStart,
-    timeEnd: z.timeEnd,
     minRateCents: z.minRateCents,
     shiftTypes: z.shiftTypes,
     notifyChannels: z.notifyChannels,
     paused: z.paused,
   }));
+
+  // ?edit=<zoneId> loads that zone into the editor. zonesForClient is already
+  // scoped to this OD, so an id belonging to someone else simply finds nothing
+  // (the update action re-checks ownership on write regardless).
+  const editZone = sp.edit
+    ? zonesForClient.find((z) => z.id === sp.edit) ?? null
+    : null;
 
   return (
     <div>
@@ -93,13 +103,16 @@ export default async function WatchPage() {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[3fr_2fr]">
         <div className="ne-card p-0 overflow-hidden">
+          {/* key remounts the editor per edit target so all state reseeds */}
           <WatchZoneEditor
+            key={editZone?.id ?? "new"}
             initialCenter={initialCenter}
             disabled={!optInOk}
             smsOptInEnabled={smsOptInEnabled}
+            editZone={editZone ?? undefined}
           />
         </div>
-        <WatchZoneList zones={zonesForClient} />
+        <WatchZoneList zones={zonesForClient} editingId={editZone?.id} />
       </div>
     </div>
   );

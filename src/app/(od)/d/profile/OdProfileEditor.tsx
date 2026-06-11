@@ -12,6 +12,7 @@ type OdProfile = {
   headshotUrl: string | null;
   bio: string | null;
   travelRadiusMi: number;
+  homeZip: string | null;
   licenseState: string | null;
   licenseNumber: string | null;
   licenseDocUrl: string | null;
@@ -81,6 +82,7 @@ export function OdProfileEditor({
         headshotUrl: form.headshotUrl,
         bio: form.bio,
         travelRadiusMi: form.travelRadiusMi,
+        homeZip: form.homeZip,
         licenseDocUrl: form.licenseDocUrl,
         deaUrl: form.deaUrl,
         malpracticeUrl: form.malpracticeUrl,
@@ -244,6 +246,21 @@ export function OdProfileEditor({
                 className="ne-input w-32"
               />
             </label>
+            <label>
+              <span className="ne-label">Home ZIP code</span>
+              <input
+                value={form.homeZip ?? ""}
+                onChange={(e) => setForm({ ...form, homeZip: e.target.value })}
+                inputMode="numeric"
+                maxLength={10}
+                placeholder="e.g. 94110"
+                className="ne-input w-32"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Centers your shift map and powers &ldquo;miles away&rdquo; on
+                open shifts. Never shown to practices.
+              </p>
+            </label>
           </div>
         </section>
 
@@ -252,12 +269,13 @@ export function OdProfileEditor({
             Credentials
           </h2>
           <p className="mt-1 text-xs text-muted-foreground">
-            Your license document is required to apply to shifts. The rest are
-            optional but strengthen your profile.
+            All documents here are optional — your license number is what we
+            verify. Uploading the license document helps our team verify you
+            faster, and the rest strengthen your profile.
           </p>
           <div className="mt-3 grid gap-3">
             <FileField
-              label="License document (required)"
+              label="License document (optional — speeds up verification)"
               value={form.licenseDocUrl}
               onChange={(v) => setForm({ ...form, licenseDocUrl: v })}
               accept="image/*,application/pdf"
@@ -405,8 +423,8 @@ export function OdProfileEditor({
           ) : null}
           {form.verificationStatus === "pending" ? (
             <p className="text-xs text-muted-foreground">
-              Upload your license doc above. An admin reviews and verifies
-              typically within 24 hours.
+              An admin reviews and verifies typically within 24 hours.
+              Uploading your license doc above can speed up the review.
             </p>
           ) : null}
         </div>

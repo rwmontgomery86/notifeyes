@@ -55,6 +55,7 @@ export default async function OdProfilePage() {
           headshotUrl: me.headshotUrl,
           bio: me.bio,
           travelRadiusMi: me.travelRadiusMi,
+          homeZip: me.homeZip,
           licenseState: me.licenseState,
           licenseNumber: me.licenseNumber,
           licenseDocUrl: me.licenseDocUrl,

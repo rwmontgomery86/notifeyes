@@ -1,0 +1,1 @@
+ALTER TABLE "optometrists" ADD COLUMN "home_zip" varchar(10);

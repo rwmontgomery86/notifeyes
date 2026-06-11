@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { optometrists, practices, shifts, watchZones } from "@/db/schema";
 import { formatShiftWhen, relativeTime } from "@/lib/dates";
 import { formatUsd } from "@/lib/format";
+import { capitalForState } from "@/lib/geo/state-capitals";
 import { ShiftsMap } from "./ShiftsMap";
 import { ScopeToggle } from "./ScopeToggle";
 
@@ -128,6 +129,11 @@ export default async function OdShiftsPage({
       ? { lat: Number(home.lat), lng: Number(home.lng) }
       : null;
 
+  // Without a home location, open the map over the OD's license-state area
+  // (same approach as the watch-zones page) instead of an arbitrary pin.
+  const capital = capitalForState(licenseState);
+  const fallbackCenter = capital ? { lat: capital.lat, lng: capital.lng } : null;
+
   const headerCopy = !licenseState
     ? "Add your license state on your profile to see matching shifts."
     : watchZoneOnly
@@ -163,10 +169,12 @@ export default async function OdShiftsPage({
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[3fr_2fr]">
         <div className="ne-card p-0 overflow-hidden h-[520px]">
-          <ShiftsMap pins={pins} home={homeForMap} />
+          <ShiftsMap pins={pins} home={homeForMap} fallbackCenter={fallbackCenter} />
         </div>
 
-        <div className="grid gap-3 overflow-y-auto max-h-[520px] pr-1">
+        {/* content-start: without it the outer grid stretches this column to
+            the map's height and a lone card balloons to fill it. */}
+        <div className="grid gap-3 content-start overflow-y-auto max-h-[520px] pr-1">
           {!licenseState ? (
             <div className="ne-card text-sm text-muted-foreground">
               No license state on file.{" "}
