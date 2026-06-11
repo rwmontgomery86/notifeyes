@@ -254,7 +254,7 @@ function Step2({
       </div>
 
       <div>
-        <span className="ne-label">License document (optional now, required before applying)</span>
+        <span className="ne-label">License document (optional — speeds up verification)</span>
         <div className="flex items-center gap-3">
           <label className="ne-btn-secondary cursor-pointer">
             <input

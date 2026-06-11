@@ -7,9 +7,8 @@
  *      of the practice (ST_DWithin on geography → meters).
  *   2. min_rate_cents <= shift.effective rate (bump rate when set, else base)
  *   3. days_of_week includes the shift's day
- *   4. time window (HH:MM start/end) overlaps the shift hours
- *   5. shift_types includes the shift's type
- *   6. NOT paused
+ *   4. shift_types includes the shift's type
+ *   5. NOT paused
  *
  * Returns the matching OD user_ids (the rows are joined back through
  * optometrists → users so the caller can write Notification rows directly).
@@ -53,9 +52,7 @@ export async function findOdsMatchingShift(shiftId: string): Promise<MatchedOd[]
         sh.bump_radius_meters,
         sh.type::text AS shift_type,
         p.location AS practice_location,
-        EXTRACT(DOW FROM sh.starts_at AT TIME ZONE 'UTC')::int AS dow,
-        TO_CHAR(sh.starts_at AT TIME ZONE 'UTC', 'HH24:MI') AS starts_hhmm,
-        TO_CHAR(sh.ends_at AT TIME ZONE 'UTC', 'HH24:MI') AS ends_hhmm
+        EXTRACT(DOW FROM sh.starts_at AT TIME ZONE 'UTC')::int AS dow
       FROM shifts sh
       JOIN practices p ON p.id = sh.practice_id
       WHERE sh.id = ${shiftId}
@@ -83,8 +80,6 @@ export async function findOdsMatchingShift(shiftId: string): Promise<MatchedOd[]
       AND wz.min_rate_cents <= s.effective_rate_cents
       AND wz.days_of_week::jsonb @> to_jsonb(s.dow)
       AND wz.shift_types::jsonb @> to_jsonb(s.shift_type)
-      AND (wz.time_start IS NULL OR wz.time_start <= s.starts_hhmm)
-      AND (wz.time_end   IS NULL OR wz.time_end   >= s.ends_hhmm)
       AND o.verification_status = 'verified'
       AND NOT EXISTS (
         SELECT 1 FROM od_practice_blocks opb
@@ -136,9 +131,7 @@ export async function countOdsMatchingShift(
         ${input.rateCentsPerHour}::int AS effective_rate_cents,
         ${bumpRadius}::int AS bump_radius_meters,
         ${input.shiftType}::text AS shift_type,
-        EXTRACT(DOW FROM ${input.startsAt.toISOString()}::timestamptz AT TIME ZONE 'UTC')::int AS dow,
-        TO_CHAR(${input.startsAt.toISOString()}::timestamptz AT TIME ZONE 'UTC', 'HH24:MI') AS starts_hhmm,
-        TO_CHAR(${input.endsAt.toISOString()}::timestamptz AT TIME ZONE 'UTC', 'HH24:MI') AS ends_hhmm
+        EXTRACT(DOW FROM ${input.startsAt.toISOString()}::timestamptz AT TIME ZONE 'UTC')::int AS dow
       FROM practices p
       WHERE p.id = ${input.practiceId}
     ),
@@ -161,8 +154,6 @@ export async function countOdsMatchingShift(
         AND wz.min_rate_cents <= s.effective_rate_cents
         AND wz.days_of_week::jsonb @> to_jsonb(s.dow)
         AND wz.shift_types::jsonb @> to_jsonb(s.shift_type)
-        AND (wz.time_start IS NULL OR wz.time_start <= s.starts_hhmm)
-        AND (wz.time_end   IS NULL OR wz.time_end   >= s.ends_hhmm)
         AND o.verification_status = 'verified'
     )
     SELECT

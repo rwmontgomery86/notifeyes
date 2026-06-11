@@ -1,10 +1,11 @@
 "use server";
 
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import { odPracticeBlocks, optometrists, users } from "@/db/schema";
 import { requireOd } from "@/lib/auth/guards";
+import { geocoder } from "@/lib/geocode";
 
 // URL fields are widened to fit data-URL fallback payloads (dev mode without
 // UploadThing). Compressed images land around 200-500K base64 chars; 2M gives
@@ -16,6 +17,7 @@ const schema = z.object({
   headshotUrl: z.string().max(URL_MAX).nullable().optional(),
   bio: z.string().max(2000).nullable().optional(),
   travelRadiusMi: z.number().int().min(5).max(200).optional(),
+  homeZip: z.string().max(10).nullable().optional(),
   licenseDocUrl: z.string().max(URL_MAX).nullable().optional(),
   deaUrl: z.string().max(URL_MAX).nullable().optional(),
   malpracticeUrl: z.string().max(URL_MAX).nullable().optional(),
@@ -45,6 +47,37 @@ export async function updateOdProfile(input: z.infer<typeof schema>) {
     };
   }
 
+  const homeZip = v.homeZip?.trim() || null;
+  if (homeZip && !/^\d{5}(-\d{4})?$/.test(homeZip)) {
+    return { ok: false as const, error: "Enter a 5-digit ZIP code." };
+  }
+
+  // Geocode the home ZIP into homeLocation, but only when it changed —
+  // Nominatim (the dev fallback geocoder) is rate-limited to 1 req/s.
+  const [existing] = await db
+    .select({ homeZip: optometrists.homeZip })
+    .from(optometrists)
+    .where(eq(optometrists.id, session.user.odId!))
+    .limit(1);
+  const zipChanged = (existing?.homeZip ?? null) !== homeZip;
+
+  let homeLocationSql: ReturnType<typeof sql> | null = null;
+  if (zipChanged && homeZip) {
+    const located = await geocoder.geocode({
+      addressLine: null,
+      city: null,
+      state: null,
+      zip: homeZip,
+    });
+    if (!located) {
+      return {
+        ok: false as const,
+        error: "We couldn't find that ZIP code — double-check it.",
+      };
+    }
+    homeLocationSql = sql`ST_SetSRID(ST_MakePoint(${located.lng}, ${located.lat}), 4326)::geography`;
+  }
+
   await db
     .update(optometrists)
     .set({
@@ -52,6 +85,8 @@ export async function updateOdProfile(input: z.infer<typeof schema>) {
       headshotUrl: v.headshotUrl ?? null,
       bio: v.bio ?? null,
       travelRadiusMi: v.travelRadiusMi ?? undefined,
+      // A cleared ZIP also clears the geocoded point.
+      ...(zipChanged ? { homeZip, homeLocation: homeLocationSql } : {}),
       licenseDocUrl: v.licenseDocUrl ?? null,
       deaUrl: v.deaUrl ?? null,
       malpracticeUrl: v.malpracticeUrl ?? null,

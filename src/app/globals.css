@@ -67,6 +67,15 @@
   }
 }
 
+/* Trap Leaflet's internal z-indexes (panes 400, controls 1000) inside the
+   map so they can't float above the shell's sticky header or the mobile nav
+   drawer. Deliberately outside @layer so it always ships and outranks
+   leaflet.css. */
+.leaflet-container {
+  isolation: isolate;
+  z-index: 0;
+}
+
 @layer components {
   .ne-card {
     @apply rounded-card border border-rule bg-paper-card text-ink p-5;

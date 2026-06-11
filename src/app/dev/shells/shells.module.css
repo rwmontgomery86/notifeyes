@@ -1,0 +1,120 @@
+/* Gallery + variant CSS that's awkward as Tailwind utilities: the docked-pill
+   scoop corners, the sliding rail indicator, and the scaled preview frames.
+   Plain CSS on the global --tokens; no @apply. */
+
+/* ---- V1 docked pill ------------------------------------------------- */
+
+.dockItem {
+  position: relative;
+  margin-right: 12px;
+  border-radius: 9999px;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    margin-right 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dockItem:hover {
+  background-color: rgba(255, 255, 255, 0.07);
+}
+
+.dockActive,
+.dockActive:hover {
+  margin-right: 0;
+  background-color: var(--paper); /* the content bg, so the pill merges into it */
+  color: var(--ink);
+  border-radius: 9999px 0 0 9999px;
+}
+
+/* Scooped inverted corners where the active pill meets the content area.
+   Layer 1 (the span) is a 12px paper square bridging pill and content;
+   layer 2 (::after) paints the navy quarter-disc back on top, leaving only
+   the concave paper fillet. Native border-radius anti-aliasing, no gradient
+   fuzz. (Gradient alternative, kept for reference:
+   background: radial-gradient(circle 12px at 0 0, var(--paper-deep) 11.5px,
+   var(--paper) 12px) for the top scoop, `at 0 100%` for the bottom.) */
+.scoopTop,
+.scoopBottom {
+  position: absolute;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  background: var(--paper);
+  pointer-events: none;
+  /* Delayed fade-in: the scoops mount with the active item; waiting ~80ms
+     lets the pill's margin-right finish sliding to the edge first, so no
+     notch ever floats detached from the content area. */
+  animation: scoopIn 120ms 80ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+.scoopTop {
+  top: -12px;
+}
+
+.scoopBottom {
+  bottom: -12px;
+}
+
+.scoopTop::after,
+.scoopBottom::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--paper-deep);
+}
+
+.scoopTop::after {
+  border-bottom-right-radius: 12px;
+}
+
+.scoopBottom::after {
+  border-top-right-radius: 12px;
+}
+
+@keyframes scoopIn {
+  from {
+    opacity: 0;
+  }
+}
+
+/* ---- V2 sliding indicator ------------------------------------------- */
+
+/* Height (36px) + the buttons' 4px gap = the 40px STEP constant in
+   CrispRail.tsx. Keep these in lockstep. */
+.slider {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 0;
+  height: 36px;
+  border-radius: 6px;
+  background: rgba(30, 155, 227, 0.16); /* --rust at 16%; bg-rust/15 is a no-op on var colors */
+  box-shadow: inset 2px 0 0 var(--rust);
+  transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+
+/* ---- Gallery preview frames ------------------------------------------ */
+
+.previewBox {
+  position: relative;
+  width: 420px;
+  flex-shrink: 0;
+  aspect-ratio: 1280 / 800;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid var(--rule);
+  box-shadow: 0 12px 32px -16px rgba(27, 42, 78, 0.25);
+  background: var(--paper);
+}
+
+.previewScaler {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1280px;
+  height: 800px;
+  transform: scale(0.328125); /* 420 / 1280 */
+  transform-origin: top left;
+  pointer-events: none; /* grid clicks hit the expand overlay, never inner nav */
+}

@@ -226,8 +226,9 @@ export const optometrists = pgTable(
     displayName: varchar("display_name", { length: 200 }),
     headshotUrl: text("headshot_url"),
     bio: text("bio"),
-    // Home location for distance display
+    // Home location for distance display; geocoded from homeZip on profile save
     homeLocation: point("home_location"),
+    homeZip: varchar("home_zip", { length: 10 }),
     travelRadiusMi: integer("travel_radius_mi").default(25).notNull(),
     // License
     licenseState: varchar("license_state", { length: 2 }),
@@ -284,8 +285,6 @@ export const watchZones = pgTable(
       | { kind: "polygon"; points: { lat: number; lng: number }[] }
     >().notNull(),
     daysOfWeek: jsonb("days_of_week").$type<number[]>().default([0, 1, 2, 3, 4, 5, 6]).notNull(),
-    timeStart: varchar("time_start", { length: 5 }), // "HH:MM"
-    timeEnd: varchar("time_end", { length: 5 }),
     minRateCents: integer("min_rate_cents").default(0).notNull(),
     shiftTypes: jsonb("shift_types").$type<string[]>().default(["fill_in", "half_day", "weekend"]).notNull(),
     notifyChannels: jsonb("notify_channels").$type<("push" | "email" | "sms")[]>()

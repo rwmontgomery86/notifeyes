@@ -112,6 +112,42 @@ export default async function PracticePublicProfile({
         </section>
       ) : null}
 
+      {p.photos.length > 0 ? (
+        <section className="mt-6 ne-card">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Photos
+          </h2>
+          <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {p.photos.map((url, i) => {
+              const img = (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={url}
+                  alt={`${p.name} — photo ${i + 1}`}
+                  loading="lazy"
+                  className="aspect-[4/3] w-full rounded-md border object-cover"
+                />
+              );
+              // Dev uploads are data: URLs, which browsers refuse to open in
+              // a new tab — only link out the real (http) ones.
+              return url.startsWith("http") ? (
+                <a
+                  key={i}
+                  href={url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block transition-opacity hover:opacity-90"
+                >
+                  {img}
+                </a>
+              ) : (
+                <div key={i}>{img}</div>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
+
       <section className="mt-6 grid gap-3 md:grid-cols-2">
         <div className="ne-card">
           <h3 className="text-xs uppercase tracking-wide font-semibold text-muted-foreground">
