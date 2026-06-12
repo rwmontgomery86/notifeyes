@@ -13,14 +13,14 @@ import {
 export const metadata: Metadata = {
   title: "For Practices — NotifEyes",
   description:
-    "Post a fill-in shift in 90 seconds. License-verified ODs watching your area get pinged. You pick. We handle the contract and the payout. Flat $10 per booked match.",
+    "Post a fill-in shift in 90 seconds. License-verified ODs watching your area get pinged. You pick. We handle the contract; you pay the OD directly. Flat $10 per booked match.",
 };
 
 const STEPS: { t: string; d: string; note?: string }[] = [
   { t: "Post", d: "Date, hours, rate, services. Five fields and publish." },
   { t: "Sit back", d: "Matching ODs get pinged. Apps roll in.", note: "avg first app · 8 min" },
   { t: "Pick + book", d: "Compare applicants. One-tap to book. Contract auto-signed." },
-  { t: "Day-of", d: "OD checks in. You confirm hours. We pay them." },
+  { t: "Day-of", d: "The OD works the shift. You confirm they showed — that's when our fee captures. You pay them directly." },
 ];
 
 const FEATURES: { t: string; d: string; comingSoon?: boolean }[] = [
@@ -28,7 +28,7 @@ const FEATURES: { t: string; d: string; comingSoon?: boolean }[] = [
   { t: "Favorites + invites", d: "Tag ODs you would hire again. Invite them direct — they skip the queue." },
   { t: "Team seats", d: "Owner + schedulers. Roles for who can post and who can pay — invite flow coming soon.", comingSoon: true },
   { t: "Built-in messaging", d: "Talk to your OD before they show up. Files and photos." },
-  { t: "Cancel policy, written", d: "7-day, 48-hr, 4-hr tiers. We charge. You don't chase." },
+  { t: "Cancel policy, written", d: "Cancellations and no-shows go on the record — both sides. No awkward chasing." },
   { t: "Invoices + receipts", d: "Monthly statement, per-shift breakout, downloadable PDFs." },
 ];
 
@@ -43,7 +43,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "What if the OD no-shows?",
-    a: "15-min grace period, then full refund + we surface nearby watching ODs as emergency backups. The OD gets a flag. Three flags = suspension review.",
+    a: "Report it — your match fee is never captured (you pay nothing), and we surface nearby watching ODs as emergency backups. The OD gets a flag. Three flags = suspension review.",
   },
   {
     q: "Can my scheduler post without my login?",
@@ -75,8 +75,8 @@ export default function ForPracticesPage() {
             </h1>
             <p className="mt-5 max-w-[500px] text-[19px] leading-[1.5] text-ink-2">
               Post the shift. License-verified ODs watching your area get
-              pinged. You pick. We handle the contract and the payout.{" "}
-              {MARKETING_MATCH_FEE_DISPLAY} per booked match.
+              pinged. You pick. We handle the contract; you pay the OD
+              directly. {MARKETING_MATCH_FEE_DISPLAY} per booked match.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <MarketingButton href="/signup?role=practice" variant="primary" size="lg">

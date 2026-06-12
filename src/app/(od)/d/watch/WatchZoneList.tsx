@@ -81,7 +81,11 @@ export function WatchZoneList({
                 {" · min "}${(z.minRateCents / 100).toFixed(0)}/hr
               </div>
               <div className="text-xs text-muted-foreground mt-1">
-                Channels: {z.notifyChannels.join(" · ")}
+                {/* "push" is hidden — Web Push is deferred for beta, and legacy
+                    zones may still carry it in notify_channels. */}
+                Channels:{" "}
+                {z.notifyChannels.filter((c) => c !== "push").join(" · ") ||
+                  "in-app only"}
               </div>
             </div>
             <div className="flex flex-col gap-1">

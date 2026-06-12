@@ -142,9 +142,11 @@ export function AppShellClient({
             {userName ?? "Account"}
           </div>
           <div className="flex items-center gap-2 text-[#9fb0d0]">
-            <span>{ROLE_LABELS[role]}</span>
+            <span className="truncate whitespace-nowrap">
+              {ROLE_LABELS[role]}
+            </span>
             <span aria-hidden>·</span>
-            {signOutSlot}
+            <span className="shrink-0 whitespace-nowrap">{signOutSlot}</span>
           </div>
         </div>
       </div>

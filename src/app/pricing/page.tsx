@@ -20,11 +20,11 @@ export const metadata: Metadata = {
 const FAQS: { q: string; a: string }[] = [
   {
     q: "How does the $10 get charged?",
-    a: "Authorized at booking on your stored card or ACH. Captured at shift completion. Refunded automatically if the shift is cancelled more than 7 days out.",
+    a: "A hold is placed on your saved card at booking, and it's captured only after you confirm the OD showed up for the shift. No show, no charge. The OD's wage is yours to pay directly — it never goes through us.",
   },
   {
     q: "What if we book and then cancel?",
-    a: "See the tiered cancellation schedule in Trust & safety. The $10 match fee is non-refundable past 48 hours before the shift. OD cancellation fees are separate.",
+    a: "No cancellation fee — the $10 hold is released and you pay nothing. Cancellations go on the cancelling side's reliability record (yours or the OD's), which both sides can see.",
   },
   {
     q: "Why not a percentage-of-shift model?",
@@ -85,7 +85,7 @@ export default function PricingPage() {
                 "Unlimited watch zones",
                 "Apply to any open shift",
                 "Direct invites from practices",
-                "Weekly ACH payouts",
+                "Full rate, paid to you directly",
                 "Blind reviews",
                 "In-app messaging",
               ]}
@@ -116,9 +116,9 @@ export default function PricingPage() {
               bullets={[
                 "Everything in free, plus:",
                 "Booking + e-signed contract",
-                "Payment authorization + capture",
-                "OD payout handled by us",
-                "Cancellation enforcement",
+                "Fee captured only after the OD shows",
+                "You pay the OD directly — no markup",
+                "Reliability records on cancellations",
                 "Dispute support",
                 "24-hr verification SLA on ODs",
               ]}
@@ -165,7 +165,7 @@ export default function PricingPage() {
               },
               {
                 t: "What the OD gets",
-                d: "100% of the shift rate the practice agreed to. We don't shave the OD payout. The practice pays the agreed rate plus our $10 match fee — the OD gets exactly what was promised.",
+                d: "100% of the shift rate the practice agreed to, paid directly by the practice. We never touch the wage. The practice pays the agreed rate to the OD plus our $10 match fee — the OD gets exactly what was promised.",
               },
               {
                 t: "Future pricing",
@@ -216,11 +216,11 @@ export default function PricingPage() {
                 ],
               },
               {
-                label: "OD payout",
+                label: "OD pay",
                 cells: [
                   { text: "Cash · favor" },
                   { text: "~70–78% of rate" },
-                  { text: "100% of agreed rate", tone: "yes" },
+                  { text: "100% of agreed rate, direct", tone: "yes" },
                 ],
               },
               {

@@ -8,6 +8,7 @@ import { formatShiftWhen } from "@/lib/dates";
 import { buildContractBody, CONTRACT_TEMPLATE_VERSION } from "@/lib/contract";
 import { env } from "@/env";
 import { ConfirmBookingForm } from "./ConfirmBookingForm";
+import { isUuid } from "@/lib/uuid";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,7 @@ export default async function ConfirmBookingPage({
   params: Promise<{ id: string; appId: string }>;
 }) {
   const { id, appId } = await params;
+  if (!isUuid(id) || !isUuid(appId)) notFound();
   const session = await auth();
   if (!session?.user.practiceId) redirect("/p/dashboard");
 
@@ -50,12 +52,7 @@ export default async function ConfirmBookingPage({
     startsAt: row.shift.startsAt,
     endsAt: row.shift.endsAt,
     lunchMinutes: row.shift.lunchMinutes,
-    urgent: row.shift.urgent,
   });
-  const matchFeeDisplay = cost.sameDay
-    ? `${formatUsd(cost.feeCents)} (same-day)`
-    : formatUsd(cost.feeCents);
-  const matchFeeLabel = cost.sameDay ? "Same-day match fee" : "Match fee";
 
   const contractBody = buildContractBody({
     practiceName: row.practice.name,
@@ -63,8 +60,8 @@ export default async function ConfirmBookingPage({
     shiftStartsAt: row.shift.startsAt,
     shiftEndsAt: row.shift.endsAt,
     ratePerHour: formatUsd(row.shift.rateCentsPerHour),
-    totalAmount: formatUsd(cost.totalCents),
-    matchFee: matchFeeDisplay,
+    wageAmount: formatUsd(cost.wageCents),
+    matchFee: formatUsd(cost.feeCents),
   });
 
   return (
@@ -97,7 +94,7 @@ export default async function ConfirmBookingPage({
         <dl className="mt-3 space-y-1 text-sm">
           <Row label="OD wage — you pay directly" value={formatUsd(cost.wageCents)} />
           <Row
-            label={`${matchFeeLabel} — charged to your card`}
+            label="Match fee — charged to your card"
             value={formatUsd(cost.practiceChargeCents)}
           />
           <div className="border-t pt-2 mt-2 font-semibold text-base">

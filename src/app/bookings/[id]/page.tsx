@@ -18,6 +18,7 @@ import { OdContractSign } from "./OdContractSign";
 import { CancelBooking } from "./CancelBooking";
 import { NoShowReport } from "./NoShowReport";
 import { ConfirmAttendance } from "./ConfirmAttendance";
+import { isUuid } from "@/lib/uuid";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +28,7 @@ export default async function BookingPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  if (!isUuid(id)) notFound();
   const session = await auth();
   if (!session?.user) redirect("/login");
 
@@ -70,17 +72,33 @@ export default async function BookingPage({
   const totalCents = row.booking.totalCents;
   const subtotalCents = totalCents - feeCents;
   const matchFeeLabel = "Match fee";
-  const feeStatus = feeStatusCopy(row.booking.paymentStatus);
+  const feeStatus = feeStatusCopy(
+    row.booking.paymentStatus,
+    !!row.booking.attendanceConfirmedAt,
+  );
+  const lifecycle = LIFECYCLE_BADGE[row.booking.status] ?? "Booking confirmed";
+  const isDeadBooking =
+    row.booking.status === "cancelled" || row.booking.status === "no_show";
 
   const odSigned = !!row.contract?.signedByOdAt;
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
-      <div className="ne-card bg-green-50/40 border-green-500/40">
+      <div
+        className={`ne-card ${
+          isDeadBooking
+            ? "bg-secondary/30 border-border"
+            : "bg-green-50/40 border-green-500/40"
+        }`}
+      >
         <div className="flex items-start justify-between gap-3">
           <div>
-            <div className="text-xs uppercase tracking-wide font-semibold text-green-800">
-              Booking confirmed
+            <div
+              className={`text-xs uppercase tracking-wide font-semibold ${
+                isDeadBooking ? "text-muted-foreground" : "text-green-800"
+              }`}
+            >
+              {lifecycle}
             </div>
             <h1 className="mt-1 text-2xl font-bold">
               {row.practice.name} × {row.od.name}
@@ -305,6 +323,16 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
+// Header badge per booking lifecycle. "Booking confirmed" stays the confirmed-
+// state label (the spine e2e asserts on it).
+const LIFECYCLE_BADGE: Record<string, string> = {
+  confirmed: "Booking confirmed",
+  in_progress: "Shift in progress",
+  completed: "Shift completed",
+  cancelled: "Booking cancelled",
+  no_show: "No-show reported",
+};
+
 type FeeTone = "ok" | "pending" | "warn";
 
 const FEE_TONE: Record<FeeTone, string> = {
@@ -319,11 +347,24 @@ const FEE_TONE: Record<FeeTone, string> = {
 // with a clear "nothing to do now" instead of a raw machine status (the old
 // invite-accept "payment limbo"). Card collection now exists (A3, /p/billing);
 // when the real provider is active the hold authorizes off_session at booking.
-function feeStatusCopy(status: string): {
+function feeStatusCopy(
+  status: string,
+  attendanceConfirmed: boolean,
+): {
   label: string;
   detail: string;
   tone: FeeTone;
 } {
+  // Once attendance is confirmed the hold has been captured — don't keep
+  // promising a future capture.
+  if (attendanceConfirmed) {
+    return {
+      label: "Match fee captured",
+      detail:
+        "Captured when you confirmed the doctor showed up. The OD's wage is paid by you directly.",
+      tone: "ok",
+    };
+  }
   switch (status) {
     case "succeeded":
     case "requires_capture":

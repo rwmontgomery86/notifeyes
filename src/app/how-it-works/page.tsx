@@ -20,11 +20,11 @@ export const metadata: Metadata = {
 type Owner = "practice" | "od" | "system";
 const SPINE: { n: string; t: string; d: string; who: Owner }[] = [
   { n: "01", t: "Post", d: "Practice creates a shift draft. Date, hours, rate, services, EHR, notes.", who: "practice" },
-  { n: "02", t: "Broadcast", d: "We match the shift to OD watch zones. Push + email + SMS per their preference.", who: "system" },
+  { n: "02", t: "Broadcast", d: "We match the shift to OD watch zones. Email + SMS per their preference, in seconds.", who: "system" },
   { n: "03", t: "Apply", d: "ODs read the shift detail, tap apply. Optional message + availability note.", who: "od" },
   { n: "04", t: "Book", d: "Practice picks. Confirms cost. Contract auto-signed via click-through.", who: "practice" },
-  { n: "05", t: "Work", d: "Auto check-in at shift start. End-of-day confirm hours, mark complete.", who: "od" },
-  { n: "06", t: "Pay + review", d: "ACH scheduled 3 days out. Both sides prompted to review (blind, 7-day).", who: "system" },
+  { n: "05", t: "Work", d: "The OD works the shift. The practice confirms they showed up — that's what captures our fee.", who: "od" },
+  { n: "06", t: "Pay + review", d: "Practice pays the OD directly — full rate, no middleman. Both sides prompted to review (blind, 7-day).", who: "system" },
 ];
 
 function ownerChip(who: Owner) {
@@ -36,16 +36,15 @@ function ownerChip(who: Owner) {
 const OD_CONFIG: [string, string][] = [
   ["Geometry", "Polygon, or circle around home / work."],
   ["Days of week", "Tue / Thu / Sat only, whatever."],
-  ["Hours", "8a–5p, AM-only, etc."],
   ["Rate floor", "Min $/hr."],
-  ["Shift types", "Fill-in · half-day · weekend · recurring."],
-  ["Channels", "Push, email, SMS — per zone."],
+  ["Shift types", "Fill-in · half-day · weekend."],
+  ["Channels", "Email, SMS — per zone."],
   ["Pause", "Mute zones without deleting them."],
 ];
 
 const PRACTICE_SEES: [string, string][] = [
   ["Reach estimate", '"[xx] ODs watching this area" at post time.'],
-  ["Broadcast confirm", '"Push sent to [n] ODs" after publishing.'],
+  ["Broadcast confirm", '"Alerts sent to [n] ODs" after publishing.'],
   ["Applicant stream", "Apps flow into the shift admin pipeline live."],
   ["Bump tool", "Auto-widen radius if no apps in 4 hours."],
   ["Direct invite", "Skip the queue — invite favorites direct."],
@@ -58,11 +57,11 @@ const SIDE_PATHS: { t: string; d: string }[] = [
   },
   {
     t: "Cancellation",
-    d: "Tiered fee policy. > 7d free. 2–7d 25%. < 48h 50%. < 4h 100%. Shift can be re-posted with urgent flag.",
+    d: "No platform fee. The cancellation goes on the cancelling side's reliability record — the closer to the shift, the more serious. Shift can be re-posted with urgent flag.",
   },
   {
     t: "No-show",
-    d: "Start + 15 min no check-in → practice prompted. + 15 min grace → report. Full refund. Backup ODs surfaced.",
+    d: "Practice reports it — the match fee is never captured, so the practice pays nothing. The no-show goes on the OD's record. Backup ODs surfaced.",
   },
 ];
 
@@ -71,7 +70,7 @@ const GLOSSARY: [string, string][] = [
   ["Shift", "A posted slot: date, hours, rate, services."],
   ["Application", "An OD's intent on a shift. Source can be apply, invite, or watch-alert."],
   ["Booking", "Confirmed match. Triggers contract + payment auth."],
-  ["Closeout", "Check-out + payout + review prompts."],
+  ["Closeout", "Attendance confirm + fee capture + review prompts."],
   ["Blind review", "Both sides write. Neither reads until both submit (or 7 days pass)."],
 ];
 

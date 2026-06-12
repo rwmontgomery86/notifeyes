@@ -15,6 +15,7 @@ import {
 import { ThreadPane } from "./ThreadPane";
 import { ThreadContextCard } from "./ThreadContextCard";
 import { markThreadRead } from "./actions";
+import { isUuid } from "@/lib/uuid";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +25,7 @@ export default async function ThreadPage({
   params: Promise<{ threadId: string }>;
 }) {
   const { threadId } = await params;
+  if (!isUuid(threadId)) notFound();
   const session = await auth();
   if (!session?.user) redirect("/login");
   const userId = session.user.id;

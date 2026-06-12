@@ -66,10 +66,14 @@ export default async function NotificationsInbox() {
           const url = n.actionUrl ?? "/";
           const label = KIND_LABELS[n.kind] ?? n.kind;
           const payload = n.payload as Record<string, unknown>;
-          const channels =
-            Array.isArray(n.channelsSent) && n.channelsSent.length
-              ? n.channelsSent.join(" · ")
-              : "in-app only";
+          // "push" is the stubbed Web Push channel (deferred for beta) — don't
+          // tell users we sent on a channel that doesn't reach them.
+          const realChannels = Array.isArray(n.channelsSent)
+            ? n.channelsSent.filter((c) => c !== "push")
+            : [];
+          const channels = realChannels.length
+            ? realChannels.join(" · ")
+            : "in-app only";
           const metaLine = `${payload.zoneName ? `Zone: ${String(payload.zoneName)} · ` : ""}sent on ${channels}`;
           return (
             <NotificationRow

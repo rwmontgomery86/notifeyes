@@ -31,17 +31,17 @@ const OD_VERIFICATION: { h: string; d: string }[] = [
 const PRACTICE_VERIFICATION: { h: string; d: string }[] = [
   { h: "Business license", d: "Verified at signup." },
   { h: "Address", d: "Matched against published practice records." },
-  { h: "Payment method", d: "Verified card or ACH on file before posting." },
+  { h: "Payment method", d: "Card on file before the first booking — never charged until an OD shows." },
   { h: "Owner identity", d: "We know who actually runs the practice." },
 ];
 
 const MONEY: { t: string; d: string }[] = [
-  { t: "Authorized at booking", d: "Practice card or ACH authorized when the shift books. Funds reserved, not yet captured." },
-  { t: "Captured at completion", d: "After shift check-out. Held 24 hours for dispute window before release." },
-  { t: "OD payout in 3 days", d: "ACH initiated 3 business days after the shift. Visible on payouts dashboard the whole way." },
-  { t: "Refunds policy", d: "Spelled out below. We charge fees from the practice and pay the OD. You don't chase anyone." },
-  { t: "No PHI on platform", d: "We never store patient data. ODs chart in your EHR — we just match and pay." },
-  { t: "Stripe-handled", d: "Stripe processes all payments. We never touch raw card data. PCI by inheritance." },
+  { t: "Held at booking", d: "The flat $10 match fee is authorized on the practice's saved card when the shift books. That's the only money NotifEyes ever touches." },
+  { t: "Captured on attendance", d: "The fee is captured only after the practice confirms the OD showed up. No-show — the hold is released, the practice pays nothing." },
+  { t: "Wage paid direct", d: "The practice pays the OD's full rate directly — check, direct deposit, Venmo, Zelle. The dashboard tracks owed → paid the whole way." },
+  { t: "Refunds policy", d: "Cancel before attendance is confirmed and the fee hold is simply released. Nothing to refund, no one to chase." },
+  { t: "No PHI on platform", d: "We never store patient data. ODs chart in your EHR — we just match." },
+  { t: "Stripe-handled", d: "Stripe processes the match fee. We never touch raw card data. PCI by inheritance." },
 ];
 
 const CANCELLATION: {
@@ -50,17 +50,17 @@ const CANCELLATION: {
   od: { text: string; tone?: "yes" | "no" };
   repost: string;
 }[] = [
-  { when: "> 7 days out", practice: { text: "No fee · full refund", tone: "yes" }, od: { text: "No fee · OD flag (light)" }, repost: "Yes, normal" },
-  { when: "2–7 days out", practice: { text: "25% of shift paid to OD" }, od: { text: "$25 cancel fee · OD flag" }, repost: "Yes, urgent flag" },
-  { when: "< 48 hr", practice: { text: "50% of shift paid to OD" }, od: { text: "$75 cancel fee · OD flag" }, repost: "Yes, urgent flag" },
-  { when: "< 4 hr / no-show", practice: { text: "100% of shift paid to OD" }, od: { text: "Suspension review", tone: "no" }, repost: "Auto-urgent + backup push" },
+  { when: "> 7 days out", practice: { text: "No charge · no record", tone: "yes" }, od: { text: "No charge · light record" }, repost: "Yes, normal" },
+  { when: "2–7 days out", practice: { text: "No charge · on the record" }, od: { text: "No charge · on the record" }, repost: "Yes, urgent flag" },
+  { when: "< 48 hr", practice: { text: "No charge · serious record" }, od: { text: "No charge · serious record" }, repost: "Yes, urgent flag" },
+  { when: "< 4 hr / no-show", practice: { text: "No charge · serious record" }, od: { text: "Suspension review", tone: "no" }, repost: "Auto-urgent + backup push" },
 ];
 
 const DISPUTES: { t: string; d: string }[] = [
   { t: "Report", d: "Either side flags within 72 hours of shift end." },
-  { t: "Pause", d: "Payout paused. Both sides invited to comment." },
+  { t: "Pause", d: "Fee capture paused. Both sides invited to comment." },
   { t: "Review", d: "Our team reads. Response within 2 business days." },
-  { t: "Resolve", d: "Refund, payout, or split — written and recorded." },
+  { t: "Resolve", d: "Fee released or captured, records adjusted — written and recorded." },
 ];
 
 export default function TrustSafetyPage() {
@@ -91,7 +91,7 @@ export default function TrustSafetyPage() {
             <p className="mt-5 max-w-[480px] text-[19px] leading-[1.5] text-ink-2">
               Optometry is a regulated profession. We treat it like one. Every OD
               on NotifEyes is license-verified before they apply. Every booking
-              has a written contract. Every payout is on a schedule we publish.
+              has a written contract. Every dollar moves by rules we publish.
             </p>
           </div>
           <div className="grid grid-cols-2 gap-3.5">

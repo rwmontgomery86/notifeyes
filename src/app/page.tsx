@@ -222,7 +222,7 @@ function WhyBoth() {
                 ["Watch zones", "Draw where you would actually drive. Filter by day, rate, EHR."],
                 ["One-tap apply", "Read the contract in the app. Apply with a single tap."],
                 ["Free, always", "Zero fees on the OD side. Forever. You get 100% of the agreed rate."],
-                ["Weekly ACH payouts", "Three business days post-shift. Visible on a real dashboard."],
+                ["Paid directly, in full", "The practice pays your full rate straight to you — no platform cut, tracked on your dashboard."],
               ].map(([h, d]) => (
                 <li key={h} className="grid grid-cols-[16px_1fr] gap-3">
                   <span className="mt-1.5 h-2 w-2 rounded-full bg-rust" />
@@ -387,11 +387,11 @@ function Compare() {
               ],
             },
             {
-              label: "OD payout",
+              label: "OD pay",
               cells: [
                 { text: "Cash · favor" },
                 { text: "~70% of rate" },
-                { text: "100% of agreed rate", tone: "yes" },
+                { text: "100% of agreed rate, direct", tone: "yes" },
               ],
             },
             {
@@ -407,7 +407,7 @@ function Compare() {
               cells: [
                 { text: "Awkward", tone: "no" },
                 { text: "Buried" },
-                { text: "Tiered · enforced", tone: "yes" },
+                { text: "On the record · both sides", tone: "yes" },
               ],
             },
             {
@@ -451,9 +451,9 @@ function PricingTeaser() {
             price="$0"
             footnote="always · forever"
             bullets={[
-              "Watch zones + push alerts",
+              "Watch zones + instant alerts",
               "One-tap apply",
-              "Weekly ACH payouts",
+              "Full rate, paid to you directly",
               "Blind reviews",
             ]}
           />
@@ -476,9 +476,9 @@ function PricingTeaser() {
             footnote="flat · same-day & urgent included"
             bullets={[
               "Booking + e-signed contract",
-              "Payment auth + capture",
-              "OD payout handled by us",
-              "Cancellation enforcement",
+              "Fee captured only after the OD shows",
+              "You pay the OD directly — no markup",
+              "Reliability records on cancellations",
               "Dispute support",
             ]}
             accent

@@ -24,7 +24,7 @@ export const PRACTICE_NAV: NavItem[] = [
 
 export const ADMIN_NAV: NavItem[] = [
   { href: "/admin/verifications", label: "OD verifications" },
-  { href: "/admin/payouts", label: "Manual payouts" },
+  { href: "/admin/payouts", label: "Wage tracking" },
   { href: "/admin/geocode", label: "Geocode backfill" },
   { href: "/admin/notifications", label: "Dev notifications log" },
 ];

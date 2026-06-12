@@ -10,7 +10,7 @@
  * --TODO: legal review item before any real launch.
  */
 
-export const CONTRACT_TEMPLATE_VERSION = "v0.1-stub";
+export const CONTRACT_TEMPLATE_VERSION = "v0.2-stub";
 
 export function buildContractBody(params: {
   practiceName: string;
@@ -18,8 +18,8 @@ export function buildContractBody(params: {
   shiftStartsAt: Date;
   shiftEndsAt: Date;
   ratePerHour: string; // formatted, e.g. "$110.00"
-  totalAmount: string;
-  matchFee: string; // formatted, e.g. "$10"
+  wageAmount: string; // formatted estimated wage the practice pays the OD directly
+  matchFee: string; // formatted, e.g. "$10.00"
 }): string {
   // --TODO: legal review --- all language below is placeholder. Replace with
   // attorney-drafted independent contractor agreement before any real launch.
@@ -30,9 +30,9 @@ export function buildContractBody(params: {
     ``,
     `1. SCOPE. The Optometrist will provide independent optometric services at the Practice during the scheduled shift hours at the agreed rate of ${params.ratePerHour}/hour. The Optometrist is an independent contractor and not an employee of the Practice or NotifEyes.`,
     ``,
-    `2. PAYMENT. Practice will be charged ${params.totalAmount}, which includes a NotifEyes match fee of ${params.matchFee}. The Optometrist's payout is scheduled three (3) days after shift completion.`,
+    `2. PAYMENT. The Practice pays the Optometrist's wage — estimated at ${params.wageAmount} for the scheduled hours — directly to the Optometrist. NotifEyes never holds or transmits the wage. Separately, NotifEyes charges the Practice a flat ${params.matchFee} match fee, authorized when this booking is confirmed and captured only after the Practice confirms the Optometrist worked the shift. If the Optometrist does not show, the match fee is not charged.`,
     ``,
-    `3. CANCELLATION. The cancellation fee schedule and no-show policy described in the NotifEyes Terms of Service apply to this engagement.`,
+    `3. CANCELLATION. Cancelling carries no platform fee. Cancellations and no-shows are recorded on the cancelling party's reliability record as described in the NotifEyes Terms of Service; the closer to the shift start, the more serious the record.`,
     ``,
     `4. CONDUCT. The Optometrist will hold a current, unrestricted license to practice optometry in the state where the Practice operates. The Practice will provide a safe and adequately equipped work environment.`,
     ``,

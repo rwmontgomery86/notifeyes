@@ -17,6 +17,7 @@ import { ApplicantActions } from "./ApplicantActions";
 import { BoostModal } from "./BoostModal";
 import { CancelShift } from "./CancelShift";
 import { InvitePanel } from "./InvitePanel";
+import { isUuid } from "@/lib/uuid";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +27,7 @@ export default async function ShiftAdminPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  if (!isUuid(id)) notFound();
   const session = await auth();
   if (!session?.user.practiceId) redirect("/p/dashboard");
 
@@ -58,11 +60,7 @@ export default async function ShiftAdminPage({
     startsAt: shift.startsAt,
     endsAt: shift.endsAt,
     lunchMinutes: shift.lunchMinutes,
-    urgent: shift.urgent,
   });
-  const matchFeeDisplay = cost.sameDay
-    ? `${formatUsd(cost.feeCents)} (same-day)`
-    : formatUsd(cost.feeCents);
 
   const cancelNotice =
     shift.status === "booked"
@@ -129,7 +127,7 @@ export default async function ShiftAdminPage({
             )}
             <div className="text-xs text-muted-foreground">
               Est. {formatUsd(cost.wageCents)} wage (you pay directly) +{" "}
-              {matchFeeDisplay} match fee
+              {formatUsd(cost.feeCents)} match fee
             </div>
           </div>
         </div>
@@ -148,8 +146,8 @@ export default async function ShiftAdminPage({
               shiftStartsAt: shift.startsAt,
               shiftEndsAt: shift.endsAt,
               ratePerHour: formatUsd(effectiveRate),
-              totalAmount: formatUsd(cost.totalCents),
-              matchFee: matchFeeDisplay,
+              wageAmount: formatUsd(cost.wageCents),
+              matchFee: formatUsd(cost.feeCents),
             })}
           />
         </div>

@@ -58,8 +58,8 @@ export default function AboutPage() {
           <p className="mt-6 max-w-[620px] text-[22px] leading-[1.5] text-ink-2">
             Optometry has a fill-in network. It runs over text. We&apos;re not
             trying to replace it — we&apos;re trying to give it a UI, a contract,
-            and a payout. So the network can scale past the people you went to
-            school with.
+            and a paper trail. So the network can scale past the people you went
+            to school with.
           </p>
         </Container>
       </section>
@@ -93,8 +93,8 @@ export default function AboutPage() {
               </p>
               <p className="mt-3.5 text-base leading-[1.7] text-ink-2">
                 The fill-in network was real — and trapped in DMs. NotifEyes is
-                the network with a UI, a contract, and a payout that actually
-                happens. We&apos;re keeping it small until V1 ships. Then we go
+                the network with a UI, a contract, and pay that actually shows
+                up. We&apos;re keeping it small until V1 ships. Then we go
                 wide.
               </p>
 

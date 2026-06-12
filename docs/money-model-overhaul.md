@@ -66,6 +66,15 @@ money clarity & trust polish (the last unstarted phase).
 | E | Money clarity & trust polish | ⬜ not started | — |
 
 **Carry-over notes for the next session:**
+- **2026-06-12 QA sweep shrank Phase E's scope.** A full-app QA batch (see
+  launch-plan Decisions log 2026-06-12) aligned everything *copy* with
+  fee-only: marketing/legal pages, the **contract body (v0.2-stub** — wage paid
+  directly, fee captures on attendance, reputation-only cancellation**)**, the
+  booking payment panel (now shows "Match fee captured" post-confirm), the
+  admin payouts page (reframed "Wage tracking"), and deleted the same-day fee
+  env vars/labels. What's left for Phase E proper: the no-show card's
+  "this looks wrong? / reliability standing" treatment + any fuller role-aware
+  money breakdown beyond what the booking page now shows.
 - **Phase D landed "focused" scope:** the preference model + concierge toggle,
   the morning-of reminder, and the .ics invite. The roadmap's three "new key
   moments" (shift-tomorrow, "did the doctor show?", payout/wage sent) **already

@@ -6,8 +6,10 @@
 > resume. When work lands, the commit that lands it must also tick the
 > checkbox here and bump `Last touched`.
 
-**Last touched:** 2026-05-30 (Phase-1 alert pipeline **PROVEN end-to-end in
-prod.** Ross ran the watch-zone smoke: real OD → Bay Area watch zone → shift
+**Last touched:** 2026-06-12 (side-quest QA sweep landed — fee-only
+copy/contract alignment + bug-fix batch, see Decisions log 2026-06-12; cursor
+unchanged. Phase-1 status as of 2026-05-30: alert pipeline **PROVEN end-to-end
+in prod.** Ross ran the watch-zone smoke: real OD → Bay Area watch zone → shift
 posted by the seeded practice → OD received the **in-app notification + a real
 email** from notifications@notifeyes.com. Railway worker confirmed online
 (listening on all 8 queues; `DATABASE_URL` on the session pooler/5432, not the
@@ -406,6 +408,32 @@ old one; do not edit history.
   `PRODUCT.md` + `DESIGN.md`; a global `.leaflet-container` isolation rule
   stops Leaflet panes painting over shell overlays. Spine e2e green on the
   new shell.
+- **2026-06-12** **Full-app QA sweep → fee-only consistency fixes** (side
+  quest; no Phase boxes ticked). A piece-by-piece QA of every surface found the
+  app functionally solid (zero console errors; spine flows all pass) but the
+  **marketing site + contract still described the old money-through model**.
+  Fixed in one batch: (1) the engagement agreement (`contract.ts`, bumped
+  `v0.1-stub` → **`v0.2-stub`**) now states the practice pays the wage directly
+  and the $10 fee captures on attendance confirm — prior bookings keep their
+  frozen v0.1 text; (2) all marketing/legal copy (home, hero, for-*, pricing,
+  how-it-works, help, about, trust-safety, legal terms, signup) swept to
+  fee-only — no more ACH/"weekly payouts"/W-9/"we pay them" claims; cancellation
+  copy is reputation-only; (3) **same-day fee machinery deleted** (the
+  `NOTIFEYES_SAMEDAY_*` env vars, `isSameDayBooking`, and the "(same-day)"
+  labels — finishing the 2026-06-10 flat-$10 decision); (4) the stubbed **push
+  channel is hidden** from all OD-facing UI until Web Push ships (zone editor,
+  defaults, zone cards, notifications list); (5) site contact email is
+  **support@notifeyes.com** everywhere (footer was a dev-domain mailto;
+  help page said help@); (6) malformed-uuid URLs on all nine dynamic `[id]`
+  pages now 404 instead of 500 (new `src/lib/uuid.ts` guard); (7) `/admin/payouts`
+  reframed as **"Wage tracking"** (it claimed NotifEyes pushes ACH transfers);
+  (8) UX state fixes: review form shows a submitted/blind banner + "Update
+  review", booking payment panel shows "Match fee captured" after attendance
+  confirm, booking header badge follows the lifecycle, "Welcome, Dr.." greeting
+  fixed. Verified: `tsc` clean, CI-env `next build`, **spine e2e green cold**,
+  worker boots all 10 queues. Deferred from the QA report: forgot-password
+  flow (spun off), practice-side "mark wage paid" loop (feature), marketing
+  mobile nav.
 
 ---
 

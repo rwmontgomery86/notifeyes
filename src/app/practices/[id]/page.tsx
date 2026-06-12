@@ -7,6 +7,7 @@ import { auth } from "@/lib/auth";
 import { formatShiftWhen } from "@/lib/dates";
 import { formatUsd } from "@/lib/pricing";
 import { BlockButton } from "./BlockButton";
+import { isUuid } from "@/lib/uuid";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,7 @@ export default async function PracticePublicProfile({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  if (!isUuid(id)) notFound();
   const [p] = await db
     .select()
     .from(practices)

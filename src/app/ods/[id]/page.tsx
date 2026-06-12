@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/db";
 import { optometrists } from "@/db/schema";
+import { isUuid } from "@/lib/uuid";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,7 @@ export default async function OdPublicProfile({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  if (!isUuid(id)) notFound();
   const [od] = await db
     .select()
     .from(optometrists)

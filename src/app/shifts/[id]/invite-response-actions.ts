@@ -131,12 +131,7 @@ export async function respondToInvite(
     startsAt: row.shift.startsAt,
     endsAt: row.shift.endsAt,
     lunchMinutes: row.shift.lunchMinutes,
-    confirmedAt: new Date(),
-    urgent: row.shift.urgent,
   });
-  const matchFeeDisplay = cost.sameDay
-    ? `${formatUsd(cost.feeCents)} (same-day)`
-    : formatUsd(cost.feeCents);
 
   const finalContractBody = buildContractBody({
     practiceName: row.practice.name,
@@ -144,8 +139,8 @@ export async function respondToInvite(
     shiftStartsAt: row.shift.startsAt,
     shiftEndsAt: row.shift.endsAt,
     ratePerHour: formatUsd(effectiveRate),
-    totalAmount: formatUsd(cost.totalCents),
-    matchFee: matchFeeDisplay,
+    wageAmount: formatUsd(cost.wageCents),
+    matchFee: formatUsd(cost.feeCents),
   });
 
   // Look up OD's user (for thread + their own confirmation/calendar invite)
