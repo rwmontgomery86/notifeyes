@@ -48,7 +48,6 @@ export default async function HomePage({
     <div className="bg-paper text-ink min-h-screen">
       <SiteHeader activeKey="home" />
       <HomeHero />
-      <ProofBar />
       <ShiftTicker state={detected} />
       <WhyBoth />
       <WatchZoneSection />
@@ -61,31 +60,6 @@ export default async function HomePage({
 }
 
 export const dynamic = "force-dynamic";
-
-function ProofBar() {
-  const stats = [
-    { n: "< 10s", l: "from shift post to first ping" },
-    { n: "8 min", l: "median first application" },
-    { n: "24 hr", l: "license verification SLA" },
-    { n: MARKETING_MATCH_FEE_DISPLAY, l: "per match · flat, no %" },
-  ];
-  return (
-    <section className="border-b border-rule bg-paper-2">
-      <div className="max-w-wide mx-auto grid grid-cols-2 md:grid-cols-4 gap-7 px-7 py-8">
-        {stats.map((s) => (
-          <div key={s.l}>
-            <div
-              className="font-display text-5xl font-medium leading-[0.96] text-ink tracking-[-0.02em]"
-            >
-              {s.n}
-            </div>
-            <div className="mt-1 text-[13px] text-ink-2">{s.l}</div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
 
 const SHIFT_TYPE_LABEL: Record<
   "fill_in" | "half_day" | "weekend" | "recurring" | "permanent",
@@ -550,7 +524,7 @@ function FinalCTA() {
     <Section variant="dark">
       <Container className="text-center">
         <h2
-          className="font-display mx-auto max-w-[900px] text-[64px] md:text-[80px] font-medium leading-[1.05] text-[#f4f7fc]"
+          className="font-display mx-auto max-w-[900px] text-[44px] sm:text-[64px] md:text-[80px] font-medium leading-[1.05] text-[#f4f7fc]"
         >
           One marketplace.{" "}
           <em

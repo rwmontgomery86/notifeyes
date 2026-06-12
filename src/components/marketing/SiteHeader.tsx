@@ -68,12 +68,14 @@ export async function SiteHeader({ activeKey }: { activeKey?: NavKey }) {
             </MarketingButton>
           ) : (
             <>
-              <Link
+              <MarketingButton
                 href="/login"
-                className="hidden sm:inline text-ink-2 hover:text-ink no-underline transition-colors group-data-[dark]:text-[#a8b3c6] group-data-[dark]:hover:text-paper"
+                variant="default"
+                size="sm"
+                className="hidden sm:inline-flex group-data-[dark]:!border-paper group-data-[dark]:!text-paper group-data-[dark]:hover:!bg-paper group-data-[dark]:hover:!text-ink"
               >
                 Log in
-              </Link>
+              </MarketingButton>
               <MarketingButton href="/signup" variant="primary" size="sm">
                 Sign up — free
               </MarketingButton>
