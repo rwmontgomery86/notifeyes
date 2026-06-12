@@ -173,6 +173,27 @@ export const verificationTokens = pgTable(
   (t) => [primaryKey({ columns: [t.identifier, t.token] })],
 );
 
+// Password-reset tokens (credentials login). Only the SHA-256 hash of the
+// token is stored — the raw token lives solely in the emailed link, so a DB
+// leak can't be replayed into account takeovers. Single-use via usedAt.
+export const passwordResets = pgTable(
+  "password_resets",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    tokenHash: text("token_hash").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    usedAt: timestamp("used_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("password_resets_token_hash_idx").on(t.tokenHash),
+    index("password_resets_user_id_idx").on(t.userId),
+  ],
+);
+
 // =========================================================================
 // Practices
 // =========================================================================

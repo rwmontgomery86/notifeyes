@@ -14,7 +14,10 @@ export type NotificationKind =
   | "message_received"
   // Concierge "status pings" (opt-in, see money-model-overhaul Phase D4):
   | "application_update" // OD: shortlisted / passed / shift filled elsewhere
-  | "shift_unfilled"; //    Practice: posted shift still has no applicants
+  | "shift_unfilled" //     Practice: posted shift still has no applicants
+  // Transactional only — sent straight through emailChannel, never via
+  // dispatchNotification (no in-app row, ignores opt-in):
+  | "password_reset";
 
 export type Channel = "push" | "email" | "sms";
 

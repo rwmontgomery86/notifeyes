@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export function LoginForm({
   callbackUrl,
@@ -56,9 +57,17 @@ export function LoginForm({
         />
       </div>
       <div>
-        <label className="ne-label" htmlFor="password">
-          Password
-        </label>
+        <div className="flex items-baseline justify-between">
+          <label className="ne-label" htmlFor="password">
+            Password
+          </label>
+          <Link
+            href="/forgot-password"
+            className="mb-1.5 text-xs font-medium text-rust hover:text-rust-2"
+          >
+            Forgot password?
+          </Link>
+        </div>
         <input
           id="password"
           name="password"
