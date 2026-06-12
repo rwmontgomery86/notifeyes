@@ -21,6 +21,7 @@ import {
 } from "@/db/schema";
 import { dispatchNotification } from "@/lib/notifications";
 import { formatShiftWhen } from "@/lib/dates";
+import { log } from "../log";
 
 export async function noShowCheckScan(): Promise<void> {
   // Bookings still confirmed/in_progress, shift started >=15 min ago,
@@ -83,6 +84,6 @@ export async function noShowCheckScan(): Promise<void> {
   }
 
   if (candidates.length) {
-    console.log(`[no-show-check] scanned ${candidates.length} candidate(s)`);
+    log.info("no_show_check.scanned", { candidates: candidates.length });
   }
 }

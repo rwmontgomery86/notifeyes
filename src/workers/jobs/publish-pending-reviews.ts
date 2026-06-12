@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import { db } from "@/db";
+import { log } from "../log";
 
 /**
  * Hourly cron — publish blind reviews older than 7 days.
@@ -22,7 +23,7 @@ export async function publishPendingReviews(): Promise<void> {
   `);
 
   if (affected.rows.length === 0) {
-    console.log("[reviews:cron] no stragglers");
+    log.info("publish_reviews.no_stragglers");
     return;
   }
 
@@ -76,5 +77,8 @@ export async function publishPendingReviews(): Promise<void> {
     `);
   }
 
-  console.log(`[reviews:cron] published stragglers · ${odIds.length} ODs / ${practiceIds.length} practices`);
+  log.info("publish_reviews.published", {
+    ods: odIds.length,
+    practices: practiceIds.length,
+  });
 }

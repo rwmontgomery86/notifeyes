@@ -12,6 +12,7 @@
  */
 
 import { getBoss } from "./boss";
+import { log } from "./log";
 import {
   fanoutShiftPosted,
   type FanoutShiftPostedData,
@@ -67,7 +68,7 @@ async function main() {
         try {
           await fanoutShiftPosted(job.data);
         } catch (err) {
-          console.error(`[worker] ${QUEUE_FANOUT} job ${job.id} failed:`, err);
+          log.error("worker.job_failed", { queue: QUEUE_FANOUT, jobId: job.id, err });
           throw err;
         }
       }
@@ -82,10 +83,11 @@ async function main() {
         try {
           await fanoutShiftBumped(job.data);
         } catch (err) {
-          console.error(
-            `[worker] ${QUEUE_FANOUT_BUMPED} job ${job.id} failed:`,
+          log.error("worker.job_failed", {
+            queue: QUEUE_FANOUT_BUMPED,
+            jobId: job.id,
             err,
-          );
+          });
           throw err;
         }
       }
@@ -100,10 +102,11 @@ async function main() {
         try {
           await bookingCompletedFollowups(job.data);
         } catch (err) {
-          console.error(
-            `[worker] ${QUEUE_BOOKING_COMPLETED} job ${job.id} failed:`,
+          log.error("worker.job_failed", {
+            queue: QUEUE_BOOKING_COMPLETED,
+            jobId: job.id,
             err,
-          );
+          });
           throw err;
         }
       }
@@ -164,14 +167,26 @@ async function main() {
     boss.send(QUEUE_PURGE_PASSWORD_RESETS, {}),
   ]);
 
-  console.log(
-    `[worker] listening on: ${QUEUE_FANOUT}, ${QUEUE_FANOUT_BUMPED}, ${QUEUE_BOOKING_COMPLETED}, ${QUEUE_REVIEW_CRON} (cron), ${QUEUE_BOOKING_PROGRESSION} (cron), ${QUEUE_NO_SHOW_CHECK} (cron), ${QUEUE_SHIFT_REMINDERS} (cron), ${QUEUE_CONCIERGE_REMINDERS} (cron), ${QUEUE_SHIFT_UNFILLED} (cron), ${QUEUE_CREDENTIAL_EXPIRING} (cron), ${QUEUE_PURGE_PASSWORD_RESETS} (cron)`,
-  );
+  log.info("worker.started", {
+    queues: [
+      QUEUE_FANOUT,
+      QUEUE_FANOUT_BUMPED,
+      QUEUE_BOOKING_COMPLETED,
+      QUEUE_REVIEW_CRON,
+      QUEUE_BOOKING_PROGRESSION,
+      QUEUE_NO_SHOW_CHECK,
+      QUEUE_SHIFT_REMINDERS,
+      QUEUE_CONCIERGE_REMINDERS,
+      QUEUE_SHIFT_UNFILLED,
+      QUEUE_CREDENTIAL_EXPIRING,
+      QUEUE_PURGE_PASSWORD_RESETS,
+    ],
+  });
 
   // Graceful shutdown
   for (const sig of ["SIGINT", "SIGTERM"] as const) {
     process.on(sig, async () => {
-      console.log(`\n[worker] ${sig} received, stopping…`);
+      log.info("worker.stopping", { signal: sig });
       await boss.stop();
       process.exit(0);
     });
@@ -179,6 +194,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error("[worker] fatal:", err);
+  log.error("worker.fatal", { err });
   process.exit(1);
 });

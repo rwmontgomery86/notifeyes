@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import { db } from "@/db";
+import { log } from "../log";
 
 /**
  * Daily cron — delete password-reset rows that can no longer be redeemed.
@@ -15,5 +16,5 @@ export async function purgePasswordResets(): Promise<void> {
     DELETE FROM password_resets
     WHERE expires_at < now() - interval '24 hours';
   `);
-  console.log(`[password-resets:cron] purged ${res.rowCount ?? 0} stale row(s)`);
+  log.info("purge_password_resets.purged", { rows: res.rowCount ?? 0 });
 }

@@ -64,6 +64,13 @@
       "when": 1781253107965,
       "tag": "0008_powerful_quasimodo",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1781263905303,
+      "tag": "0009_right_zombie",
+      "breakpoints": true
     }
   ]
 }

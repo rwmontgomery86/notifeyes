@@ -24,6 +24,7 @@ import {
   users,
 } from "@/db/schema";
 import { computeShiftCost } from "@/lib/pricing";
+import { BETA_AGREEMENT_VERSION } from "@/lib/beta-agreement";
 import { buildContractBody, CONTRACT_TEMPLATE_VERSION } from "@/lib/contract";
 import { formatUsd } from "@/lib/pricing";
 
@@ -182,6 +183,8 @@ async function main() {
       name: `Owner · ${p.name}`,
       emailVerifiedAt: sql`now()`,
       emailOptedIn: true,
+      betaAgreementAcceptedAt: sql`now()`,
+      betaAgreementVersion: BETA_AGREEMENT_VERSION,
     });
     // Scheduler user (subset)
     if (Math.random() > 0.4) {
@@ -193,6 +196,8 @@ async function main() {
         name: `Scheduler · ${p.name}`,
         emailVerifiedAt: sql`now()`,
         emailOptedIn: true,
+        betaAgreementAcceptedAt: sql`now()`,
+        betaAgreementVersion: BETA_AGREEMENT_VERSION,
       });
     }
   }
@@ -242,6 +247,8 @@ async function main() {
       name: `Dr. ${first} ${last}`,
       emailVerifiedAt: sql`now()`,
       emailOptedIn: true,
+      betaAgreementAcceptedAt: sql`now()`,
+      betaAgreementVersion: BETA_AGREEMENT_VERSION,
     });
   }
   console.log(`[seed] inserted ${odIds.length} ODs (16 verified, 4 pending)`);
@@ -254,6 +261,8 @@ async function main() {
     name: "NotifEyes Admin",
     emailVerifiedAt: sql`now()`,
     emailOptedIn: true,
+    betaAgreementAcceptedAt: sql`now()`,
+    betaAgreementVersion: BETA_AGREEMENT_VERSION,
   });
   console.log(`[seed] inserted admin user`);
 

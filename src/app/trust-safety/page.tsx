@@ -239,9 +239,9 @@ export default function TrustSafetyPage() {
             </table>
           </div>
           <p className="mt-3 text-xs text-ink-3">
-            {/* --TODO: legal review --- cancellation percentages and OD-cancel fees */}
-            Percentages are V1 placeholders pending legal + market review before
-            launch.
+            {/* --TODO: legal review --- severity thresholds + reliability-record policy */}
+            Severity thresholds and reliability-record policy are V1 placeholders
+            pending legal + market review before public launch.
           </p>
         </Container>
       </Section>

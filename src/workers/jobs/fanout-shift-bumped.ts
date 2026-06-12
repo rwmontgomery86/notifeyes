@@ -5,6 +5,7 @@ import { findOdsMatchingShift } from "@/lib/matching";
 import { dispatchNotification } from "@/lib/notifications";
 import { formatShiftWhen } from "@/lib/dates";
 import { formatUsd } from "@/lib/pricing";
+import { log } from "../log";
 
 export interface FanoutShiftBumpedData {
   shiftId: string;
@@ -26,19 +27,22 @@ export async function fanoutShiftBumped(
     .where(eq(shifts.id, data.shiftId))
     .limit(1);
   if (!row) {
-    console.warn(`[fanout-bump] shift ${data.shiftId} not found`);
+    log.warn("fanout_bump.shift_not_found", { shiftId: data.shiftId });
     return;
   }
   if (row.shift.status !== "posted") {
-    console.log(
-      `[fanout-bump] shift ${data.shiftId} is ${row.shift.status}, skipping`,
-    );
+    log.info("fanout_bump.skipped", {
+      shiftId: data.shiftId,
+      reason: "not_posted",
+      status: row.shift.status,
+    });
     return;
   }
   if (row.shift.bumpedAt == null) {
-    console.log(
-      `[fanout-bump] shift ${data.shiftId} has no bumpedAt, skipping`,
-    );
+    log.info("fanout_bump.skipped", {
+      shiftId: data.shiftId,
+      reason: "no_bumped_at",
+    });
     return;
   }
 
@@ -53,9 +57,11 @@ export async function fanoutShiftBumped(
   const already = new Set(alreadyRows.rows.map((r) => r.user_id));
   const delta = allMatches.filter((m) => !already.has(m.userId));
 
-  console.log(
-    `[fanout-bump] shift ${data.shiftId} → ${allMatches.length} total, ${delta.length} new`,
-  );
+  log.info("fanout_bump.matched", {
+    shiftId: data.shiftId,
+    total: allMatches.length,
+    fresh: delta.length,
+  });
   if (delta.length === 0) return;
 
   const effectiveRate =

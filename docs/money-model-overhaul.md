@@ -10,20 +10,25 @@
 **Status:** Phases A–D **and A3 merged to `main`** (A3 = PR #32). A3 is live in
 the codebase but **inert in prod** — `PAYMENTS_PROVIDER` stays `stub` and the
 Production-scope Stripe keys aren't set, so prod behavior is unchanged until the
-flag is flipped (go-live). Only **Phase E** remains unstarted.
-**Last touched:** 2026-06-10 — **A3 merged (PR #32)** and verified end-to-end on
-the Vercel preview (card saved via SetupIntent → $10 off_session hold → captured
-at attendance confirm). Same PR also: a fix so the Add-card form closes on
-success (it was stuck on "Saving…"), the **fee flattened to a flat $10** (was
-$9.99 regular / $19.99 same-day; the same-day premium is removed — env + all
-marketing/legal copy), and a spacing fix on the attendance-confirmed line.
-Migration `0005` confirmed applied to `notifeyes-prod`; `main` CI green; prod
-healthy and still on the stub.
-**Cursor (pick one to resume):** **A3 go-live** — code is merged; the remaining
-work is ops-only: set the Stripe keys in the **Production** scope (incl.
-`NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`) and flip `PAYMENTS_PROVIDER=stripe` (test
-first; **live keys gated on the business bank account**) · **or** **Phase E** —
-money clarity & trust polish (the last unstarted phase).
+flag is flipped (go-live). Only **Phase E** remains unstarted — and it is **ON
+HOLD as of 2026-06-12**, along with the A3 go-live flip: the first beta cohort
+won't be charged (launch-plan Decisions log 2026-06-12), so the stub stays and
+the money-clarity polish waits until charging actually turns on.
+**Last touched:** 2026-06-12 — **Phase E + A3 go-live put on hold** (first
+cohort runs free; settled in conversation, logged in the launch-plan Decisions
+log). Also: migration `0005`'s missing drizzle-ledger row was discovered and
+backfilled on prod (it had been applied by hand on 2026-06-10 — see the
+launch-plan 2026-06-12 incident entry). Prior update 2026-06-10: **A3 merged
+(PR #32)** and verified end-to-end on the Vercel preview (card saved via
+SetupIntent → $10 off_session hold → captured at attendance confirm), plus the
+Add-card form close fix, the **flat $10 fee** (same-day premium removed), and
+an attendance-copy spacing fix. `main` CI green; prod on the stub.
+**Cursor:** **ON HOLD.** Resume when the first-cohort-free period ends: pick up
+**A3 go-live** (ops-only: Production-scope Stripe keys incl.
+`NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, flip `PAYMENTS_PROVIDER=stripe`, test
+mode first; **live keys gated on the business bank account**), then **Phase E**
+— money clarity & trust polish; its remaining scope is in the carry-over notes
+below.
 
 > **Stacked PRs (done):** D4 (`claude/phase-d4-status-pings`) branched off
 > `claude/phase-d-concierge` for the `conciergeOptedIn` flag. Merged in order —
@@ -63,7 +68,7 @@ money clarity & trust polish (the last unstarted phase).
 | D | D2 — morning-of reminder w/ practice address (new worker job, OD) | ✅ merged | #30 |
 | D | D3 — .ics calendar invite on booking-confirmed (OD + practice) | ✅ merged | #30 |
 | D | D4 — status pings: OD shortlisted / passed / filled-elsewhere + practice no-applicants nudge | ✅ merged | #31 |
-| E | Money clarity & trust polish | ⬜ not started | — |
+| E | Money clarity & trust polish | ⏸ **on hold 2026-06-12** (first cohort not charged) | — |
 
 **Carry-over notes for the next session:**
 - **2026-06-12 QA sweep shrank Phase E's scope.** A full-app QA batch (see

@@ -5,6 +5,7 @@ import { findOdsMatchingShift } from "@/lib/matching";
 import { dispatchNotification } from "@/lib/notifications";
 import { formatShiftWhen } from "@/lib/dates";
 import { formatUsd } from "@/lib/pricing";
+import { log } from "../log";
 
 export interface FanoutShiftPostedData {
   shiftId: string;
@@ -27,18 +28,20 @@ export async function fanoutShiftPosted(
     .where(eq(shifts.id, data.shiftId))
     .limit(1);
   if (!row) {
-    console.warn(`[fanout] shift ${data.shiftId} not found`);
+    log.warn("fanout.shift_not_found", { shiftId: data.shiftId });
     return;
   }
   if (row.shift.status !== "posted") {
-    console.log(
-      `[fanout] shift ${data.shiftId} is ${row.shift.status}, skipping fanout`,
-    );
+    log.info("fanout.skipped", {
+      shiftId: data.shiftId,
+      reason: "not_posted",
+      status: row.shift.status,
+    });
     return;
   }
 
   const matches = await findOdsMatchingShift(data.shiftId);
-  console.log(`[fanout] shift ${data.shiftId} → ${matches.length} matching ODs`);
+  log.info("fanout.matched", { shiftId: data.shiftId, matches: matches.length });
 
   const effectiveRate =
     row.shift.bumpRateCentsPerHour ?? row.shift.rateCentsPerHour;

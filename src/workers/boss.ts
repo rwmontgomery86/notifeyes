@@ -1,5 +1,6 @@
 import PgBoss from "pg-boss";
 import { env } from "@/env";
+import { log } from "./log";
 
 let _boss: PgBoss | null = null;
 
@@ -11,7 +12,7 @@ export async function getBoss(): Promise<PgBoss> {
   // pool_size of 15 and trips EMAXCONNSESSION on startup. 5 + 5 = 10 leaves
   // headroom for Vercel's SSE listenPool, which shares the same session budget.
   const boss = new PgBoss({ connectionString: env.DATABASE_URL, max: 5 });
-  boss.on("error", (err) => console.error("[pg-boss]", err));
+  boss.on("error", (err) => log.error("pgboss.error", { err }));
   await boss.start();
   _boss = boss;
   return boss;
