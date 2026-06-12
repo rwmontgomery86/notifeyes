@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { SiteHeader } from "@/components/marketing/SiteHeader";
@@ -7,6 +8,11 @@ import { Section } from "@/components/marketing/Section";
 import { MarketingButton } from "@/components/marketing/MarketingButton";
 import { Chip } from "@/components/marketing/Chip";
 import { RoleBadge } from "@/components/marketing/RoleBadge";
+import {
+  CheckCircleIcon,
+  UserIcon,
+  UsersIcon,
+} from "@/components/marketing/icons";
 import { CompareTable } from "@/components/marketing/CompareTable";
 import { HomeHero } from "@/components/marketing/HomeHero";
 import {
@@ -48,8 +54,8 @@ export default async function HomePage({
     <div className="bg-paper text-ink min-h-screen">
       <SiteHeader activeKey="home" />
       <HomeHero />
-      <ShiftTicker state={detected} />
       <WhyBoth />
+      <ShiftTicker state={detected} />
       <WatchZoneSection />
       <Compare />
       <PricingTeaser />
@@ -146,71 +152,125 @@ function WhyBoth() {
   return (
     <Section>
       <Container>
-        <div className="mb-12 max-w-[720px]">
-          <div className="text-xs font-semibold uppercase tracking-[0.14em] text-rust">
-            Why both sides stay
-          </div>
-          <h2
-            className="font-display mt-3.5 text-[56px] md:text-[72px] font-medium leading-[1.05] text-ink"
-          >
-            Practices post. ODs watch. The match happens.
-          </h2>
-          <p className="mt-4 max-w-[580px] text-[19px] leading-[1.5] text-ink-2">
-            The thing that makes NotifEyes work for practices is the same thing
-            that makes it work for ODs: shifts go find the right person. The
-            person doesn&apos;t have to go find them.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <article className="rounded-card border border-rule bg-paper-card p-6">
-            <RoleBadge role="practice" />
-            <h3 className="font-display mt-3.5 text-[26px] text-ink">
-              Post once. The right ODs apply.
-            </h3>
-            <ul className="m-0 mt-4 flex list-none flex-col gap-2.5 p-0">
-              {[
-                ["Post in 90 seconds", "Pulls from your existing scheduler. Five fields, then publish."],
-                ["Vetted ODs only", "License + DEA + ID, all verified before they can apply."],
-                [`${MARKETING_MATCH_FEE_DISPLAY} per booked shift`, "Flat. No %, no markup, no agency middle-cut."],
-                ["Cancel policy, written down", "7-day, 48-hr, 4-hr tiers. We enforce them so you're not chasing anyone."],
-              ].map(([h, d]) => (
-                <li key={h} className="grid grid-cols-[16px_1fr] gap-3">
-                  <span className="mt-1.5 h-2 w-2 rounded-full bg-rust" />
-                  <span className="text-ink">
-                    <strong>{h}.</strong>{" "}
-                    <span className="text-sm text-ink-2">{d}</span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </article>
-
-          <article className="rounded-card border border-[#a8d5f0] bg-rust-soft p-6">
-            <RoleBadge role="od" />
-            <h3 className="font-display mt-3.5 text-[26px] text-ink">
-              Set zones once. The right shifts find you.
-            </h3>
-            <ul className="m-0 mt-4 flex list-none flex-col gap-2.5 p-0">
-              {[
-                ["Watch zones", "Draw where you would actually drive. Filter by day, rate, EHR."],
-                ["One-tap apply", "Read the contract in the app. Apply with a single tap."],
-                ["Free, always", "Zero fees on the OD side. Forever. You get 100% of the agreed rate."],
-                ["Paid directly, in full", "The practice pays your full rate straight to you — no platform cut, tracked on your dashboard."],
-              ].map(([h, d]) => (
-                <li key={h} className="grid grid-cols-[16px_1fr] gap-3">
-                  <span className="mt-1.5 h-2 w-2 rounded-full bg-rust" />
-                  <span className="text-ink">
-                    <strong>{h}.</strong>{" "}
-                    <span className="text-sm text-ink-2">{d}</span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </article>
+        <div className="relative grid gap-6 md:grid-cols-2 md:gap-10 lg:gap-14">
+          <AudienceFeatureCard side="practice" />
+          <CenterEmblem variant="inline" />
+          <AudienceFeatureCard side="od" />
+          <CenterEmblem variant="overlay" />
         </div>
       </Container>
     </Section>
+  );
+}
+
+function AudienceFeatureCard({ side }: { side: "practice" | "od" }) {
+  const isPractice = side === "practice";
+  const bullets: [string, string][] = isPractice
+    ? [
+        ["Post in 90 seconds", "Pulls from your existing scheduler. Five fields, then publish."],
+        ["Vetted ODs only", "License + DEA + ID, all verified before they can apply."],
+        [`${MARKETING_MATCH_FEE_DISPLAY} per booked shift`, "Flat. No %, no markup, no agency middle-cut."],
+        ["Cancel policy, written down", "7-day, 48-hr, 4-hr tiers. We enforce them so you're not chasing anyone."],
+      ]
+    : [
+        ["Watch zones", "Draw where you would actually drive. Filter by day, rate, EHR."],
+        ["One-tap apply", "Read the contract in the app. Apply with a single tap."],
+        ["Free, always", "Zero fees on the OD side. Forever. You get 100% of the agreed rate."],
+        ["Paid directly, in full", "The practice pays your full rate straight to you — no platform cut, tracked on your dashboard."],
+      ];
+  return (
+    <article
+      className={`flex flex-col rounded-2xl border p-6 lg:p-8 ${
+        isPractice
+          ? "border-rule bg-paper-card"
+          : "border-[#a8d5f0] bg-rust-soft md:pl-16 lg:pl-16"
+      }`}
+    >
+      <div className="flex items-center gap-2.5 text-rust">
+        {isPractice ? (
+          <UsersIcon className="h-5 w-5" />
+        ) : (
+          <UserIcon className="h-5 w-5" />
+        )}
+        <span className="text-xs font-semibold uppercase tracking-[0.14em]">
+          {isPractice ? "For practices" : "For optometrists"}
+        </span>
+      </div>
+      <h3 className="font-display mt-3.5 text-[26px] font-medium leading-[1.15] text-ink lg:text-[30px]">
+        {isPractice ? (
+          <>
+            Post once.
+            <br />
+            The right ODs apply.
+          </>
+        ) : (
+          <>
+            Set zones once.
+            <br />
+            The right shifts find you.
+          </>
+        )}
+      </h3>
+      <ul
+        className={`m-0 mt-5 flex list-none flex-col gap-3 p-0 ${
+          isPractice ? "md:pr-12" : ""
+        }`}
+      >
+        {bullets.map(([h, d]) => (
+          <li key={h} className="grid grid-cols-[20px_1fr] gap-3">
+            <CheckCircleIcon className="mt-0.5 h-5 w-5 text-sage" />
+            <span className="text-ink">
+              <strong>{h}.</strong>{" "}
+              <span className="text-sm text-ink-2">{d}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+      <div className="mt-auto pt-6">
+        <MarketingButton
+          href={isPractice ? "/signup?role=practice" : "/signup?role=od"}
+          variant="primary"
+          size="md"
+        >
+          {isPractice ? "I'm a practice" : "I'm an optometrist"} →
+        </MarketingButton>
+      </div>
+    </article>
+  );
+}
+
+function CenterEmblem({ variant }: { variant: "overlay" | "inline" }) {
+  const badge = (
+    <div className="relative flex h-24 w-24 items-center justify-center rounded-full border border-[rgba(30,155,227,0.6)] bg-white shadow-[0_8px_24px_rgba(27,42,78,0.14)]">
+      <Image
+        src="/notifeyes-mark.png"
+        alt=""
+        width={56}
+        height={56}
+        className="h-14 w-14 object-contain"
+      />
+      <span className="absolute right-1 top-1 h-3 w-3 rounded-full border-2 border-white bg-sage" />
+    </div>
+  );
+  if (variant === "inline") {
+    return (
+      <div aria-hidden="true" className="mx-auto -my-1 md:hidden">
+        {badge}
+      </div>
+    );
+  }
+  return (
+    <div
+      aria-hidden="true"
+      className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 md:block"
+    >
+      <div className="relative flex h-[150px] w-[150px] items-center justify-center rounded-full bg-paper">
+        <span className="absolute inset-3 rounded-full border border-[rgba(30,155,227,0.45)]" />
+        <span className="absolute left-1/2 top-[7px] h-2.5 w-2.5 -translate-x-1/2 rounded-full bg-rust" />
+        <span className="absolute bottom-[7px] left-1/2 h-2.5 w-2.5 -translate-x-1/2 rounded-full bg-rust" />
+        {badge}
+      </div>
+    </div>
   );
 }
 
