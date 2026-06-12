@@ -20,7 +20,7 @@ export function PayoutActions({ payoutId }: { payoutId: string }) {
         disabled={pending}
         className="ne-btn-ghost h-8 px-2 text-xs"
       >
-        Mark failed
+        Flag issue
       </button>
       <button
         onClick={() =>
@@ -32,7 +32,7 @@ export function PayoutActions({ payoutId }: { payoutId: string }) {
         disabled={pending}
         className="ne-btn h-8 px-2 text-xs"
       >
-        Mark sent
+        Mark paid
       </button>
     </div>
   );

@@ -17,7 +17,7 @@ const COLS: { heading: string; links: { label: string; href: string }[] }[] = [
     links: [
       { label: "About", href: "/about" },
       { label: "Help", href: "/help" },
-      { label: "Contact", href: "mailto:hello@notifeyes.local" },
+      { label: "Contact", href: "mailto:support@notifeyes.com" },
     ],
   },
   {

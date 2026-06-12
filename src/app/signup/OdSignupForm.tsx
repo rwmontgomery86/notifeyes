@@ -323,7 +323,7 @@ function Step3({
         moment your license is verified.
       </p>
       <ul className="ne-card text-sm space-y-2">
-        <li>· Browse and follow practices — <strong>unlocked now</strong></li>
+        <li>· Browse shifts and practices — <strong>unlocked now</strong></li>
         <li>· Draw watch zones, set rate floor — <strong>unlocked now</strong></li>
         <li>· Apply to a shift — <strong>unlocks after verification</strong></li>
       </ul>

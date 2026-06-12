@@ -1,9 +1,10 @@
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { practices, shifts } from "@/db/schema";
 import { ShiftForm } from "../../new/ShiftForm";
+import { isUuid } from "@/lib/uuid";
 
 export const metadata = { title: "Edit draft · NotifEyes" };
 export const dynamic = "force-dynamic";
@@ -31,6 +32,7 @@ export default async function EditShiftPage({
   const session = await auth();
   if (!session?.user.practiceId) redirect("/p/dashboard");
   const { id } = await params;
+  if (!isUuid(id)) notFound();
 
   const [row] = await db
     .select()

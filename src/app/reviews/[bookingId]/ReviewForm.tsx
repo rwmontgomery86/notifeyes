@@ -44,9 +44,11 @@ export function ReviewForm({
   );
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
 
   function submit() {
     setError(null);
+    setSaved(false);
     startTransition(async () => {
       const res = await submitReview({
         bookingId,
@@ -59,6 +61,7 @@ export function ReviewForm({
         setError(res.error ?? "Could not submit review");
         return;
       }
+      setSaved(true);
       router.refresh();
     });
   }
@@ -117,9 +120,18 @@ export function ReviewForm({
         </div>
       ) : null}
 
-      <div className="flex justify-end">
+      <div className="flex items-center justify-end gap-3">
+        {saved && !pending ? (
+          <span className="text-sm font-medium text-green-700">
+            Review saved.
+          </span>
+        ) : null}
         <button onClick={submit} disabled={pending} className="ne-btn">
-          {pending ? "Submitting…" : "Submit review"}
+          {pending
+            ? "Submitting…"
+            : existing || saved
+              ? "Update review"
+              : "Submit review"}
         </button>
       </div>
     </div>

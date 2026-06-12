@@ -19,7 +19,7 @@ export function SignupChoice() {
           <h2 className="mt-3 text-xl font-semibold">I&apos;m an OD</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             Pick shifts on your terms. Set a watch zone, get pinged when a
-            matching shift posts. Weekly payouts.
+            matching shift posts. Full rate, paid directly to you.
           </p>
           <p className="mt-4 text-sm font-medium text-primary">
             Continue as OD →

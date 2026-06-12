@@ -52,7 +52,9 @@ export default async function OdWelcomePage() {
   const hasLicenseDoc = !!me.licenseDocUrl;
   const hasWatchZone = watchZoneCount > 0;
 
-  const greetingName = me.displayName?.split(" ")[0] ?? me.name.split(" ")[0];
+  // The signup field says "as on your license", so names often arrive as
+  // "Dr. Jane Smith" — skip honorifics or the greeting reads "Welcome, Dr.."
+  const greetingName = firstNameFor(me.displayName ?? me.name);
 
   const steps: { done: boolean; title: string; body: React.ReactNode }[] = [
     {
@@ -181,4 +183,10 @@ export default async function OdWelcomePage() {
       </div>
     </div>
   );
+}
+
+function firstNameFor(fullName: string): string {
+  const parts = fullName.trim().split(/\s+/);
+  const first = parts.find((p) => !/^dr\.?$/i.test(p));
+  return first ?? parts[0] ?? "doctor";
 }

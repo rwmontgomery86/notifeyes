@@ -366,11 +366,7 @@ async function main() {
           startsAt,
           endsAt,
           lunchMinutes: 30,
-          confirmedAt: new Date(),
         });
-        const matchFeeDisplay = cost.sameDay
-          ? `${formatUsd(cost.feeCents)} (same-day)`
-          : formatUsd(cost.feeCents);
 
         const [b] = await db
           .insert(bookings)
@@ -395,8 +391,8 @@ async function main() {
           shiftStartsAt: startsAt,
           shiftEndsAt: endsAt,
           ratePerHour: formatUsd(rate * 100),
-          totalAmount: formatUsd(cost.totalCents),
-          matchFee: matchFeeDisplay,
+          wageAmount: formatUsd(cost.wageCents),
+          matchFee: formatUsd(cost.feeCents),
         });
 
         const [c] = await db

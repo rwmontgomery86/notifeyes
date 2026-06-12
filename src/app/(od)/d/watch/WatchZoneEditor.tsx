@@ -87,7 +87,7 @@ export function WatchZoneEditor({
       : ["fill_in", "half_day", "weekend"],
   );
   const [notifyChannels, setNotifyChannels] = useState<Channel[]>(
-    editZone?.notifyChannels ?? ["push", "email"],
+    editZone?.notifyChannels ?? ["email"],
   );
   // Plain state, NOT useTransition — the post-save router.push must not run
   // inside a transition or a concurrent re-render can silently discard the
@@ -622,15 +622,8 @@ export function WatchZoneEditor({
         </div>
         <div>
           <span className="ne-label">Notify me via</span>
+          {/* Web Push is deferred for beta (stub adapter) — don't offer a dead channel. */}
           <div className="mt-2 flex flex-wrap gap-3 text-sm">
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={notifyChannels.includes("push")}
-                onChange={() => toggleChannel("push")}
-              />
-              <span>Push</span>
-            </label>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"

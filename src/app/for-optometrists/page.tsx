@@ -40,7 +40,7 @@ const TIMELINE: { day: string; t: string; a: string; d: string }[] = [
     day: "Fri",
     t: "6:08 PM",
     a: "Paid",
-    d: "ACH initiated. $760 in your bank Monday. Review prompt in 2 hr.",
+    d: "Practice pays you $760 directly — full rate, no cut. Review prompt in 2 hr.",
   },
 ];
 
@@ -50,8 +50,8 @@ const FAQS: { q: string; a: string }[] = [
     a: "Zero. Forever. Practices pay $10 per match. ODs are always free, with no subscription and no payout cut.",
   },
   {
-    q: "How fast do payouts hit my bank?",
-    a: "ACH initiated 3 business days after shift completion. Visible on your payouts dashboard. V1 cohort uses manual ACH; V2 switches to Stripe Connect.",
+    q: "How do I get paid?",
+    a: "The practice pays you directly — check, direct deposit, Venmo, Zelle, whatever you two agree on. You get 100% of the agreed rate; NotifEyes never touches your money. Your dashboard tracks what each practice owes and when it was paid. Guaranteed in-app pay via Stripe Connect is on the V2 roadmap.",
   },
   {
     q: "Do I need malpractice insurance?",
@@ -63,7 +63,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "What about taxes / 1099?",
-    a: "We collect W-9 at payout setup. 1099-NEC issued by Jan 31. Manual the first season; automated by V2.",
+    a: "You're an independent contractor of the practice, and the practice pays you directly — so any 1099-NEC comes from the practice, not NotifEyes. Automated tax docs arrive with Stripe Connect in V2.",
   },
 ];
 
@@ -111,7 +111,7 @@ export default function ForOptometristsPage() {
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-4 text-[13px] text-ink-2">
               <span>✓ Free for ODs · always</span>
-              <span>✓ Weekly ACH payouts</span>
+              <span>✓ Paid directly by the practice</span>
               <span>✓ 100% of the agreed rate</span>
             </div>
           </div>
@@ -125,7 +125,7 @@ export default function ForOptometristsPage() {
           {[
             { n: "$0", l: "OD fees · forever" },
             { n: "100%", l: "of the agreed rate · paid" },
-            { n: "3 days", l: "ACH after shift completion" },
+            { n: "Direct", l: "the practice pays you, no middleman" },
             { n: "< 10s", l: "from shift post to your phone" },
           ].map((s) => (
             <div key={s.l}>

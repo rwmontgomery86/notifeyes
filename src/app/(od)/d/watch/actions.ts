@@ -94,7 +94,7 @@ export async function createWatchZone(input: z.infer<typeof createSchema>) {
 
   const daysOfWeek = v.daysOfWeek ?? [0, 1, 2, 3, 4, 5, 6];
   const shiftTypes = v.shiftTypes ?? ["fill_in", "half_day", "weekend"];
-  const notifyChannels = v.notifyChannels ?? ["push", "email"];
+  const notifyChannels = v.notifyChannels ?? ["email"];
 
   await db.execute(sql`
     INSERT INTO watch_zones (od_id, name, shape, geometry, geometry_meta, min_rate_cents, days_of_week, shift_types, notify_channels)
@@ -140,7 +140,7 @@ export async function updateWatchZone(
 
   const daysOfWeek = v.daysOfWeek ?? [0, 1, 2, 3, 4, 5, 6];
   const shiftTypes = v.shiftTypes ?? ["fill_in", "half_day", "weekend"];
-  const notifyChannels = v.notifyChannels ?? ["push", "email"];
+  const notifyChannels = v.notifyChannels ?? ["email"];
 
   // `paused` is deliberately untouched — editing a paused zone keeps it paused.
   await db.execute(sql`

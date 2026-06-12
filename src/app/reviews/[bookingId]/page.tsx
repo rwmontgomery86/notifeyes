@@ -12,6 +12,7 @@ import {
 import { auth } from "@/lib/auth";
 import { formatShiftWhen } from "@/lib/dates";
 import { ReviewForm } from "./ReviewForm";
+import { isUuid } from "@/lib/uuid";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,7 @@ export default async function ReviewPromptPage({
   params: Promise<{ bookingId: string }>;
 }) {
   const { bookingId } = await params;
+  if (!isUuid(bookingId)) notFound();
   const session = await auth();
   if (!session?.user) redirect("/login");
 
@@ -96,6 +98,14 @@ export default async function ReviewPromptPage({
         Reviews stay blind for 7 days or until the counterparty also submits.
         You can&apos;t edit once you publish.
       </p>
+
+      {existing ? (
+        <div className="mt-4 rounded-md border border-green-500/30 bg-green-50/40 px-3 py-2 text-sm text-green-900">
+          <span className="font-medium">✓ Review submitted.</span> It stays
+          blind until the other side reviews too (or 7 days pass). You can
+          update it below until it publishes.
+        </div>
+      ) : null}
 
       <ReviewForm
         bookingId={bookingId}

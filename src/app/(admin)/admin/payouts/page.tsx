@@ -37,10 +37,12 @@ export default async function AdminPayoutsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Manual payouts</h1>
+      <h1 className="text-2xl font-bold">Wage tracking</h1>
       <p className="mt-1 text-muted-foreground">
-        V1 payouts settle by ACH outside the platform. Mark each one sent here
-        after pushing the transfer.
+        Fee-only model: each practice pays its OD&apos;s wage directly —
+        NotifEyes never moves it. This queue tracks those wages. Mark one paid
+        once the practice confirms, and it shows as paid on the OD&apos;s
+        payouts dashboard.
       </p>
 
       <h2 className="mt-8 text-lg font-semibold">Due now ({dueNow.length})</h2>
@@ -62,10 +64,8 @@ export default async function AdminPayoutsPage() {
                   · {formatShiftWhen(shift.startsAt, shift.endsAt)}
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">
-                  Payout method:{" "}
-                  {od.payoutMethod && typeof od.payoutMethod === "object"
-                    ? `${(od.payoutMethod as { kind?: string }).kind ?? "manual_ach"} ${(od.payoutMethod as { bankLast4?: string }).bankLast4 ? `(…${(od.payoutMethod as { bankLast4: string }).bankLast4})` : ""}`
-                    : "Not configured yet"}
+                  Paid directly by the practice — wage never routes through
+                  NotifEyes.
                 </div>
               </div>
               <div className="text-right">

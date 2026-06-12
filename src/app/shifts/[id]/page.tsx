@@ -9,6 +9,7 @@ import { formatShiftWhen, relativeTime } from "@/lib/dates";
 import { ApplyButton } from "./ApplyButton";
 import { ApplicationStatusCard } from "./ApplicationStatusCard";
 import { InviteResponse } from "./InviteResponse";
+import { isUuid } from "@/lib/uuid";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,7 @@ export default async function ShiftDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  if (!isUuid(id)) notFound();
 
   const [row] = await db
     .select({
@@ -45,7 +47,6 @@ export default async function ShiftDetailPage({
     startsAt: row.shift.startsAt,
     endsAt: row.shift.endsAt,
     lunchMinutes: row.shift.lunchMinutes,
-    urgent: row.shift.urgent,
   });
 
   let existingApplication:
