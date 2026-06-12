@@ -122,6 +122,13 @@ export const users = pgTable(
     // Opt-in for "concierge" extras (morning-of reminders w/ address, .ics
     // calendar invites) on top of the default key-moment alerts. Off by default.
     conciergeOptedIn: boolean("concierge_opted_in").default(false).notNull(),
+    // Closed-beta participant agreement (/legal/beta-agreement): accepted via a
+    // required click-through checkbox at signup. Null on accounts that predate
+    // the agreement — enforcement is signup-only (Decisions log 2026-06-12).
+    betaAgreementAcceptedAt: timestamp("beta_agreement_accepted_at", {
+      withTimezone: true,
+    }),
+    betaAgreementVersion: varchar("beta_agreement_version", { length: 32 }),
     passwordHash: text("password_hash"),
     role: userRoleEnum("role").notNull(),
     practiceId: uuid("practice_id"),

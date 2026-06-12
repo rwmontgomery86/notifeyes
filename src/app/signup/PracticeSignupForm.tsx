@@ -53,6 +53,23 @@ export function PracticeSignupForm() {
           </div>
         ) : null}
 
+        <label className="flex items-start gap-2 text-xs text-muted-foreground">
+          <input type="checkbox" name="betaAgreement" required className="mt-0.5" />
+          <span>
+            I agree to the{" "}
+            <a
+              href="/legal/beta-agreement"
+              target="_blank"
+              rel="noreferrer"
+              className="underline"
+            >
+              Beta Participant Agreement
+            </a>{" "}
+            — NotifEyes is in closed beta; features, fees, and policies may
+            change.
+          </span>
+        </label>
+
         <div className="pt-2">
           <button type="submit" className="ne-btn" disabled={pending}>
             {pending ? "Creating account…" : "Create account"}
@@ -61,7 +78,15 @@ export function PracticeSignupForm() {
 
         <p className="text-xs text-muted-foreground">
           {/* --TODO: legal review --- terms acknowledgement copy */}
-          By creating an account you agree to NotifEyes&apos;s Terms and Privacy Policy.
+          By creating an account you agree to NotifEyes&apos;s{" "}
+          <a href="/legal/terms" target="_blank" rel="noreferrer" className="underline">
+            Terms
+          </a>{" "}
+          and{" "}
+          <a href="/legal/privacy" target="_blank" rel="noreferrer" className="underline">
+            Privacy Policy
+          </a>
+          .
         </p>
       </form>
     </div>

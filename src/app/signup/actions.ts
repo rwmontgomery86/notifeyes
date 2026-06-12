@@ -7,6 +7,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { optometrists, practices, users } from "@/db/schema";
 import { signIn } from "@/lib/auth";
+import { BETA_AGREEMENT_VERSION } from "@/lib/beta-agreement";
 import { geocoder } from "@/lib/geocode";
 import { uploadFile } from "@/lib/upload-server";
 
@@ -14,6 +15,12 @@ const baseSchema = z.object({
   name: z.string().min(2).max(200),
   email: z.string().email().transform((v) => v.toLowerCase()),
   password: z.string().min(8).max(200),
+  // Closed-beta click-through (Decisions log 2026-06-12): required at signup,
+  // recorded on the user row. `unknown` so a missing checkbox still produces
+  // this message rather than a generic "Required".
+  betaAgreement: z.unknown().refine((v) => v === "on", {
+    message: "Please accept the Beta Participant Agreement.",
+  }),
 });
 
 const practiceSignupSchema = baseSchema.extend({
@@ -95,6 +102,8 @@ export async function signupPractice(formData: FormData): Promise<SignupResult> 
       // actually gets applicant/booking notifications (and can post without
       // first detouring to Settings to enable a channel). Tunable in Settings.
       emailOptedIn: true,
+      betaAgreementAcceptedAt: sql`now()`,
+      betaAgreementVersion: BETA_AGREEMENT_VERSION,
     });
   });
 
@@ -166,6 +175,8 @@ export async function signupOd(formData: FormData): Promise<SignupResult> {
       // gets watch-zone pings (and can create a zone without first detouring to
       // the profile to enable a channel). Tunable in their profile.
       emailOptedIn: true,
+      betaAgreementAcceptedAt: sql`now()`,
+      betaAgreementVersion: BETA_AGREEMENT_VERSION,
     });
   });
 

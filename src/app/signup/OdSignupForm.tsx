@@ -19,6 +19,7 @@ export function OdSignupForm() {
     licenseNumber: "",
   });
   const [licenseDoc, setLicenseDoc] = useState<File | null>(null);
+  const [agreedToBeta, setAgreedToBeta] = useState(false);
 
   function next() {
     setError(null);
@@ -37,6 +38,7 @@ export function OdSignupForm() {
     const fd = new FormData();
     Object.entries(form).forEach(([k, v]) => fd.append(k, v));
     if (licenseDoc) fd.append("licenseDoc", licenseDoc);
+    if (agreedToBeta) fd.append("betaAgreement", "on");
     startTransition(async () => {
       const res = await signupOd(fd);
       if (!res.ok) {
@@ -101,7 +103,13 @@ export function OdSignupForm() {
           setError={setError}
         />
       ) : (
-        <Step3 onSubmit={submit} onBack={back} pending={pending} />
+        <Step3
+          onSubmit={submit}
+          onBack={back}
+          pending={pending}
+          agreed={agreedToBeta}
+          setAgreed={setAgreedToBeta}
+        />
       )}
     </div>
   );
@@ -309,10 +317,14 @@ function Step3({
   onSubmit,
   onBack,
   pending,
+  agreed,
+  setAgreed,
 }: {
   onSubmit: () => void;
   onBack: () => void;
   pending: boolean;
+  agreed: boolean;
+  setAgreed: (v: boolean) => void;
 }) {
   return (
     <div className="grid gap-4">
@@ -327,11 +339,37 @@ function Step3({
         <li>· Draw watch zones, set rate floor — <strong>unlocked now</strong></li>
         <li>· Apply to a shift — <strong>unlocks after verification</strong></li>
       </ul>
+      <label className="flex items-start gap-2 text-xs text-muted-foreground">
+        <input
+          type="checkbox"
+          checked={agreed}
+          onChange={(e) => setAgreed(e.target.checked)}
+          className="mt-0.5"
+        />
+        <span>
+          I agree to the{" "}
+          <a
+            href="/legal/beta-agreement"
+            target="_blank"
+            rel="noreferrer"
+            className="underline"
+          >
+            Beta Participant Agreement
+          </a>{" "}
+          — NotifEyes is in closed beta; features, fees, and policies may
+          change.
+        </span>
+      </label>
       <div className="flex justify-between">
         <button type="button" className="ne-btn-secondary" onClick={onBack} disabled={pending}>
           Back
         </button>
-        <button type="button" className="ne-btn" onClick={onSubmit} disabled={pending}>
+        <button
+          type="button"
+          className="ne-btn"
+          onClick={onSubmit}
+          disabled={pending || !agreed}
+        >
           {pending ? "Creating account…" : "Create account"}
         </button>
       </div>

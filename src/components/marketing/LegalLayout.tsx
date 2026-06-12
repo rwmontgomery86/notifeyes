@@ -4,13 +4,19 @@ import { SiteHeader } from "./SiteHeader";
 import { SiteFooter } from "./SiteFooter";
 import { Container } from "./Container";
 
-export type LegalDoc = "terms" | "privacy" | "cookies" | "acceptable-use";
+export type LegalDoc =
+  | "terms"
+  | "privacy"
+  | "cookies"
+  | "acceptable-use"
+  | "beta-agreement";
 
 const DOCS: { slug: LegalDoc; label: string; href: string }[] = [
   { slug: "terms", label: "Terms of Service", href: "/legal/terms" },
   { slug: "privacy", label: "Privacy Policy", href: "/legal/privacy" },
   { slug: "cookies", label: "Cookie policy", href: "/legal/cookies" },
   { slug: "acceptable-use", label: "Acceptable use", href: "/legal/acceptable-use" },
+  { slug: "beta-agreement", label: "Beta agreement", href: "/legal/beta-agreement" },
 ];
 
 export function LegalLayout({

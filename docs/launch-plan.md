@@ -6,34 +6,30 @@
 > resume. When work lands, the commit that lands it must also tick the
 > checkbox here and bump `Last touched`.
 
-**Last touched:** 2026-06-12 (side-quest QA sweep landed — fee-only
-copy/contract alignment + bug-fix batch, see Decisions log 2026-06-12; cursor
-unchanged. Phase-1 status as of 2026-05-30: alert pipeline **PROVEN end-to-end
-in prod.** Ross ran the watch-zone smoke: real OD → Bay Area watch zone → shift
-posted by the seeded practice → OD received the **in-app notification + a real
-email** from notifications@notifeyes.com. Railway worker confirmed online
-(listening on all 8 queues; `DATABASE_URL` on the session pooler/5432, not the
-txn pooler; `AUTH_SECRET` present). **LLC cleared + EIN received** (business bank
-account this week) — Stripe is now live-capable. One transient `EMAXCONNSESSION`
-(session `pool_size: 15`) hit on worker startup and self-recovered; root-caused
-to pg-boss's default pool (10) + the Drizzle pool (5) = 15, and **fixed** by
-capping pg-boss at 5 in `boss.ts`. Still open on Phase 1: Stripe Payment Element
-checkout (held), Twilio activation (compliance pending) + the SMS leg of the
-smoke. Earlier today: #16 Sentry + #17 PostHog verified live, #18 Stripe
-foundational adapter merged, #23 `/api/health` shipped.)
-**Cursor:** Phase 1 plumbing — final leg. RESUME HERE: all integrations merged +
-deployed; worker running; **e2e alert smoke passed (in-app + email)**; LLC + EIN
-cleared. Remaining on Phase 1:
-1. **Twilio activation** (compliance pending) → buy a US number → set the 3
-   `TWILIO_*` vars on **both** Vercel + Railway (no code) → re-run the **SMS leg**
-   of the smoke. The last unverified channel; in-app + email already proven.
-2. **Stripe Payment Element checkout** (held) — the card step so a real
-   test-mode PaymentIntent authorizes + captures, then flip
-   `PAYMENTS_PROVIDER=stripe`. Live mode is now **unblocked** (LLC + EIN cleared)
-   but gate the flip on the checkout UI existing. **Live keys go on Vercel only**
-   — the worker doesn't touch Stripe.
-3. **Point an uptime monitor** (UptimeRobot/BetterStack) at
-   `https://notifeyes.com/api/health` (Phase 2 — endpoint is ready).
+**Last touched:** 2026-06-12 (**Phase 2 batch landed**: beta participant
+agreement (`/legal/beta-agreement` + signup click-through, migration `0009`),
+worker logs → structured JSON, legal-TODO inventory (one stale trust-safety
+footnote fixed), worker-health box closed via #23's `/api/health`. **Prod
+incident found + fixed in the same session:** migration 0008
+(`password_resets`) was never applied while the reset flow was live → applied
+via Supabase + drizzle ledger backfilled (incl. 0005's hand-apply gap).
+Decisions settled: first beta cohort not charged (Phase E held, Stripe flip
+parked), BetterStack for the monitor, CI-branch-DB deferred past beta. See
+the seven Decisions log entries dated 2026-06-12.)
+**Cursor:** Phase 2 remainder. Phase 1 is blocked on externals only: **Twilio
+activation** (compliance pending → buy a US number → set the 3 `TWILIO_*` vars
+on **both** Vercel + Railway → re-run the SMS smoke leg). The **Stripe flag
+flip is parked** by the 2026-06-12 no-charge decision — the stub charges
+nothing, which is correct for the first cohort; flip later in beta when
+charging starts (live keys on Vercel only). RESUME HERE:
+1. **Point BetterStack at `/api/health`** (Ross ops) — keyword monitor, alert
+   when `"status":"ok"` is absent, 3-min interval; full config in the
+   2026-06-12 Decisions entry. Ticks the Phase-2 health box.
+2. **Verify Supabase backup/PITR** by restoring to a fresh project (dashboard
+   ops; mind the second project's compute cost — delete it after the check).
+3. **Apply migration 0009 to prod** when the beta-agreement PR deploys —
+   the ledger is now clean, so `db:migrate` applies exactly 0009.
+Then Phase 3 prep: the beta cohort list (open question).
 **Pooler rule stands:** SSE `LISTEN` + pg-boss on the session pooler (5432);
 query pool on the transaction pooler (6543) via `DATABASE_URL_POOLED`.
 
@@ -434,6 +430,62 @@ old one; do not edit history.
   worker boots all 10 queues. Deferred from the QA report: forgot-password
   flow (spun off), practice-side "mark wage paid" loop (feature), marketing
   mobile nav.
+- **2026-06-12** **First beta cohort will not be charged** (settled in
+  conversation). The platform keeps `PAYMENTS_PROVIDER=stub` in prod (charges
+  nothing) for the initial hand-picked users; the Stripe flag flip + live keys
+  are **parked**, and money-model **Phase E (money clarity & trust polish) is
+  held**. Partially supersedes the 2026-05-27 "real money in $1–5
+  denominations" decision: the full Stripe flow still gets exercised with real
+  money later in beta, before any wider rollout — just not with the first
+  cohort.
+- **2026-06-12** **Beta participant agreement shipped** (Phase 2). Page at
+  `/legal/beta-agreement` (in the LegalLayout doc nav, `v1.0-beta`) with the
+  "beta, things change, no recourse for pre-exit changes" + fees-may-be-waived
+  language. Enforcement = **signup checkbox only** (settled in conversation;
+  hard-gate and banner rejected — accounts predating the agreement are Ross's
+  own test accounts). Acceptance recorded on `users`
+  (`beta_agreement_accepted_at` + `beta_agreement_version`, migration
+  `0009`); both signup forms require the checkbox and the action validates it;
+  seeds pre-accept so fixtures stay e2e-safe. Signup Terms/Privacy mentions are
+  now real links.
+- **2026-06-12** **Worker logging → structured JSON** (Phase 2). New
+  `src/workers/log.ts` (single-line JSON: `ts`/`level`/`event` + fields,
+  Error-flattening); all `console.*` in `src/workers/**` converted (boss
+  errors, job failures with queue+jobId, per-job events). Deliberately scoped
+  to the worker — shared modules (notification channels, `queue.ts`) keep
+  plain logs since they also run on Vercel.
+- **2026-06-12** **Legal-TODO inventory done** (Phase 2). All 11
+  `--TODO: legal review` markers audited against the fee-only model: one was
+  stale (trust-safety cancellation footnote said "percentages are placeholders"
+  under a table with no percentages — reworded to severity thresholds); the
+  other 10 are accurate as written and **stay deliberately** as
+  attorney-review breadcrumbs for the pre-public-launch pass (env/pricing/
+  format fee amount, contract v0.2-stub body, cancellation thresholds,
+  LegalTodo banner, signup ack copy, billing tax copy, booking click-through).
+  The beta agreement is the umbrella that makes them safe to ship in beta.
+- **2026-06-12** Uptime monitor: **BetterStack** (over UptimeRobot — 3-min vs
+  5-min checks, status page + phone alerts on free tier). Config: HTTP keyword
+  monitor on `https://notifeyes.com/api/health`, alert when **`"status":"ok"`
+  is absent** (catches the 200-but-degraded worker-stale case, not just 503),
+  3-min interval, alerts to rosswmont@notifeyes.com. Account signup is Ross
+  ops; the Phase-2 health box ticks when the monitor is live.
+- **2026-06-12** CI against a Supabase branch DB: **deferred past beta**. The
+  `postgis/postgis:16-3.4` service container in CI is sufficient parity at
+  beta scale; branching would add an access-token secret, per-PR
+  branch-lifecycle plumbing, and CI flakiness for marginal gain. Revisit only
+  if a prod-only schema bug ever slips past CI.
+- **2026-06-12** **Prod migration incident found + fixed.** While verifying
+  prod state for the Phase 2 batch: migration **0008 (`password_resets`) had
+  never been applied** to `notifeyes-prod`, while the password-reset UI from
+  this morning's merge was already live — the flow 500'd on submit. Also
+  found: **0005 was applied by hand** on 2026-06-10 without its drizzle ledger
+  row (columns exist, ledger silent). Fixed 2026-06-12: applied 0008 via the
+  Supabase connection (idempotent SQL) and **backfilled the ledger rows for
+  0005 + 0008** (sha256 of the SQL files + the journal's `when` values).
+  Verified: table + 3 indexes exist, ledger has 9 rows, high-water mark =
+  0008 — a future `db:migrate` applies exactly 0009+. *Lesson: apply prod
+  migrations via `npm run db:migrate` (it writes the ledger), not by pasting
+  SQL; and check the ledger, not just the columns, when confirming "applied".*
 
 ---
 
@@ -516,20 +568,33 @@ old one; do not edit history.
       commitments.
 
 ### Code + config (Claude)
-- [ ] Draft `/legal/beta-agreement` page with click-through accept and
+- [x] Draft `/legal/beta-agreement` page with click-through accept and
       "beta, things change, no recourse for changes made before exit-of-
-      beta" language.
+      beta" language. _Shipped 2026-06-12: page (`v1.0-beta`) + required
+      signup checkbox on both forms, acceptance recorded on `users`
+      (migration `0009` — apply to prod at deploy). Enforcement =
+      signup-only per the Decisions log._
 - [ ] Verify Supabase backup + PITR by restoring to a fresh project.
 - [ ] `/api/health` endpoint + UptimeRobot or BetterStack monitor. _Endpoint
       **shipped (#23)** — reports DB + pg-boss worker liveness; returns 503 when
-      the DB is down. Just needs an external monitor pointed at it to tick._
-- [ ] Worker health: surface pg-boss queue depth + last-job-completed
-      timestamp.
-- [ ] Address every `--TODO: legal review` marker in the codebase.
+      the DB is down. **BetterStack chosen 2026-06-12** (config in the Decisions
+      entry); ticks when the monitor is live._
+- [x] Worker health: surface pg-boss queue depth + last-job-completed
+      timestamp. _Satisfied by `/api/health` (#23): `checks.worker` reports
+      `queued`/`active` counts + `lastJobCompletedAt` with a 15-min freshness
+      verdict._
+- [x] Address every `--TODO: legal review` marker in the codebase.
       Resolve or wrap in feature flag so beta doesn't hit unresolved
-      decisions.
-- [ ] Tighten worker logging to JSON for Railway log search.
+      decisions. _Inventoried 2026-06-12 (Decisions log): one stale footnote
+      fixed; the other 10 markers are accurate as written and stay as
+      attorney breadcrumbs — the beta agreement is the umbrella covering them
+      for beta._
+- [x] Tighten worker logging to JSON for Railway log search. _Shipped
+      2026-06-12: `src/workers/log.ts` + full `src/workers/**` sweep; shared
+      channel modules deliberately left plain (they run on Vercel too)._
 - [ ] CI runs against a Supabase branch DB (Pro tier supports this).
+      _**Deferred past beta** (Decisions log 2026-06-12) — the PostGIS
+      service container is sufficient parity at beta scale._
 
 ---
 
@@ -564,6 +629,8 @@ previous step has slipped at least once on every project ever — use it.
   (2026-06-12) caps requests per *account* (3/hour, in
   `src/lib/password-reset.ts`), but nothing stops cycling different emails
   through the form; that needs middleware- or infra-level limiting by IP.
+- CI against a Supabase branch DB → after beta (Decisions log 2026-06-12).
+  The `postgis/postgis:16-3.4` CI container is sufficient parity for now.
 
 ---
 
@@ -606,7 +673,7 @@ env vars.
 | LLC delay blocks Stripe live mode | open | Stripe test mode in parallel; switch keys when ready |
 | Email deliverability (DKIM not propagated) | open | DKIM/SPF/DMARC on day 1 of Phase 1; verify via mail-tester.com |
 | Repo is public, secrets risk | open | Audit before Phase 1 commits; consider going private |
-| `--TODO: legal review` markers ship live | open | Inventory at start of Phase 2; resolve or feature-flag each |
+| `--TODO: legal review` markers ship live | mitigated 2026-06-12 | Inventoried: all 11 audited, one stale footnote fixed, rest accurate + kept for the attorney pass. Beta agreement (`/legal/beta-agreement`, accepted at signup) is the umbrella. Full resolution = pre-public-launch legal review. |
 | Sentry/PostHog leak PII | open | Audit `beforeSend` + autocapture config during Phase 1 wiring |
 | Worker on Railway killed → jobs stuck | open | pg-boss is resilient (jobs persist in PG); set Railway healthcheck to restart |
 | Beta user disputes a $5 charge with no legal docs | open | Beta participant agreement + instant-refund policy |
