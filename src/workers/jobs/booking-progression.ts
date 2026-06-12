@@ -19,6 +19,7 @@ import { and, eq, inArray, lte, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { bookings, shifts } from "@/db/schema";
 import { getBoss } from "../boss";
+import { log } from "../log";
 
 const QUEUE_BOOKING_COMPLETED = "booking-completed-followups";
 
@@ -41,7 +42,7 @@ export async function advanceBookings(): Promise<void> {
       .update(bookings)
       .set({ status: "in_progress" })
       .where(inArray(bookings.id, toInProgress.map((b) => b.id)));
-    console.log(`[booking-progression] confirmed → in_progress · ${toInProgress.length}`);
+    log.info("booking_progression.in_progress", { count: toInProgress.length });
   }
 
   // Find bookings whose shift has ended — move to completed.
@@ -76,7 +77,7 @@ export async function advanceBookings(): Promise<void> {
           ).map((r) => r.shiftId),
         ),
       );
-    console.log(`[booking-progression] → completed · ${toCompleted.length}`);
+    log.info("booking_progression.completed", { count: toCompleted.length });
 
     // Enqueue follow-ups (review prompts + payout) with a 2-hour delay.
     const boss = await getBoss();

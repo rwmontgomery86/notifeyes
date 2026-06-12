@@ -25,6 +25,7 @@ import {
 } from "@/db/schema";
 import { dispatchNotification } from "@/lib/notifications";
 import { formatShiftWhen } from "@/lib/dates";
+import { log } from "../log";
 
 type Window = "24h" | "1h";
 
@@ -122,9 +123,10 @@ export async function shiftRemindersScan(): Promise<void> {
     }
 
     if (candidates.length) {
-      console.log(
-        `[shift-reminders] window=${w.window} · ${candidates.length} booking(s)`,
-      );
+      log.info("shift_reminders.scanned", {
+        window: w.window,
+        bookings: candidates.length,
+      });
     }
   }
 }

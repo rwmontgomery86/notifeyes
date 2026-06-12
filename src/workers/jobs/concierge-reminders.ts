@@ -27,6 +27,7 @@ import {
 import { dispatchNotification } from "@/lib/notifications";
 import { formatShiftWhen } from "@/lib/dates";
 import { formatAddress } from "@/lib/address";
+import { log } from "../log";
 
 const WINDOW = "morning_of";
 
@@ -95,6 +96,6 @@ export async function conciergeRemindersScan(): Promise<void> {
   }
 
   if (candidates.length) {
-    console.log(`[concierge-reminders] scanned ${candidates.length} candidate(s)`);
+    log.info("concierge_reminders.scanned", { candidates: candidates.length });
   }
 }

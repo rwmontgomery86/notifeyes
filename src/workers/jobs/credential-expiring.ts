@@ -14,6 +14,7 @@ import { and, eq, isNotNull, lte, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { notifications, optometrists, users } from "@/db/schema";
 import { dispatchNotification } from "@/lib/notifications";
+import { log } from "../log";
 
 export async function credentialExpiringScan(): Promise<void> {
   const candidates = await db
@@ -82,8 +83,6 @@ export async function credentialExpiringScan(): Promise<void> {
   }
 
   if (candidates.length) {
-    console.log(
-      `[credential-expiring] scanned ${candidates.length} OD(s) with licenses within 30 days`,
-    );
+    log.info("credential_expiring.scanned", { ods: candidates.length });
   }
 }

@@ -15,6 +15,7 @@ import { db } from "@/db";
 import { notifications, shifts, users } from "@/db/schema";
 import { dispatchNotification } from "@/lib/notifications";
 import { formatShiftWhen } from "@/lib/dates";
+import { log } from "../log";
 
 export async function shiftUnfilledNudgeScan(): Promise<void> {
   const candidates = await db
@@ -67,6 +68,6 @@ export async function shiftUnfilledNudgeScan(): Promise<void> {
   }
 
   if (candidates.length) {
-    console.log(`[shift-unfilled-nudge] scanned ${candidates.length} candidate(s)`);
+    log.info("shift_unfilled_nudge.scanned", { candidates: candidates.length });
   }
 }
