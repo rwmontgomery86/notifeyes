@@ -57,6 +57,13 @@
       "when": 1781169457202,
       "tag": "0007_typical_the_fallen",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1781253107965,
+      "tag": "0008_powerful_quasimodo",
+      "breakpoints": true
     }
   ]
 }

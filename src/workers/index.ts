@@ -31,6 +31,7 @@ import { shiftRemindersScan } from "./jobs/shift-reminders";
 import { conciergeRemindersScan } from "./jobs/concierge-reminders";
 import { shiftUnfilledNudgeScan } from "./jobs/shift-unfilled-nudge";
 import { credentialExpiringScan } from "./jobs/credential-expiring";
+import { purgePasswordResets } from "./jobs/purge-password-resets";
 
 const QUEUE_FANOUT = "fanout-shift-posted";
 const QUEUE_FANOUT_BUMPED = "fanout-shift-bumped";
@@ -42,6 +43,7 @@ const QUEUE_SHIFT_REMINDERS = "shift-reminders";
 const QUEUE_CONCIERGE_REMINDERS = "concierge-reminders";
 const QUEUE_SHIFT_UNFILLED = "shift-unfilled-nudge";
 const QUEUE_CREDENTIAL_EXPIRING = "credential-expiring";
+const QUEUE_PURGE_PASSWORD_RESETS = "purge-password-resets";
 
 async function main() {
   const boss = await getBoss();
@@ -55,6 +57,7 @@ async function main() {
   await boss.createQueue(QUEUE_CONCIERGE_REMINDERS);
   await boss.createQueue(QUEUE_SHIFT_UNFILLED);
   await boss.createQueue(QUEUE_CREDENTIAL_EXPIRING);
+  await boss.createQueue(QUEUE_PURGE_PASSWORD_RESETS);
 
   await boss.work<FanoutShiftPostedData>(
     QUEUE_FANOUT,
@@ -128,6 +131,9 @@ async function main() {
   await boss.work(QUEUE_CREDENTIAL_EXPIRING, async () => {
     await credentialExpiringScan();
   });
+  await boss.work(QUEUE_PURGE_PASSWORD_RESETS, async () => {
+    await purgePasswordResets();
+  });
 
   // Schedule the review cron hourly. pg-boss schedule accepts cron syntax.
   await boss.schedule(QUEUE_REVIEW_CRON, "0 * * * *", {});
@@ -144,6 +150,8 @@ async function main() {
   await boss.schedule(QUEUE_SHIFT_UNFILLED, "0 * * * *", {});
   // Credential expiration check daily at 9am.
   await boss.schedule(QUEUE_CREDENTIAL_EXPIRING, "0 9 * * *", {});
+  // Purge unredeemable password-reset rows daily (kept 24h past expiry).
+  await boss.schedule(QUEUE_PURGE_PASSWORD_RESETS, "30 3 * * *", {});
 
   // Kick once on startup so first run doesn't wait.
   await Promise.all([
@@ -153,10 +161,11 @@ async function main() {
     boss.send(QUEUE_CONCIERGE_REMINDERS, {}),
     boss.send(QUEUE_SHIFT_UNFILLED, {}),
     boss.send(QUEUE_CREDENTIAL_EXPIRING, {}),
+    boss.send(QUEUE_PURGE_PASSWORD_RESETS, {}),
   ]);
 
   console.log(
-    `[worker] listening on: ${QUEUE_FANOUT}, ${QUEUE_FANOUT_BUMPED}, ${QUEUE_BOOKING_COMPLETED}, ${QUEUE_REVIEW_CRON} (cron), ${QUEUE_BOOKING_PROGRESSION} (cron), ${QUEUE_NO_SHOW_CHECK} (cron), ${QUEUE_SHIFT_REMINDERS} (cron), ${QUEUE_CONCIERGE_REMINDERS} (cron), ${QUEUE_SHIFT_UNFILLED} (cron), ${QUEUE_CREDENTIAL_EXPIRING} (cron)`,
+    `[worker] listening on: ${QUEUE_FANOUT}, ${QUEUE_FANOUT_BUMPED}, ${QUEUE_BOOKING_COMPLETED}, ${QUEUE_REVIEW_CRON} (cron), ${QUEUE_BOOKING_PROGRESSION} (cron), ${QUEUE_NO_SHOW_CHECK} (cron), ${QUEUE_SHIFT_REMINDERS} (cron), ${QUEUE_CONCIERGE_REMINDERS} (cron), ${QUEUE_SHIFT_UNFILLED} (cron), ${QUEUE_CREDENTIAL_EXPIRING} (cron), ${QUEUE_PURGE_PASSWORD_RESETS} (cron)`,
   );
 
   // Graceful shutdown

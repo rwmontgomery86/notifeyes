@@ -560,6 +560,10 @@ previous step has slipped at least once on every project ever — use it.
 - Multi-metro → V2. `NOTIFEYES_LAUNCH_METRO` stays pinned to SF Bay.
 - Real legal review of ToS/Privacy/contract body → before public launch,
   not before beta.
+- IP-level rate limiting on `/forgot-password` → after beta. The reset flow
+  (2026-06-12) caps requests per *account* (3/hour, in
+  `src/lib/password-reset.ts`), but nothing stops cycling different emails
+  through the form; that needs middleware- or infra-level limiting by IP.
 
 ---
 

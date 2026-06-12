@@ -10,9 +10,9 @@ export const metadata = { title: "Log in · NotifEyes" };
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ callbackUrl?: string; error?: string }>;
+  searchParams: Promise<{ callbackUrl?: string; error?: string; reset?: string }>;
 }) {
-  const { callbackUrl, error } = await searchParams;
+  const { callbackUrl, error, reset } = await searchParams;
   const googleEnabled = Boolean(env.AUTH_GOOGLE_ID && env.AUTH_GOOGLE_SECRET);
 
   return (
@@ -36,6 +36,11 @@ export default async function LoginPage({
           {error ? (
             <div className="mt-4 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
               Invalid email or password.
+            </div>
+          ) : null}
+          {reset ? (
+            <div className="mt-4 rounded-md border border-green-500/40 bg-green-50/40 px-3 py-2 text-sm text-green-900">
+              Password updated. Log in with your new password.
             </div>
           ) : null}
           <LoginForm callbackUrl={callbackUrl} googleEnabled={googleEnabled} />
