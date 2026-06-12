@@ -6,29 +6,27 @@
 > resume. When work lands, the commit that lands it must also tick the
 > checkbox here and bump `Last touched`.
 
-**Last touched:** 2026-06-12 (**Phase 2 batch landed**: beta participant
-agreement (`/legal/beta-agreement` + signup click-through, migration `0009`),
-worker logs → structured JSON, legal-TODO inventory (one stale trust-safety
-footnote fixed), worker-health box closed via #23's `/api/health`. **Prod
-incident found + fixed in the same session:** migration 0008
-(`password_resets`) was never applied while the reset flow was live → applied
-via Supabase + drizzle ledger backfilled (incl. 0005's hand-apply gap).
-Decisions settled: first beta cohort not charged (Phase E held, Stripe flip
-parked), BetterStack for the monitor, CI-branch-DB deferred past beta. See
-the seven Decisions log entries dated 2026-06-12.)
+**Last touched:** 2026-06-12 (**PR #38 merged + deployed + verified**, and the
+**BetterStack monitor is LIVE** → health box ticked. The Phase 2 batch (beta
+participant agreement + signup click-through, JSON worker logs, legal-TODO
+inventory, worker-health via #23) is on `main`; migration **0009 was applied
+to prod pre-merge** (columns-before-code — no broken-signup window; ledger
+complete at 10 rows). Post-deploy prod smoke: agreement page + signup 200,
+`/api/health` status ok (DB 21ms), `main` CI green. Same-day prod incident
+fixed: 0008 (`password_resets`) had never been applied while the reset flow
+was live → applied + ledger backfilled (incl. 0005's gap). Decisions settled:
+first cohort not charged (Phase E held, Stripe flip parked), BetterStack,
+CI-branch-DB deferred. See the seven Decisions entries dated 2026-06-12.
+**Phase 2 has one box left: backup/PITR verify.**)
 **Cursor:** Phase 2 remainder. Phase 1 is blocked on externals only: **Twilio
 activation** (compliance pending → buy a US number → set the 3 `TWILIO_*` vars
 on **both** Vercel + Railway → re-run the SMS smoke leg). The **Stripe flag
 flip is parked** by the 2026-06-12 no-charge decision — the stub charges
 nothing, which is correct for the first cohort; flip later in beta when
 charging starts (live keys on Vercel only). RESUME HERE:
-1. **Point BetterStack at `/api/health`** (Ross ops) — keyword monitor, alert
-   when `"status":"ok"` is absent, 3-min interval; full config in the
-   2026-06-12 Decisions entry. Ticks the Phase-2 health box.
-2. **Verify Supabase backup/PITR** by restoring to a fresh project (dashboard
+1. **Verify Supabase backup/PITR** by restoring to a fresh project (dashboard
    ops; mind the second project's compute cost — delete it after the check).
-3. **Apply migration 0009 to prod** when the beta-agreement PR deploys —
-   the ledger is now clean, so `db:migrate` applies exactly 0009.
+   The last open Phase 2 box (monitor live + 0009 applied 2026-06-12).
 Then Phase 3 prep: the beta cohort list (open question).
 **Pooler rule stands:** SSE `LISTEN` + pg-boss on the session pooler (5432);
 query pool on the transaction pooler (6543) via `DATABASE_URL_POOLED`.
@@ -575,10 +573,11 @@ old one; do not edit history.
       (migration `0009` — apply to prod at deploy). Enforcement =
       signup-only per the Decisions log._
 - [ ] Verify Supabase backup + PITR by restoring to a fresh project.
-- [ ] `/api/health` endpoint + UptimeRobot or BetterStack monitor. _Endpoint
+- [x] `/api/health` endpoint + UptimeRobot or BetterStack monitor. _Endpoint
       **shipped (#23)** — reports DB + pg-boss worker liveness; returns 503 when
-      the DB is down. **BetterStack chosen 2026-06-12** (config in the Decisions
-      entry); ticks when the monitor is live._
+      the DB is down. **BetterStack monitor LIVE 2026-06-12** (Ross): keyword
+      alert on missing `"status":"ok"` (catches the 200-but-degraded
+      worker-stale case), 3-min checks, email alerts, test alert verified._
 - [x] Worker health: surface pg-boss queue depth + last-job-completed
       timestamp. _Satisfied by `/api/health` (#23): `checks.worker` reports
       `queued`/`active` counts + `lastJobCompletedAt` with a 15-min freshness
