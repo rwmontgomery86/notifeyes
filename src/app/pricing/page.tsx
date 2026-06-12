@@ -297,7 +297,7 @@ export default function PricingPage() {
       <Section variant="dark">
         <Container className="text-center">
           <h2
-            className="font-display mx-auto max-w-[900px] text-[64px] md:text-[80px] font-medium leading-[1.05] text-[#f4f7fc]"
+            className="font-display mx-auto max-w-[900px] text-[44px] sm:text-[64px] md:text-[80px] font-medium leading-[1.05] text-[#f4f7fc]"
           >
             One marketplace.{" "}
             <em
