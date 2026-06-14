@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { FileField } from "@/components/FileField";
+import { SmsConsentNote } from "@/components/SmsConsentNote";
 import { unblockPracticeFromProfile, updateOdProfile } from "./actions";
 
 type OdProfile = {
@@ -178,12 +179,7 @@ export function OdProfileEditor({
                 {smsDisabled ? " (add a phone number first)" : null}
               </span>
             </label>
-            <p className="text-xs text-muted-foreground">
-              We use your phone and email only to notify you about shifts that
-              match your watch zones and to send transactional account
-              messages. We do not sell or share your contact information with
-              marketing agencies.
-            </p>
+            <SmsConsentNote about="shifts that match your watch zones" />
             <label className="flex items-start gap-2 border-t border-border pt-3 text-sm">
               <input
                 type="checkbox"

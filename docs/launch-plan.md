@@ -484,6 +484,23 @@ old one; do not edit history.
   0008 — a future `db:migrate` applies exactly 0009+. *Lesson: apply prod
   migrations via `npm run db:migrate` (it writes the ledger), not by pasting
   SQL; and check the ledger, not just the columns, when confirming "applied".*
+- **2026-06-14** **Legal pages fleshed out for Twilio A2P** (side quest; **no
+  Phase boxes ticked**) — prerequisite for the Twilio compliance submission, not
+  the cursor. `/legal/terms` gained a dedicated **SMS section** (program name
+  "NotifEyes Shift Alerts", description, recurring/variable frequency, "message &
+  data rates may apply", **STOP/HELP in bold**, settings opt-out, support contact,
+  carrier-liability line); `/legal/privacy` expanded with real data categories, the
+  canonical carrier **no-share clause** (mobile/SMS consent never shared with third
+  parties for marketing) + the full subprocessor list (Twilio, Resend, Stripe,
+  Mapbox, UploadThing, Supabase, Vercel, Sentry, PostHog, Google — none for
+  marketing). In-product SMS opt-in copy unified via a new `SmsConsentNote`
+  component (OD profile lacked the rates/STOP line; practice lacked HELP; both now
+  link to the Terms). Privacy contact switched `privacy@`→`support@notifeyes.com`
+  (the working mailbox). **Routing decision:** the Twilio form points at
+  `/legal/privacy` + `/legal/terms` — the bare `/privacy`/`/terms` URLs 404 and **no
+  redirect was added**. **STOP/HELP relies on Twilio's carrier-level handling** for
+  beta — no inbound webhook / `smsOptedIn` auto-sync yet (follow-up). The Phase-1
+  SMS smoke box still waits on Twilio activation (number + the 3 `TWILIO_*` vars).
 
 ---
 

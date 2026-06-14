@@ -91,7 +91,7 @@ export function LegalLayout({
   );
 }
 
-export function LegalSection({ heading, body }: { heading: string; body: string }) {
+export function LegalSection({ heading, body }: { heading: string; body: ReactNode }) {
   return (
     <div className="mb-8">
       <h3
