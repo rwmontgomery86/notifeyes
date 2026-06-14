@@ -23,20 +23,17 @@ const SECTIONS: [string, ReactNode][] = [
   [
     "9. SMS / text message alerts",
     <>
-      NotifEyes Shift Alerts is our text-message program. If you opt in with your
-      phone number, we send transactional alerts only: watch-zone shift matches,
-      shift reminders, and no-show / attendance checks. Message frequency is
-      recurring and varies with your watch zones and bookings.{" "}
-      <strong>Message and data rates may apply.</strong> Reply{" "}
-      <strong>STOP</strong> to cancel at any time; reply <strong>HELP</strong>{" "}
-      for help. You can also turn SMS off anytime in your account settings. We
-      share your number only with our SMS provider (Twilio) to deliver these
-      messages — never for marketing. Carriers are not liable for delayed or
-      undelivered messages. Questions: support@notifeyes.com. See our{" "}
-      <a href="/legal/privacy" className="underline">
-        Privacy Policy
-      </a>{" "}
-      for how we handle your data.
+      NotifEyes is an optometry staffing platform operated by Second Sight
+      Technologies LLC. NotifEyes sends transactional and account-related SMS
+      notifications to registered optometry practices and optometrists/providers
+      who have opted in to receive SMS notifications. Messages may include new
+      shift alerts, watch-zone shift matches, application updates, provider
+      application alerts, shift confirmations, shift reminders, no-show or
+      attendance checks, account updates, and platform notifications. Messages
+      are sent only to users who opt in through the NotifEyes website or app
+      during account creation or in notification settings. Message frequency
+      varies. Users can reply <strong>STOP</strong> to opt out or{" "}
+      <strong>HELP</strong> for help.
     </>,
   ],
   ["10. Disputes", "Internal review within 2 business days. Binding arbitration thereafter — see § 15."],

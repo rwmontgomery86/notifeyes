@@ -501,6 +501,19 @@ old one; do not edit history.
   redirect was added**. **STOP/HELP relies on Twilio's carrier-level handling** for
   beta — no inbound webhook / `smsOptedIn` auto-sync yet (follow-up). The Phase-1
   SMS smoke box still waits on Twilio activation (number + the 3 `TWILIO_*` vars).
+- **2026-06-14** **SMS legal copy finalized for the Twilio A2P submission**
+  (side quest; **no Phase boxes ticked**) — supplements the earlier 2026-06-14
+  A2P entry. Privacy **§4 (SMS / text messaging)** rewritten to the final
+  three-paragraph form (affirmative opt-in; full transactional message-type
+  list; STOP/HELP; "consent is not a condition of purchase"; explicit
+  no-sell/rent/share + Twilio-as-service-provider clause). Terms **§9 (SMS /
+  text message alerts)** rewritten to the final program description (operator,
+  opted-in audience, message types, opt-in channels, "frequency varies",
+  STOP/HELP). Verbatim copy provided by Ross for the Twilio campaign
+  registration. **Note:** §9 no longer carries the "message & data rates may
+  apply" / carrier-liability lines (the rates line still lives in Privacy §4) —
+  acceptable if Twilio's form captures them separately; revisit if the campaign
+  review flags it.
 
 ---
 

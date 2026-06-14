@@ -27,20 +27,28 @@ const SECTIONS: [string, ReactNode][] = [
   [
     "4. SMS / text messaging",
     <>
-      We collect your phone number and SMS consent only when you opt in, and we
-      use them only to send the transactional alerts described in our{" "}
-      <a href="/legal/terms" className="underline">
-        Terms
-      </a>{" "}
-      (watch-zone shift matches, shift reminders, and no-show checks). We do{" "}
-      <strong>not</strong> sell your personal information.{" "}
-      <strong>
-        Mobile phone numbers and SMS opt-in/consent data are never shared with
-        third parties or affiliates for marketing or promotional purposes.
-      </strong>{" "}
-      We share data only with the service providers that operate NotifEyes — for
-      example, Twilio to deliver the texts you requested. You can opt out at any
-      time by replying STOP or by turning off SMS in your account settings.
+      <span className="block">
+        We collect your phone number and SMS consent only when you affirmatively
+        opt in to receive text messages from NotifEyes. We use your phone number
+        and SMS consent only to send transactional and account-related NotifEyes
+        messages, including watch-zone shift matches, shift opportunities,
+        application updates, shift confirmations, shift reminders, no-show
+        checks, account updates, and platform notifications.
+      </span>
+      <span className="mt-4 block">
+        Message frequency varies. <strong>Message and data rates may apply.</strong>{" "}
+        You may reply <strong>STOP</strong> to unsubscribe at any time or{" "}
+        <strong>HELP</strong> for help. You may also manage SMS notification
+        preferences in your account settings. Consent to receive SMS messages is
+        not a condition of purchase or use of the NotifEyes platform.
+      </span>
+      <span className="mt-4 block">
+        NotifEyes does not sell, rent, or share mobile phone numbers or SMS
+        opt-in consent with third parties or affiliates for their marketing or
+        promotional purposes. We share SMS-related information only with service
+        providers that help operate NotifEyes, such as Twilio, solely to deliver
+        the messages requested by the user.
+      </span>
     </>,
   ],
   [
