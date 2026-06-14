@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { FileField } from "@/components/FileField";
+import { SmsConsentNote } from "@/components/SmsConsentNote";
 import { updatePracticeSettings } from "./actions";
 
 type PracticeForm = {
@@ -195,13 +196,10 @@ export function PracticeSettingsForm({ initial }: { initial: PracticeForm }) {
             on top of your standard booking alerts.
           </span>
         </label>
-        <p className="text-xs text-muted-foreground">
-          We use your phone and email only to notify you about applicants,
-          bookings, and your account. Marketing updates (product news, tips)
-          are separate and require opt-in above. We do not sell or share your
-          contact info with marketing agencies. Standard message and data
-          rates may apply for SMS. Reply STOP to opt out at any time.
-        </p>
+        <SmsConsentNote about="applicants, bookings, and your account">
+          Marketing updates (product news, tips) are separate and require opt-in
+          above.
+        </SmsConsentNote>
       </section>
 
       <section className="ne-card grid gap-4">
