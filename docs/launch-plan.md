@@ -515,6 +515,20 @@ old one; do not edit history.
   acceptable if Twilio's form captures them separately; revisit if the campaign
   review flags it.
 
+- **2026-07-05** **How-it-Works page rebuilt to the new marketing look** (side
+  quest; **no Phase boxes ticked**). Ross supplied a full-page render as the
+  spec; rebuilt with the PR #44 kit conventions. Settled in conversation:
+  render blues → existing `--rust` tokens only; devices **code-built** (new
+  shared `LaptopFrame` + a page-local mini phone — no AI raster art, per the
+  scrapped isometric attempt); **true-facts copy only** — the render's "96% of
+  shifts filled", "5.0★" rating, "reliability guarantee", "backup ODs",
+  "check-in", and "Push" claims all replaced with verified fee-only facts
+  (license verification, fee-on-attendance, email/SMS/in-app channels); the
+  old glossary + watch-zone detail tables **dropped** (git history keeps
+  them); side-paths content survives as the "We've got your back" cards;
+  shared `FinalCTA` gained an opt-in `decorated` prop (default off — other
+  pages unchanged). Hero was sample-approved before the rest was built
+  (lesson from the scrapped redesign applied).
 - **2026-07-05** **For Optometrists page redesigned to a new marketing look**
   (side quest; **no Phase boxes ticked**). Rebuilt from Ross's re-rendered
   mockups: bolder display headings (**now the marketing-wide standard**, adopted
