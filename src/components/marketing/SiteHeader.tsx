@@ -46,10 +46,10 @@ export async function SiteHeader({ activeKey }: { activeKey?: NavKey }) {
             <Link
               key={item.key}
               href={item.href}
-              className={`no-underline transition-colors ${
+              className={`transition-colors ${
                 activeKey === item.key
-                  ? "text-ink font-medium group-data-[dark]:text-paper"
-                  : "text-ink-2 hover:text-ink group-data-[dark]:text-[#a8b3c6] group-data-[dark]:hover:text-paper"
+                  ? "font-medium text-rust underline decoration-rust decoration-2 underline-offset-[10px] group-data-[dark]:text-paper"
+                  : "no-underline text-ink-2 hover:text-ink group-data-[dark]:text-[#a8b3c6] group-data-[dark]:hover:text-paper"
               }`}
             >
               {item.label}
