@@ -33,6 +33,22 @@ Fonts: Geist (`--font-display`, headings via `.font-display`, letter-spacing -0.
 - `src/env.ts` is server-only; client components must not import it.
 - No animation library; motion is CSS transitions only.
 
+## Marketing site direction (2026-07-05)
+
+Set by the For Optometrists redesign (`src/app/for-optometrists/page.tsx` is
+the reference implementation); adopt on other marketing pages as they're
+touched. The app dashboard is unaffected.
+
+- Display headings: **bold (700)**, tracking -0.02em — heavier than the app's
+  font-medium standard.
+- Shared kit: `PhoneFrame` (realistic device shell, `dark` prop for dark
+  screens), `MarketingButton` size `xl`, Caveat script font (`--font-script`,
+  `font-script` utility) for handwritten annotations.
+- Mockup/render blues always map onto the existing `--rust` scale — no new
+  brand hexes. Greens map to `--sage`.
+- No fabricated social proof (user counts, ratings, testimonials): use
+  true-facts cards and bracketed `[placeholder]` styling until real data exists.
+
 ## Dashboard shell direction (2026-06-11)
 
 Decided via interview; candidate shells live at `/dev/shells` (dev/preview only — the route 404s in production).

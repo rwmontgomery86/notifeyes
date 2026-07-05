@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode, ButtonHTMLAttributes } from "react";
 
 type Variant = "primary" | "default" | "ghost";
-type Size = "sm" | "md" | "lg";
+type Size = "sm" | "md" | "lg" | "xl";
 
 const VARIANT: Record<Variant, string> = {
   primary:
@@ -17,6 +17,7 @@ const SIZE: Record<Size, string> = {
   sm: "px-3 py-1.5 text-[13px]",
   md: "px-[18px] py-[10px] text-sm",
   lg: "px-[22px] py-[13px] text-[15px]",
+  xl: "px-7 py-4 text-base",
 };
 
 type Props = {
