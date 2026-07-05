@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Inter } from "next/font/google";
+import { Caveat, Geist, Inter } from "next/font/google";
 import "./globals.css";
 import { PostHogProvider } from "@/components/analytics/PostHogProvider";
 
@@ -15,6 +15,13 @@ const inter = Inter({
   display: "swap",
 });
 
+// Handwritten annotations on marketing pages only.
+const caveat = Caveat({
+  subsets: ["latin"],
+  variable: "--font-script",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "NotifEyes — Optometry staffing, on your terms",
   description:
@@ -27,7 +34,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${geist.variable} ${inter.variable}`}>
+    <html lang="en" className={`${geist.variable} ${inter.variable} ${caveat.variable}`}>
       <body className="min-h-screen antialiased">
         <PostHogProvider>{children}</PostHogProvider>
       </body>

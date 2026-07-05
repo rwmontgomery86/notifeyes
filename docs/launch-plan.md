@@ -515,6 +515,21 @@ old one; do not edit history.
   acceptable if Twilio's form captures them separately; revisit if the campaign
   review flags it.
 
+- **2026-07-05** **For Optometrists page redesigned to a new marketing look**
+  (side quest; **no Phase boxes ticked**). Rebuilt from Ross's re-rendered
+  mockups: bolder display headings (**now the marketing-wide standard**, adopted
+  per page as pages get touched), realistic `PhoneFrame` device mock (+ dark
+  lock-screen variant), dashed watch-zone rings + clinic-pin hero backdrop,
+  Caveat handwritten annotation, navy stats band, 3-step "We make it simple",
+  "Alerts that fit your life", two-column FAQ (new cancellations answer),
+  solid-blue final CTA. Settled in conversation: mockup blues always map to the
+  existing `--rust` cyan (no new brand hexes); **fabricated social proof
+  rejected** — a true-facts trust card (100% license-verified / <10s / $0)
+  replaces the render's "1,200+ ODs / 4.9★" numbers and the quote keeps its
+  bracketed-placeholder styling until a real testimonial exists; header nav
+  unchanged (the mockup's "Resources ▾" was filler); **For Practices restyle
+  deferred** to its own later pass (the new kit is reusable for it).
+
 ---
 
 ## Phase 1 — Plumbing (target: end of week 1)
